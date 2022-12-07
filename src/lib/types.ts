@@ -2,10 +2,22 @@ import { Plot } from "./Plot";
 
 export type Hooks<SeriesExtras extends Record<string, unknown>> = {
   onInit?: (plot: Plot<SeriesExtras>) => void;
-  beforeClear?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
-  afterClear?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
-  afterSeries?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
-  afterAxes?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
+  beforeClear?: (
+    drawContext: DrawContext<SeriesExtras>,
+    plot: Plot<SeriesExtras>
+  ) => void;
+  afterClear?: (
+    drawContext: DrawContext<SeriesExtras>,
+    plot: Plot<SeriesExtras>
+  ) => void;
+  afterSeries?: (
+    drawContext: DrawContext<SeriesExtras>,
+    plot: Plot<SeriesExtras>
+  ) => void;
+  afterAxes?: (
+    drawContext: DrawContext<SeriesExtras>,
+    plot: Plot<SeriesExtras>
+  ) => void;
   onDestroy?: (plot: Plot<SeriesExtras>) => void;
 };
 
@@ -62,10 +74,15 @@ export type PlotAxis = {
   genTickLabels?: (tick: number) => string;
 };
 
+type NormalizedPadding = {
+  top: number;
+  bottom: number;
+  right: number;
+  left: number;
+};
+
 export type PlotDrawConfig<SeriesExtras extends Record<string, unknown>> = {
-  padding:
-    | number
-    | { top: number; right: number; bottom: number; left: number };
+  padding?: number | NormalizedPadding;
   axes: PlotAxis[];
   scales: Scale[];
   series: (SeriesBase & SeriesExtras & { plotter?: Plotter<SeriesExtras> })[];
@@ -81,17 +98,16 @@ export type DrawContext<S extends Record<string, unknown> = {}> = {
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
   chartArea: {
+    x: number;
+    y: number;
     width: number;
     height: number;
-    lt: { x: number; y: number };
-    rt: { x: number; y: number };
-    rb: { x: number; y: number };
-    lb: { x: number; y: number };
   };
+  padding: NormalizedPadding;
 };
 
-export type StaticConfig<S extends Record<string, unknown>> = {
+export type StaticConfig<SeriesExtras extends Record<string, unknown>> = {
   canvas: HTMLCanvasElement;
-  plugins: PlotPlugin<S>[];
+  plugins: PlotPlugin<SeriesExtras>[];
   dimensions: Dimensions;
 };

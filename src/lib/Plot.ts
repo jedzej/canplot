@@ -1,13 +1,25 @@
 import produce from "immer";
-import { scatterPlotter } from "./plotters";
-import {
-  PlotAxis,
-  PlotDrawConfig,
-  DrawContext,
-  Size,
-  StaticConfig,
-} from "./types";
-import { deepMerge, DeepPartial } from "./utils";
+import { drawAxes } from "./axes";
+import { isXScale } from "./helpers";
+import { drawSeries } from "./series";
+import { PlotDrawConfig, DrawContext, Size, StaticConfig } from "./types";
+
+const normalizePadding = (padding: PlotDrawConfig<{}>["padding"]) => {
+  if (typeof padding === "number") {
+    return { top: padding, right: padding, bottom: padding, left: padding };
+  }
+  if (typeof padding === "undefined") {
+    return { top: 0, right: 0, bottom: 0, left: 0 };
+  }
+  return padding;
+};
+
+const clearCanvas = <SeriesExtras extends Record<string, unknown>>({
+  ctx,
+  canvasSize,
+}: DrawContext<SeriesExtras>) => {
+  ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+};
 
 export class Plot<SeriesExtras extends Record<string, unknown>> {
   #staticConfig: StaticConfig<SeriesExtras>;
@@ -25,20 +37,16 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
     }
   });
 
-  isDimensionAuto() {
-    return (
-      this.#staticConfig.dimensions.width === "auto" ||
-      this.#staticConfig.dimensions.height === "auto"
-    );
-  }
-
   constructor(
     staticConfig: StaticConfig<SeriesExtras>,
     drawConfig: PlotDrawConfig<SeriesExtras>
   ) {
     this.#staticConfig = staticConfig;
     this.#lastDrawConfig_DO_NOT_USE = drawConfig;
-    if (this.isDimensionAuto()) {
+    const isAutosized =
+      this.#staticConfig.dimensions.width === "auto" ||
+      this.#staticConfig.dimensions.height === "auto";
+    if (isAutosized) {
       this.parentResizeObserver.observe(
         this.#staticConfig.canvas.parentElement!
       );
@@ -46,12 +54,11 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
       this.#draw(drawConfig);
     }
   }
-
-  ctx() {
-    return this.#staticConfig.canvas.getContext("2d")!;
+  getCanvas() {
+    return this.#staticConfig.canvas;
   }
 
-  #applyScaling() {
+  #updateCanvasSize() {
     const { width, height } = this.#staticConfig.dimensions;
     this.#staticConfig.canvas.width =
       width === "auto" ? this.#parentSize!.width : width;
@@ -59,145 +66,67 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
       height === "auto" ? this.#parentSize!.height : height;
   }
 
-  getCanvasSize() {
-    return {
+  #makeDrawingContext(
+    drawConfig: PlotDrawConfig<SeriesExtras>
+  ): DrawContext<SeriesExtras> {
+    const padding = normalizePadding(drawConfig.padding);
+    let leftAxesSize = 0;
+    let rightAxesSize = 0;
+    let bottomAxesSize = 0;
+    let topAxesSize = 0;
+    for (const axis of drawConfig.axes) {
+      if (isXScale(axis.scaleId)) {
+        if (axis.position === "primary") {
+          leftAxesSize += axis.size;
+        } else {
+          rightAxesSize += axis.size;
+        }
+      } else {
+        if (axis.position === "primary") {
+          bottomAxesSize += axis.size;
+        } else {
+          topAxesSize += axis.size;
+        }
+      }
+    }
+
+    const canvasSize = {
       width: this.#staticConfig.canvas.width,
       height: this.#staticConfig.canvas.height,
     };
-  }
-
-  #applyAxisStyles(axis: PlotAxis) {
-    const ctx = this.ctx();
-    ctx.lineCap = axis.style?.line?.lineCap ?? "butt";
-    ctx.lineDashOffset = axis.style?.line?.lineDashOffset ?? 0;
-    ctx.lineJoin = axis.style?.line?.lineJoin ?? "miter";
-    ctx.lineWidth = axis.style?.line?.lineWidth ?? 1;
-    ctx.miterLimit = axis.style?.line?.miterLimit ?? 10;
-    ctx.strokeStyle = axis.style?.strokeFill?.strokeStyle ?? "black";
-    ctx.fillStyle = axis.style?.strokeFill?.fillStyle ?? "black";
-  }
-
-  #drawXAxis(axis: PlotAxis, offset: number, x0: number, x1: number) {
-    const newOffset = offset + axis.size;
-    const { height } = this.getCanvasSize();
-    const y = axis.position === "primary" ? height - newOffset : newOffset;
-    const ctx = this.ctx();
-    ctx.save();
-    this.#applyAxisStyles(axis);
-    ctx.beginPath();
-    ctx.moveTo(x0, y);
-    ctx.lineTo(x1, y);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
-    return newOffset;
-  }
-
-  #drawYAxis(axis: PlotAxis, offset: number, y0: number, y1: number) {
-    const newOffset = offset + axis.size;
-    const { width } = this.getCanvasSize();
-    const ctx = this.ctx();
-    const x =
-      axis.position === "primary"
-        ? offset + axis.size
-        : width - offset - axis.size;
-    ctx.save();
-    this.#applyAxisStyles(axis);
-
-    ctx.beginPath();
-    ctx.moveTo(x, y0);
-    ctx.lineTo(x, y1);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
-    return newOffset;
-  }
-
-  #getPadding(drawConfig: PlotDrawConfig<SeriesExtras>) {
-    const padding = drawConfig.padding;
-    if (typeof padding === "number") {
-      return { top: padding, right: padding, bottom: padding, left: padding };
-    }
-    return padding;
-  }
-
-  #getChartArea(drawConfig: PlotDrawConfig<SeriesExtras>) {
-    const padding = this.#getPadding(drawConfig);
-    const leftAxesSize = drawConfig.axes
-      .map((a) =>
-        a.scaleId.startsWith("y-") && a.position === "primary" ? a.size : 0
-      )
-      .reduce((a, b) => a + b, 0);
-
-    const rightAxesSize = drawConfig.axes
-      .map((a) =>
-        a.scaleId.startsWith("y-") && a.position === "secondary" ? a.size : 0
-      )
-      .reduce((a, b) => a + b, 0);
-
-    const bottomAxesSize = drawConfig.axes
-      .map((a) =>
-        a.scaleId.startsWith("x-") && a.position === "primary" ? a.size : 0
-      )
-      .reduce((a, b) => a + b, 0);
-
-    const topAxesSize = drawConfig.axes
-      .map((a) =>
-        a.scaleId.startsWith("x-") && a.position === "secondary" ? a.size : 0
-      )
-      .reduce((a, b) => a + b, 0);
 
     return {
-      width:
-        this.getCanvasSize().width -
-        leftAxesSize -
-        rightAxesSize -
-        padding.left -
-        padding.right,
-      height:
-        this.getCanvasSize().height -
-        topAxesSize -
-        bottomAxesSize -
-        padding.top -
-        padding.bottom,
-      lt: {
+      ctx: this.#staticConfig.canvas.getContext("2d")!,
+      chartArea: {
         x: leftAxesSize + padding.left,
         y: topAxesSize + padding.top,
+        width:
+          canvasSize.width -
+          leftAxesSize -
+          rightAxesSize -
+          padding.left -
+          padding.right,
+        height:
+          canvasSize.height -
+          topAxesSize -
+          bottomAxesSize -
+          padding.top -
+          padding.bottom,
       },
-      rt: {
-        x: this.getCanvasSize().width - rightAxesSize - padding.right,
-        y: topAxesSize + padding.top,
-      },
-      rb: {
-        x: this.getCanvasSize().width - rightAxesSize - padding.right,
-        y: this.getCanvasSize().height - bottomAxesSize - padding.bottom,
-      },
-      lb: {
-        x: leftAxesSize + padding.left,
-        y: this.getCanvasSize().height - bottomAxesSize - padding.bottom,
-      },
+      padding,
+      canvasSize,
+      drawConfig,
     };
-  }
-
-  getChartArea() {
-    return this.#getChartArea(this.#lastDrawConfig_DO_NOT_USE);
-  }
-
-  incrementalUpdate(drawConfig: DeepPartial<PlotDrawConfig<SeriesExtras>>) {
-    const config = deepMerge(this.#lastDrawConfig_DO_NOT_USE, drawConfig);
-    this.update(config);
-  }
-
-  incrementalImperativeUpdate(
-    recipe: (draft: PlotDrawConfig<SeriesExtras>) => void
-  ) {
-    const config = produce(this.#lastDrawConfig_DO_NOT_USE, recipe);
-    this.update(config);
   }
 
   update(drawConfig: PlotDrawConfig<SeriesExtras>) {
     this.#lastDrawConfig_DO_NOT_USE = drawConfig;
     this.#draw(drawConfig);
+  }
+
+  incrementalUpdate(recipe: (draft: PlotDrawConfig<SeriesExtras>) => void) {
+    const config = produce(this.#lastDrawConfig_DO_NOT_USE, recipe);
+    this.update(config);
   }
 
   destroy() {
@@ -212,8 +141,9 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
     if (this.#phase === "destroyed") {
       return;
     }
-    this.#applyScaling();
+    this.#updateCanvasSize();
     if (this.#phase === "initializing") {
+      // ON INIT HOOK
       for (const plugin of this.#staticConfig.plugins) {
         plugin.hooks?.onInit?.(this);
       }
@@ -224,110 +154,38 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
         plugin.transformDrawConfig ? plugin.transformDrawConfig(acc) : acc,
       inputDrawConfig
     );
-    const drawContext: DrawContext<SeriesExtras> = {
-      ctx: this.ctx(),
-      chartArea: this.#getChartArea(drawConfig),
-      canvasSize: this.getCanvasSize(),
-      drawConfig,
-    };
+    const drawingContext = this.#makeDrawingContext(drawConfig);
 
+    // CLEAR
     for (const plugin of this.#staticConfig.plugins) {
-      plugin.hooks?.beforeClear?.(this, drawContext);
+      plugin.hooks?.beforeClear?.(drawingContext, this);
     }
 
-    const ctx = this.ctx();
-    ctx.clearRect(
-      0,
-      0,
-      this.getCanvasSize().width,
-      this.getCanvasSize().height
-    );
+    clearCanvas(drawingContext);
 
     for (const plugin of this.#staticConfig.plugins) {
-      plugin.hooks?.afterClear?.(this, drawContext);
+      plugin.hooks?.afterClear?.(drawingContext, this);
     }
 
-    const padding = this.#getPadding(drawConfig);
-
-    const chartArea = this.#getChartArea(drawConfig);
-    if (chartArea.height < 0 || chartArea.width < 0) {
+    if (
+      drawingContext.chartArea.height < 0 ||
+      drawingContext.chartArea.width < 0
+    ) {
       return;
     }
 
-    ctx.save();
-
-    const clipPath = new Path2D();
-    clipPath.rect(
-      chartArea.lt.x,
-      chartArea.lt.y,
-      chartArea.width,
-      chartArea.height
-    );
-    ctx.clip(clipPath);
-
-    for (const series of drawConfig.series) {
-      const xScale = drawConfig.scales.find(
-        (scale) => scale.id === series.xScaleId
-      );
-      const yScale = drawConfig.scales.find(
-        (scale) => scale.id === series.yScaleId
-      );
-      if (!xScale || !yScale) {
-        continue;
-      }
-      if (xScale.limits.autorange || yScale.limits.autorange) {
-        continue;
-      }
-      const plotter = series.plotter ?? scatterPlotter;
-      plotter(drawContext, series, xScale, yScale);
-    }
-    ctx.restore();
+    // DRAW SERIES
+    drawSeries(drawingContext);
 
     for (const plugin of this.#staticConfig.plugins) {
-      plugin.hooks?.afterSeries?.(this, drawContext);
+      plugin.hooks?.afterSeries?.(drawingContext, this);
     }
 
-    let currentBottomOffset = padding.left;
-    let currentRightOffset = padding.right;
-    let currentLeftOffset = padding.bottom;
-    let currentTopOffset = padding.top;
-    for (const axis of drawConfig.axes) {
-      if (axis.scaleId.startsWith("x-")) {
-        if (axis.position === "primary") {
-          currentBottomOffset = this.#drawXAxis(
-            axis,
-            currentBottomOffset,
-            chartArea.lb.x,
-            chartArea.rb.x
-          );
-        } else {
-          currentTopOffset = this.#drawXAxis(
-            axis,
-            currentTopOffset,
-            chartArea.lb.x,
-            chartArea.rb.x
-          );
-        }
-      } else {
-        if (axis.position === "primary") {
-          currentLeftOffset = this.#drawYAxis(
-            axis,
-            currentLeftOffset,
-            chartArea.lt.y,
-            chartArea.lb.y
-          );
-        } else {
-          currentRightOffset = this.#drawYAxis(
-            axis,
-            currentRightOffset,
-            chartArea.lt.y,
-            chartArea.lb.y
-          );
-        }
-      }
-    }
+    // DRAW AXES
+    drawAxes(drawingContext);
+
     for (const plugin of this.#staticConfig.plugins) {
-      plugin.hooks?.afterAxes?.(this, drawContext);
+      plugin.hooks?.afterAxes?.(drawingContext, this);
     }
   }
 }

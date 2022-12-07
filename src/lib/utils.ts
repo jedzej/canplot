@@ -35,3 +35,7 @@ export function deepMerge<T extends Record<string, unknown>>(
     },
   });
 }
+
+export const sum = (input: (number | undefined)[]): number => {
+  return input.reduce<number>((a, b) => a + (b ?? 0), 0);
+};

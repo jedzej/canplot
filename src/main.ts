@@ -1,11 +1,6 @@
 import { posToVal } from "./lib/helpers";
 import { Plot } from "./lib/Plot";
-import {
-  heatmapPlotter,
-  HeatmapSeriesExtras,
-  linePlotter,
-  scatterPlotter,
-} from "./lib/plotters";
+import { linePlotter } from "./lib/plotters";
 import { PlotPlugin, Scale } from "./lib/types";
 import "./style.css";
 
@@ -15,7 +10,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 <div style="background-color:darkgray; color:black; width:50vw">
   <div>input</div>
   <canvas id="input"></canvas>
-  <div>model output: yIn * sin(x / 2) + 5</div>
+  <div>model output: yIn * sin(x / 2)</div>
     <canvas id="output"></canvas>
   </div>
 </div>
@@ -25,11 +20,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
 const initialInput = {
   x: [...Array(100).keys()],
-  y: Array(100).fill(0.5),
+  y: Array(100).fill(0),
 };
 
 const produceOutput = (x: number, yIn: number) => {
-  return yIn * Math.sin(x / 2) + 1;
+  return yIn * Math.sin(x / 2);
 };
 
 const outputPlot = new Plot(
@@ -62,7 +57,7 @@ const outputPlot = new Plot(
       },
       {
         id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 2 } },
+        limits: { autorange: false, fixed: { min: -1, max: 1 } },
       },
     ],
     series: [
@@ -91,8 +86,8 @@ const makePlugin = (): PlotPlugin => {
   let isTracking = false;
   return {
     hooks: {
-      afterSeries: (plot, drawContext) => {
-        outputPlot.incrementalImperativeUpdate((draft) => {
+      afterSeries: (drawContext) => {
+        outputPlot.incrementalUpdate((draft) => {
           draft.series[0].y = drawContext.drawConfig.series[0].y.map((_, i) => {
             const x = drawContext.drawConfig.series[0].x[i];
             const y = drawContext.drawConfig.series[0].y[i];
@@ -104,9 +99,9 @@ const makePlugin = (): PlotPlugin => {
         document.getElementById("points")!.innerHTML =
           drawContext.drawConfig.series[0].y.join("\n");
       },
-      afterAxes(plot, drawContext) {
+      afterAxes(drawContext, plot) {
         if (moveListener) {
-          plot.ctx().canvas.removeEventListener("mousemove", moveListener);
+          plot.getCanvas().removeEventListener("mousemove", moveListener);
         }
         mouseDownListener = (e: MouseEvent) => {
           isTracking = true;
@@ -118,9 +113,9 @@ const makePlugin = (): PlotPlugin => {
           if (!isTracking) {
             return;
           }
-          const rect = plot.ctx().canvas.getBoundingClientRect();
-          const canvasX = e.clientX - rect.left - drawContext.chartArea.lt.x;
-          const canvasY = e.clientY - rect.top - drawContext.chartArea.lt.y;
+          const rect = plot.getCanvas().getBoundingClientRect();
+          const canvasX = e.clientX - rect.left - drawContext.chartArea.x;
+          const canvasY = e.clientY - rect.top - drawContext.chartArea.y;
           const position: Record<Scale["id"], number> = {};
           for (const scale of drawContext.drawConfig.scales) {
             if (scale.id.startsWith("x-")) {
@@ -129,7 +124,7 @@ const makePlugin = (): PlotPlugin => {
               position[scale.id] = posToVal(drawContext, canvasY, scale);
             }
           }
-          plot.incrementalImperativeUpdate((draft) => {
+          plot.incrementalUpdate((draft) => {
             let closestIndex = 0;
             for (let i = 0; i < draft.series[0].x.length; i++) {
               closestIndex =
@@ -143,26 +138,23 @@ const makePlugin = (): PlotPlugin => {
             }
             draft.series[0].y[closestIndex] = position["y-1"];
           });
-          // drawContext.drawConfig.series[0].
-          // outputPlot.incrementalImperativeUpdate(draft => {
-          //   draft
-          // })
         };
-        plot.ctx().canvas.addEventListener("mousemove", moveListener);
-        plot.ctx().canvas.addEventListener("mousedown", mouseDownListener);
-        plot.ctx().canvas.addEventListener("mouseup", mouseUpListener);
+        drawContext.ctx.canvas.addEventListener("mousemove", moveListener);
+        drawContext.ctx.canvas.addEventListener("mousedown", mouseDownListener);
+        drawContext.ctx.canvas.addEventListener("mouseup", mouseUpListener);
       },
       onDestroy(plot) {
+        const canvas = plot.getCanvas();
         if (moveListener) {
-          plot.ctx().canvas.removeEventListener("mousemove", moveListener);
+          canvas.removeEventListener("mousemove", moveListener);
           moveListener = undefined;
         }
         if (mouseDownListener) {
-          plot.ctx().canvas.removeEventListener("mousemove", mouseDownListener);
+          canvas.removeEventListener("mousemove", mouseDownListener);
           mouseDownListener = undefined;
         }
         if (mouseUpListener) {
-          plot.ctx().canvas.removeEventListener("mousemove", mouseUpListener);
+          canvas.removeEventListener("mousemove", mouseUpListener);
           mouseUpListener = undefined;
         }
       },
@@ -200,7 +192,7 @@ new Plot(
       },
       {
         id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 1 } },
+        limits: { autorange: false, fixed: { min: -1, max: 1 } },
       },
     ],
     series: [

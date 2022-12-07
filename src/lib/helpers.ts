@@ -1,6 +1,11 @@
 import { DrawContext, Scale } from "./types";
 import { clamp } from "./utils";
 
+export const isXScale = (scale: Scale | Scale["id"]) =>
+  typeof scale === "string"
+    ? scale.startsWith("x-")
+    : scale.id.startsWith("x-");
+
 export const valToPxDistance = (
   drawContext: DrawContext<any>,
   val: number,
@@ -10,9 +15,9 @@ export const valToPxDistance = (
     return 0;
   }
   const chartArea = drawContext.chartArea;
-  const isXScale = scale.id.startsWith("x-");
   const { min, max } = scale.limits.fixed;
-  const factor = (isXScale ? chartArea.width : chartArea.height) / (max - min);
+  const factor =
+    (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
   return val * factor;
 };
 
@@ -25,17 +30,16 @@ export const valToPos = (
     return 0;
   }
   const chartArea = drawContext.chartArea;
-  const isXScale = scale.id.startsWith("x-");
-  const relativePosition = valToPxDistance(drawContext, val, scale);
-  if (isXScale) {
+  const relativePosition = valToPxDistance(drawContext, val - scale.limits.fixed.min, scale);
+  if (isXScale(scale)) {
     return clamp(
-      chartArea.lb.x + relativePosition,
+      chartArea.x + relativePosition,
       -10 * chartArea.width,
       10 * chartArea.width
     );
   } else {
     return clamp(
-      chartArea.lb.y - relativePosition,
+      chartArea.y + chartArea.height - relativePosition,
       -10 * chartArea.height,
       10 * chartArea.height
     );
@@ -51,9 +55,9 @@ export const pxToValDistance = (
     return 0;
   }
   const chartArea = drawContext.chartArea;
-  const isXScale = scale.id.startsWith("x-");
   const { min, max } = scale.limits.fixed;
-  const factor = (isXScale ? chartArea.width : chartArea.height) / (max - min);
+  const factor =
+    (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
   return pxDistance / factor;
 };
 
@@ -65,9 +69,8 @@ export const posToVal = (
   if (scale.limits.autorange) {
     return 0;
   }
-  const isXScale = scale.id.startsWith("x-");
   const relativePosition = pxToValDistance(drawContext, pos, scale);
-  return isXScale
+  return isXScale(scale)
     ? scale.limits.fixed.min + relativePosition
-    : scale.limits.fixed.max - scale.limits.fixed.min - relativePosition;
+    : scale.limits.fixed.max - relativePosition;
 };
