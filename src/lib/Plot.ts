@@ -3,7 +3,7 @@ import { scatterPlotter } from "./plotters";
 import {
   PlotAxis,
   PlotDrawConfig,
-  PlotDrawContext,
+  DrawContext,
   Size,
   StaticConfig,
 } from "./types";
@@ -13,6 +13,7 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
   #staticConfig: StaticConfig<SeriesExtras>;
   #lastDrawConfig_DO_NOT_USE: PlotDrawConfig<SeriesExtras>;
   #parentSize: Size | undefined;
+  #phase: "initializing" | "initialized" | "destroyed" = "initializing";
 
   parentResizeObserver: ResizeObserver = new ResizeObserver((entries) => {
     for (const entry of entries) {
@@ -20,7 +21,6 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
         width: entry.contentRect.width,
         height: entry.contentRect.height,
       };
-      this.#applyScaling();
       this.#draw(this.#lastDrawConfig_DO_NOT_USE);
     }
   });
@@ -45,10 +45,6 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
     } else {
       this.#draw(drawConfig);
     }
-  }
-
-  deinit() {
-    this.parentResizeObserver.disconnect();
   }
 
   ctx() {
@@ -183,12 +179,18 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
     };
   }
 
+  getChartArea() {
+    return this.#getChartArea(this.#lastDrawConfig_DO_NOT_USE);
+  }
+
   incrementalUpdate(drawConfig: DeepPartial<PlotDrawConfig<SeriesExtras>>) {
     const config = deepMerge(this.#lastDrawConfig_DO_NOT_USE, drawConfig);
     this.update(config);
   }
 
-  incrementalImperativeUpdate(recipe: (draft: PlotDrawConfig<SeriesExtras>) => void) {
+  incrementalImperativeUpdate(
+    recipe: (draft: PlotDrawConfig<SeriesExtras>) => void
+  ) {
     const config = produce(this.#lastDrawConfig_DO_NOT_USE, recipe);
     this.update(config);
   }
@@ -198,18 +200,40 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
     this.#draw(drawConfig);
   }
 
+  destroy() {
+    this.parentResizeObserver.disconnect();
+    this.#phase = "destroyed";
+    for (const plugin of this.#staticConfig.plugins) {
+      plugin.hooks?.onDestroy?.(this);
+    }
+  }
+
   #draw(inputDrawConfig: PlotDrawConfig<SeriesExtras>) {
+    if (this.#phase === "destroyed") {
+      return;
+    }
     this.#applyScaling();
+    if (this.#phase === "initializing") {
+      for (const plugin of this.#staticConfig.plugins) {
+        plugin.hooks?.onInit?.(this);
+      }
+      this.#phase = "initialized";
+    }
     const drawConfig = this.#staticConfig.plugins.reduce(
-      (acc, plugin) => plugin.transformDrawConfig(acc),
+      (acc, plugin) =>
+        plugin.transformDrawConfig ? plugin.transformDrawConfig(acc) : acc,
       inputDrawConfig
     );
-    const drawContext: PlotDrawContext<SeriesExtras> = {
+    const drawContext: DrawContext<SeriesExtras> = {
       ctx: this.ctx(),
       chartArea: this.#getChartArea(drawConfig),
       canvasSize: this.getCanvasSize(),
       drawConfig,
     };
+
+    for (const plugin of this.#staticConfig.plugins) {
+      plugin.hooks?.beforeClear?.(this, drawContext);
+    }
 
     const ctx = this.ctx();
     ctx.clearRect(
@@ -219,12 +243,27 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
       this.getCanvasSize().height
     );
 
+    for (const plugin of this.#staticConfig.plugins) {
+      plugin.hooks?.afterClear?.(this, drawContext);
+    }
+
     const padding = this.#getPadding(drawConfig);
 
     const chartArea = this.#getChartArea(drawConfig);
     if (chartArea.height < 0 || chartArea.width < 0) {
       return;
     }
+
+    ctx.save();
+
+    const clipPath = new Path2D();
+    clipPath.rect(
+      chartArea.lt.x,
+      chartArea.lt.y,
+      chartArea.width,
+      chartArea.height
+    );
+    ctx.clip(clipPath);
 
     for (const series of drawConfig.series) {
       const xScale = drawConfig.scales.find(
@@ -242,22 +281,11 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
       const plotter = series.plotter ?? scatterPlotter;
       plotter(drawContext, series, xScale, yScale);
     }
+    ctx.restore();
 
-    // clear charts draw outside of chart area
-    ctx.clearRect(0, 0, chartArea.lb.x, this.getCanvasSize().height);
-    ctx.clearRect(0, 0, this.getCanvasSize().width, chartArea.rt.y);
-    ctx.clearRect(
-      0,
-      chartArea.lb.y,
-      this.getCanvasSize().width,
-      chartArea.rt.y
-    );
-    ctx.clearRect(
-      chartArea.rt.x,
-      0,
-      this.getCanvasSize().width,
-      this.getCanvasSize().height
-    );
+    for (const plugin of this.#staticConfig.plugins) {
+      plugin.hooks?.afterSeries?.(this, drawContext);
+    }
 
     let currentBottomOffset = padding.left;
     let currentRightOffset = padding.right;
@@ -297,6 +325,9 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
           );
         }
       }
+    }
+    for (const plugin of this.#staticConfig.plugins) {
+      plugin.hooks?.afterAxes?.(this, drawContext);
     }
   }
 }

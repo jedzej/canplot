@@ -1,8 +1,8 @@
-import { PlotDrawContext, Scale } from "./types";
+import { DrawContext, Scale } from "./types";
 import { clamp } from "./utils";
 
-export const valToPx = (
-  drawContext: PlotDrawContext<any>,
+export const valToPxDistance = (
+  drawContext: DrawContext<any>,
   val: number,
   scale: Scale
 ) => {
@@ -17,7 +17,7 @@ export const valToPx = (
 };
 
 export const valToPos = (
-  drawContext: PlotDrawContext<any>,
+  drawContext: DrawContext<any>,
   val: number,
   scale: Scale
 ) => {
@@ -26,7 +26,7 @@ export const valToPos = (
   }
   const chartArea = drawContext.chartArea;
   const isXScale = scale.id.startsWith("x-");
-  const relativePosition = valToPx(drawContext, val, scale);
+  const relativePosition = valToPxDistance(drawContext, val, scale);
   if (isXScale) {
     return clamp(
       chartArea.lb.x + relativePosition,
@@ -40,4 +40,34 @@ export const valToPos = (
       10 * chartArea.height
     );
   }
+};
+
+export const pxToValDistance = (
+  drawContext: DrawContext<any>,
+  pxDistance: number,
+  scale: Scale
+) => {
+  if (scale.limits.autorange) {
+    return 0;
+  }
+  const chartArea = drawContext.chartArea;
+  const isXScale = scale.id.startsWith("x-");
+  const { min, max } = scale.limits.fixed;
+  const factor = (isXScale ? chartArea.width : chartArea.height) / (max - min);
+  return pxDistance / factor;
+};
+
+export const posToVal = (
+  drawContext: DrawContext<any>,
+  pos: number,
+  scale: Scale
+) => {
+  if (scale.limits.autorange) {
+    return 0;
+  }
+  const isXScale = scale.id.startsWith("x-");
+  const relativePosition = pxToValDistance(drawContext, pos, scale);
+  return isXScale
+    ? scale.limits.fixed.min + relativePosition
+    : scale.limits.fixed.max - scale.limits.fixed.min - relativePosition;
 };

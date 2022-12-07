@@ -1,62 +1,44 @@
-import { valToPos, valToPx } from "./lib/helpers";
+import { posToVal } from "./lib/helpers";
 import { Plot } from "./lib/Plot";
-import { Plotter } from "./lib/types";
+import {
+  heatmapPlotter,
+  HeatmapSeriesExtras,
+  linePlotter,
+  scatterPlotter,
+} from "./lib/plotters";
+import { PlotPlugin, Scale } from "./lib/types";
 import "./style.css";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div style="background-color:darkgray; height: 50vh; width:50vw">
-    <canvas id="canvas"></canvas>
+<div style="display: flex; overflow:hidden;">
+<div>
+<div style="background-color:darkgray; color:black; width:50vw">
+  <div>input</div>
+  <canvas id="input"></canvas>
+  <div>model output: yIn * sin(x / 2) + 5</div>
+    <canvas id="output"></canvas>
   </div>
+</div>
+<div id="points" style="overflow-y: scroll; white-space:pre; height:400px;width:200px;"></div>
+</div>
 `;
 
-type HeatmapSeriesExtras = {
-  z: number[];
-  tileX: number;
-  tileY: number;
+const initialInput = {
+  x: [...Array(100).keys()],
+  y: Array(100).fill(0.5),
 };
 
-const heatmapPlotter: Plotter<HeatmapSeriesExtras> = (
-  drawContext,
-  series,
-  xScale,
-  yScale
-) => {
-  const maxZ = Math.max(...series.z);
-  const minZ = Math.min(...series.z);
-  const normalizedZ = series.z.map((v) => (v - minZ) / (maxZ - minZ));
-  const tileXPx = Math.floor(valToPx(drawContext, series.tileX, xScale))+1;
-  const tileYPx = Math.floor(valToPx(drawContext, series.tileY, yScale))+1;
-  for (let i = 0; i < series.x.length; i++) {
-    const x = series.x[i];
-    const y = series.y[i];
-    const z = normalizedZ[i];
-
-    if (x === undefined || y === undefined || z === undefined) {
-      continue;
-    }
-
-    const imageData = drawContext.ctx.createImageData(tileXPx, tileYPx);
-    for (let j = 0; j < imageData.data.length; j += 4) {
-      imageData.data[j] = z * 255;
-      imageData.data[j + 1] = 0;
-      imageData.data[j + 2] = (1 - z) * 255;
-      imageData.data[j + 3] = 255;
-    }
-    drawContext.ctx.putImageData(
-      imageData,
-      Math.round(valToPos(drawContext, x, xScale)),
-      Math.round(valToPos(drawContext, y, yScale) - tileYPx)
-    );
-  }
+const produceOutput = (x: number, yIn: number) => {
+  return yIn * Math.sin(x / 2) + 1;
 };
 
-const plot = new Plot<HeatmapSeriesExtras>(
+const outputPlot = new Plot(
   {
-    canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
+    canvas: document.querySelector<HTMLCanvasElement>("#output")!,
     plugins: [],
     dimensions: {
       width: "auto",
-      height: "auto",
+      height: 400,
     },
   },
   {
@@ -76,34 +58,230 @@ const plot = new Plot<HeatmapSeriesExtras>(
     scales: [
       {
         id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 5 } },
+        limits: { autorange: false, fixed: { min: 0, max: 100 } },
       },
       {
         id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 4 } },
+        limits: { autorange: false, fixed: { min: 0, max: 2 } },
       },
     ],
     series: [
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotter: heatmapPlotter,
-        tileX: 1,
-        tileY: 1,
-        x: [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
-        y: [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-        z: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        plotter: linePlotter,
+        x: initialInput.x,
+        y: initialInput.y.map((_, i) =>
+          produceOutput(initialInput.x[i], initialInput.y[i])
+        ),
+        style: {
+          strokeFill: {
+            strokeStyle: "blue",
+          },
+        },
       },
     ],
   }
 );
-setInterval(() => {
-  plot.incrementalImperativeUpdate((draft) => {
-    draft.series[0].z = new Array(draft.series[0].z.length)
-      .fill(0)
-      .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
-  });
-}, 16);
+
+const makePlugin = (): PlotPlugin => {
+  let moveListener: ((e: MouseEvent) => void) | undefined = undefined;
+  let mouseDownListener: ((e: MouseEvent) => void) | undefined = undefined;
+  let mouseUpListener: ((e: MouseEvent) => void) | undefined = undefined;
+  let isTracking = false;
+  return {
+    hooks: {
+      afterSeries: (plot, drawContext) => {
+        outputPlot.incrementalImperativeUpdate((draft) => {
+          draft.series[0].y = drawContext.drawConfig.series[0].y.map((_, i) => {
+            const x = drawContext.drawConfig.series[0].x[i];
+            const y = drawContext.drawConfig.series[0].y[i];
+            return x === undefined || y === undefined
+              ? undefined
+              : produceOutput(x, y);
+          });
+        });
+        document.getElementById("points")!.innerHTML =
+          drawContext.drawConfig.series[0].y.join("\n");
+      },
+      afterAxes(plot, drawContext) {
+        if (moveListener) {
+          plot.ctx().canvas.removeEventListener("mousemove", moveListener);
+        }
+        mouseDownListener = (e: MouseEvent) => {
+          isTracking = true;
+        };
+        mouseUpListener = (e: MouseEvent) => {
+          isTracking = false;
+        };
+        moveListener = (e: MouseEvent) => {
+          if (!isTracking) {
+            return;
+          }
+          const rect = plot.ctx().canvas.getBoundingClientRect();
+          const canvasX = e.clientX - rect.left - drawContext.chartArea.lt.x;
+          const canvasY = e.clientY - rect.top - drawContext.chartArea.lt.y;
+          const position: Record<Scale["id"], number> = {};
+          for (const scale of drawContext.drawConfig.scales) {
+            if (scale.id.startsWith("x-")) {
+              position[scale.id] = posToVal(drawContext, canvasX, scale);
+            } else {
+              position[scale.id] = posToVal(drawContext, canvasY, scale);
+            }
+          }
+          plot.incrementalImperativeUpdate((draft) => {
+            let closestIndex = 0;
+            for (let i = 0; i < draft.series[0].x.length; i++) {
+              closestIndex =
+                Math.abs((draft.series[0].x[i] ?? Infinity) - position["x-1"]) <
+                Math.abs(
+                  (draft.series[0].x[closestIndex] ?? Infinity) -
+                    position["x-1"]
+                )
+                  ? i
+                  : closestIndex;
+            }
+            draft.series[0].y[closestIndex] = position["y-1"];
+          });
+          // drawContext.drawConfig.series[0].
+          // outputPlot.incrementalImperativeUpdate(draft => {
+          //   draft
+          // })
+        };
+        plot.ctx().canvas.addEventListener("mousemove", moveListener);
+        plot.ctx().canvas.addEventListener("mousedown", mouseDownListener);
+        plot.ctx().canvas.addEventListener("mouseup", mouseUpListener);
+      },
+      onDestroy(plot) {
+        if (moveListener) {
+          plot.ctx().canvas.removeEventListener("mousemove", moveListener);
+          moveListener = undefined;
+        }
+        if (mouseDownListener) {
+          plot.ctx().canvas.removeEventListener("mousemove", mouseDownListener);
+          mouseDownListener = undefined;
+        }
+        if (mouseUpListener) {
+          plot.ctx().canvas.removeEventListener("mousemove", mouseUpListener);
+          mouseUpListener = undefined;
+        }
+      },
+    },
+  };
+};
+
+new Plot(
+  {
+    canvas: document.querySelector<HTMLCanvasElement>("#input")!,
+    plugins: [makePlugin()],
+    dimensions: {
+      width: "auto",
+      height: 200,
+    },
+  },
+  {
+    padding: 10,
+    axes: [
+      {
+        scaleId: "x-1",
+        position: "primary",
+        size: 30,
+      },
+      {
+        scaleId: "y-1",
+        position: "primary",
+        size: 30,
+      },
+    ],
+    scales: [
+      {
+        id: "x-1",
+        limits: { autorange: false, fixed: { min: 0, max: 100 } },
+      },
+      {
+        id: "y-1",
+        limits: { autorange: false, fixed: { min: 0, max: 1 } },
+      },
+    ],
+    series: [
+      {
+        xScaleId: "x-1",
+        yScaleId: "y-1",
+        plotter: linePlotter,
+        x: initialInput.x,
+        y: initialInput.y,
+        style: {
+          strokeFill: {
+            strokeStyle: "red",
+          },
+        },
+      },
+    ],
+  }
+);
+
+// setInterval(() => {
+//   plot.incrementalImperativeUpdate((draft) => {
+//     draft.series[0].z = new Array(draft.series[0].z.length)
+//       .fill(0)
+//       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
+//   });
+// }, 16);
+
+// const plot = new Plot<HeatmapSeriesExtras>(
+//   {
+//     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
+//     plugins: [],
+//     dimensions: {
+//       width: "auto",
+//       height: "auto",
+//     },
+//   },
+//   {
+//     padding: 10,
+//     axes: [
+//       {
+//         scaleId: "x-1",
+//         position: "primary",
+//         size: 30,
+//       },
+//       {
+//         scaleId: "y-1",
+//         position: "primary",
+//         size: 30,
+//       },
+//     ],
+//     scales: [
+//       {
+//         id: "x-1",
+//         limits: { autorange: false, fixed: { min: 0, max: 5 } },
+//       },
+//       {
+//         id: "y-1",
+//         limits: { autorange: false, fixed: { min: 0, max: 4 } },
+//       },
+//     ],
+//     series: [
+//       {
+//         xScaleId: "x-1",
+//         yScaleId: "y-1",
+//         plotter: heatmapPlotter,
+//         tileX: 1,
+//         tileY: 1,
+//         x: [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
+//         y: [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+//         z: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+//       },
+//     ],
+//   }
+// );
+// setInterval(() => {
+//   plot.incrementalImperativeUpdate((draft) => {
+//     draft.series[0].z = new Array(draft.series[0].z.length)
+//       .fill(0)
+//       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
+//   });
+// }, 16);
 
 // const plot = new Plot<{ id: string }>(
 //   {

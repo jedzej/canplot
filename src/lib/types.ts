@@ -1,7 +1,12 @@
-export type Hooks = {
-  init?: () => void;
-  update?: () => void;
-  deinit?: () => void;
+import { Plot } from "./Plot";
+
+export type Hooks<SeriesExtras extends Record<string, unknown>> = {
+  onInit?: (plot: Plot<SeriesExtras>) => void;
+  beforeClear?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
+  afterClear?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
+  afterSeries?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
+  afterAxes?: (plot: Plot<SeriesExtras>, drawContext: DrawContext<SeriesExtras>) => void;
+  onDestroy?: (plot: Plot<SeriesExtras>) => void;
 };
 
 export type Size = {
@@ -32,10 +37,14 @@ export type SeriesBase = {
   yScaleId: YScaleId;
   x: (number | undefined)[];
   y: (number | undefined)[];
+  style?: {
+    line?: Partial<CanvasPathDrawingStyles>;
+    strokeFill?: Partial<CanvasFillStrokeStyles>;
+  };
 };
 
 export type Plotter<SeriesExtras extends Record<string, unknown> = any> = (
-  drawContext: PlotDrawContext<SeriesExtras>,
+  drawContext: DrawContext<SeriesExtras>,
   series: SeriesBase & SeriesExtras,
   xScale: Scale,
   yScale: Scale
@@ -62,12 +71,12 @@ export type PlotDrawConfig<SeriesExtras extends Record<string, unknown>> = {
   series: (SeriesBase & SeriesExtras & { plotter?: Plotter<SeriesExtras> })[];
 };
 
-export type PlotPlugin<S extends Record<string, unknown>> = {
-  transformDrawConfig: (params: PlotDrawConfig<S>) => PlotDrawConfig<S>;
-  hooks: Hooks;
+export type PlotPlugin<S extends Record<string, unknown> = {}> = {
+  transformDrawConfig?: (params: PlotDrawConfig<S>) => PlotDrawConfig<S>;
+  hooks?: Hooks<S>;
 };
 
-export type PlotDrawContext<S extends Record<string, unknown> = {}> = {
+export type DrawContext<S extends Record<string, unknown> = {}> = {
   drawConfig: PlotDrawConfig<S>;
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
