@@ -1,9 +1,7 @@
 import { scatterPlotter } from "./plotters";
 import { DrawContext } from "./types";
 
-export const drawSeries = <SeriesExtras extends Record<string, unknown>>(
-  drawContext: DrawContext<SeriesExtras>
-) => {
+export const drawSeries = (drawContext: DrawContext) => {
   const { ctx, chartArea, drawConfig } = drawContext;
   ctx.save();
 
@@ -24,7 +22,7 @@ export const drawSeries = <SeriesExtras extends Record<string, unknown>>(
     if (xScale.limits.autorange || yScale.limits.autorange) {
       continue;
     }
-    const plotter = series.plotter ?? scatterPlotter;
+    const plotter = series.plotterOptions.plotter ?? scatterPlotter;
     plotter(drawContext, series, xScale, yScale);
   }
 

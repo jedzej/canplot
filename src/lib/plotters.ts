@@ -1,7 +1,11 @@
 import { valToPos, valToPxDistance } from "./helpers";
 import { Plotter } from "./types";
 
-export const scatterPlotter: Plotter = (
+export type ScatterExtras = {
+  plotter: Plotter;
+};
+
+export const scatterPlotter: Plotter<ScatterExtras> = (
   drawContext,
   singleSeries,
   xScale,
@@ -22,7 +26,11 @@ export const scatterPlotter: Plotter = (
   ctx.stroke();
 };
 
-export const linePlotter: Plotter<{}> = (
+export type LineExtras = {
+  plotter: Plotter
+};
+
+export const linePlotter: Plotter<LineExtras> = (
   drawContext,
   singleSeries,
   xScale,
@@ -43,7 +51,7 @@ export const linePlotter: Plotter<{}> = (
   const x0 = valToPos(drawContext, singleSeries.x[firstPoint]!, xScale);
   const y0 = valToPos(drawContext, singleSeries.y[firstPoint]!, yScale);
   ctx.save();
-  ctx.beginPath()
+  ctx.beginPath();
   ctx.moveTo(x0, y0);
   ctx.strokeStyle = singleSeries.style?.strokeFill?.strokeStyle ?? "yellow";
   for (let i = 1; i < length; i++) {
@@ -60,23 +68,27 @@ export const linePlotter: Plotter<{}> = (
   ctx.restore();
 };
 
-export type HeatmapSeriesExtras = {
+export type HeatmapExtras = {
+  type: "heatmap";
+  plotter: typeof heatmapPlotter;
   z: number[];
   tileX: number;
   tileY: number;
 };
 
-export const heatmapPlotter: Plotter<HeatmapSeriesExtras> = (
+export const heatmapPlotter: Plotter<HeatmapExtras> = (
   drawContext,
   series,
   xScale,
   yScale
 ) => {
-  const maxZ = Math.max(...series.z);
-  const minZ = Math.min(...series.z);
-  const normalizedZ = series.z.map((v) => (v - minZ) / (maxZ - minZ));
-  const tileXPx = Math.floor(valToPxDistance(drawContext, series.tileX, xScale))+1;
-  const tileYPx = Math.floor(valToPxDistance(drawContext, series.tileY, yScale))+1;
+  const maxZ = Math.max(...series.plotterOptions.z);
+  const minZ = Math.min(...series.plotterOptions.z);
+  const normalizedZ = series.plotterOptions.z.map((v) => (v - minZ) / (maxZ - minZ));
+  const tileXPx =
+    Math.floor(valToPxDistance(drawContext, series.plotterOptions.tileX, xScale)) + 1;
+  const tileYPx =
+    Math.floor(valToPxDistance(drawContext, series.plotterOptions.tileY, yScale)) + 1;
   for (let i = 0; i < series.x.length; i++) {
     const x = series.x[i];
     const y = series.y[i];

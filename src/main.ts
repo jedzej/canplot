@@ -1,6 +1,13 @@
 import { posToVal } from "./lib/helpers";
 import { Plot } from "./lib/Plot";
-import { linePlotter } from "./lib/plotters";
+import {
+  HeatmapExtras,
+  heatmapPlotter,
+  LineExtras,
+  linePlotter,
+  ScatterExtras,
+  scatterPlotter,
+} from "./lib/plotters";
 import { PlotPlugin, Scale } from "./lib/types";
 import "./style.css";
 
@@ -27,7 +34,7 @@ const produceOutput = (x: number, yIn: number) => {
   return yIn * Math.sin(x / 2);
 };
 
-const outputPlot = new Plot(
+const outputPlot = new Plot<LineExtras | ScatterExtras | HeatmapExtras>(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#output")!,
     plugins: [],
@@ -43,11 +50,17 @@ const outputPlot = new Plot(
         scaleId: "x-1",
         position: "primary",
         size: 30,
+        // genTicks() {
+        //   return [0, 25, 50, 75, 100];
+        // },
       },
       {
         scaleId: "y-1",
         position: "primary",
         size: 30,
+        genTicks() {
+          return [0, 0.25, 0.5, 0.75];
+        },
       },
     ],
     scales: [
@@ -64,7 +77,9 @@ const outputPlot = new Plot(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotter: linePlotter,
+        plotterOptions: {
+          plotter: linePlotter,
+        },
         x: initialInput.x,
         y: initialInput.y.map((_, i) =>
           produceOutput(initialInput.x[i], initialInput.y[i])
@@ -75,6 +90,26 @@ const outputPlot = new Plot(
           },
         },
       },
+      // {
+      //   xScaleId: "x-1",
+      //   yScaleId: "y-1",
+      //   plotOptions: {
+      //     type: "heatmap",
+      //     plotter: heatmapPlotter,
+      //     tileX: 1,
+      //     tileY: 1,
+      //     z: [],
+      //   },
+      //   x: initialInput.x,
+      //   y: initialInput.y.map((_, i) =>
+      //     produceOutput(initialInput.x[i], initialInput.y[i])
+      //   ),
+      //   style: {
+      //     strokeFill: {
+      //       strokeStyle: "blue",
+      //     },
+      //   },
+      // },
     ],
   }
 );
@@ -199,7 +234,9 @@ new Plot(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotter: linePlotter,
+        plotterOptions: {
+          plotter: linePlotter,
+        },
         x: initialInput.x,
         y: initialInput.y,
         style: {

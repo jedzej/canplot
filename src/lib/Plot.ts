@@ -2,9 +2,15 @@ import produce from "immer";
 import { drawAxes } from "./axes";
 import { isXScale } from "./helpers";
 import { drawSeries } from "./series";
-import { PlotDrawConfig, DrawContext, Size, StaticConfig } from "./types";
+import {
+  PlotDrawConfig,
+  DrawContext,
+  Size,
+  StaticConfig,
+  SeriesBase,
+} from "./types";
 
-const normalizePadding = (padding: PlotDrawConfig<{}>["padding"]) => {
+const normalizePadding = (padding: PlotDrawConfig["padding"]) => {
   if (typeof padding === "number") {
     return { top: padding, right: padding, bottom: padding, left: padding };
   }
@@ -14,16 +20,13 @@ const normalizePadding = (padding: PlotDrawConfig<{}>["padding"]) => {
   return padding;
 };
 
-const clearCanvas = <SeriesExtras extends Record<string, unknown>>({
-  ctx,
-  canvasSize,
-}: DrawContext<SeriesExtras>) => {
+const clearCanvas = ({ ctx, canvasSize }: DrawContext) => {
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 };
 
-export class Plot<SeriesExtras extends Record<string, unknown>> {
-  #staticConfig: StaticConfig<SeriesExtras>;
-  #lastDrawConfig_DO_NOT_USE: PlotDrawConfig<SeriesExtras>;
+export class Plot<Extras = any> {
+  #staticConfig: StaticConfig<Extras>;
+  #lastDrawConfig_DO_NOT_USE: PlotDrawConfig<Extras>;
   #parentSize: Size | undefined;
   #phase: "initializing" | "initialized" | "destroyed" = "initializing";
 
@@ -38,8 +41,8 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
   });
 
   constructor(
-    staticConfig: StaticConfig<SeriesExtras>,
-    drawConfig: PlotDrawConfig<SeriesExtras>
+    staticConfig: StaticConfig<Extras>,
+    drawConfig: PlotDrawConfig<Extras>
   ) {
     this.#staticConfig = staticConfig;
     this.#lastDrawConfig_DO_NOT_USE = drawConfig;
@@ -66,9 +69,7 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
       height === "auto" ? this.#parentSize!.height : height;
   }
 
-  #makeDrawingContext(
-    drawConfig: PlotDrawConfig<SeriesExtras>
-  ): DrawContext<SeriesExtras> {
+  #makeDrawingContext(drawConfig: PlotDrawConfig<Extras>): DrawContext<Extras> {
     const padding = normalizePadding(drawConfig.padding);
     let leftAxesSize = 0;
     let rightAxesSize = 0;
@@ -119,12 +120,12 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
     };
   }
 
-  update(drawConfig: PlotDrawConfig<SeriesExtras>) {
+  update(drawConfig: PlotDrawConfig<Extras>) {
     this.#lastDrawConfig_DO_NOT_USE = drawConfig;
     this.#draw(drawConfig);
   }
 
-  incrementalUpdate(recipe: (draft: PlotDrawConfig<SeriesExtras>) => void) {
+  incrementalUpdate(recipe: (draft: PlotDrawConfig<Extras>) => void) {
     const config = produce(this.#lastDrawConfig_DO_NOT_USE, recipe);
     this.update(config);
   }
@@ -137,7 +138,7 @@ export class Plot<SeriesExtras extends Record<string, unknown>> {
     }
   }
 
-  #draw(inputDrawConfig: PlotDrawConfig<SeriesExtras>) {
+  #draw(inputDrawConfig: PlotDrawConfig<Extras>) {
     if (this.#phase === "destroyed") {
       return;
     }

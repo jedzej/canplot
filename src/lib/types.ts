@@ -1,24 +1,14 @@
 import { Plot } from "./Plot";
 
-export type Hooks<SeriesExtras extends Record<string, unknown>> = {
-  onInit?: (plot: Plot<SeriesExtras>) => void;
-  beforeClear?: (
-    drawContext: DrawContext<SeriesExtras>,
-    plot: Plot<SeriesExtras>
-  ) => void;
-  afterClear?: (
-    drawContext: DrawContext<SeriesExtras>,
-    plot: Plot<SeriesExtras>
-  ) => void;
-  afterSeries?: (
-    drawContext: DrawContext<SeriesExtras>,
-    plot: Plot<SeriesExtras>
-  ) => void;
-  afterAxes?: (
-    drawContext: DrawContext<SeriesExtras>,
-    plot: Plot<SeriesExtras>
-  ) => void;
-  onDestroy?: (plot: Plot<SeriesExtras>) => void;
+export type SeriesExtrasBase = Record<string, unknown>;
+
+export type Hooks<Extras = any> = {
+  onInit?: (plot: Plot<Extras>) => void;
+  beforeClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
+  afterClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
+  afterSeries?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
+  afterAxes?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
+  onDestroy?: (plot: Plot<Extras>) => void;
 };
 
 export type Size = {
@@ -44,7 +34,7 @@ export type Scale = {
   limits: { autorange: true } | { autorange: false; fixed: Limits };
 };
 
-export type SeriesBase = {
+export type SeriesBase<Extras = { plotter: Plotter }> = {
   xScaleId: XScaleId;
   yScaleId: YScaleId;
   x: (number | undefined)[];
@@ -53,11 +43,12 @@ export type SeriesBase = {
     line?: Partial<CanvasPathDrawingStyles>;
     strokeFill?: Partial<CanvasFillStrokeStyles>;
   };
+  plotterOptions: Extras;
 };
 
-export type Plotter<SeriesExtras extends Record<string, unknown> = any> = (
-  drawContext: DrawContext<SeriesExtras>,
-  series: SeriesBase & SeriesExtras,
+export type Plotter<Extras = { plotter: Plotter }> = (
+  drawContext: DrawContext,
+  series: SeriesBase<Extras>,
   xScale: Scale,
   yScale: Scale
 ) => void;
@@ -70,7 +61,7 @@ export type PlotAxis = {
     line?: Partial<CanvasPathDrawingStyles>;
     strokeFill?: Partial<CanvasFillStrokeStyles>;
   };
-  genTicks?: (limits: Limits) => number[];
+  genTicks?: (drawConfig: DrawContext, scale: Scale) => number[];
   genTickLabels?: (tick: number) => string;
 };
 
@@ -81,20 +72,22 @@ type NormalizedPadding = {
   left: number;
 };
 
-export type PlotDrawConfig<SeriesExtras extends Record<string, unknown>> = {
+export type PlotDrawConfig<Extras = any> = {
   padding?: number | NormalizedPadding;
   axes: PlotAxis[];
   scales: Scale[];
-  series: (SeriesBase & SeriesExtras & { plotter?: Plotter<SeriesExtras> })[];
+  series: SeriesBase<Extras>[];
 };
 
-export type PlotPlugin<S extends Record<string, unknown> = {}> = {
-  transformDrawConfig?: (params: PlotDrawConfig<S>) => PlotDrawConfig<S>;
-  hooks?: Hooks<S>;
+export type PlotPlugin<Extras = any> = {
+  transformDrawConfig?: (
+    params: PlotDrawConfig<Extras>
+  ) => PlotDrawConfig<Extras>;
+  hooks?: Hooks<Extras>;
 };
 
-export type DrawContext<S extends Record<string, unknown> = {}> = {
-  drawConfig: PlotDrawConfig<S>;
+export type DrawContext<Extras = any> = {
+  drawConfig: PlotDrawConfig<Extras>;
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
   chartArea: {
@@ -106,8 +99,8 @@ export type DrawContext<S extends Record<string, unknown> = {}> = {
   padding: NormalizedPadding;
 };
 
-export type StaticConfig<SeriesExtras extends Record<string, unknown>> = {
+export type StaticConfig<Extras = any> = {
   canvas: HTMLCanvasElement;
-  plugins: PlotPlugin<SeriesExtras>[];
+  plugins: PlotPlugin<Extras>[];
   dimensions: Dimensions;
 };
