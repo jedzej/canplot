@@ -58,6 +58,11 @@ export type PlotAxis = {
   scaleId: Scale["id"];
   position?: "primary" | "secondary";
   size?: number;
+  tickStyle?: {
+    size?: number
+    line?: Partial<CanvasPathDrawingStyles>;
+    strokeFill?: Partial<CanvasFillStrokeStyles>;
+  };
   style?: {
     line?: Partial<CanvasPathDrawingStyles>;
     strokeFill?: Partial<CanvasFillStrokeStyles>;

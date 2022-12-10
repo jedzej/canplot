@@ -1,5 +1,6 @@
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
 import { DrawContext, PlotAxis, Scale, SeriesBase } from "./types";
+import { sum } from "./utils";
 
 const acceptable: number[] = [];
 for (let i = -12; i <= 12; i++) {
@@ -44,23 +45,25 @@ const drawYTicks = (
   drawContext: DrawContext,
   axis: PlotAxis,
   scale: Scale,
-  x0: number,
-  x1: number
+  x: number
 ) => {
   const { ctx } = drawContext;
   ctx.save();
-  applyStyles(ctx, axis.style);
+  applyStyles(ctx, { ...axis.style, ...axis.tickStyle });
   ctx.beginPath();
+  const position = axis.position ?? DEFAULT_POSITION;
+  const tickSize = axis.tickStyle?.size ?? 5;
   const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
+  const x0 = x;
+  const x1 = position === "primary" ? x - tickSize : x + tickSize;
   for (const tick of ticks) {
     const y = valToPos(drawContext, tick, scale.id);
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
-    ctx.textAlign = "right";
+    ctx.textAlign = position === "primary" ? "right" : "left";
     ctx.textBaseline = "middle";
     ctx.fillText(`${tickFormat(tick, ticks, scale)}`, x1, y);
   }
-
   ctx.closePath();
   ctx.stroke();
   ctx.restore();
@@ -100,7 +103,8 @@ const drawXTicks = (
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
     ctx.textAlign = "center";
-    ctx.textBaseline = "top";
+    ctx.textBaseline =
+      (axis.position ?? DEFAULT_POSITION) === "primary" ? "top" : "bottom";
     ctx.fillText(`${tickFormat(tick, ticks, scale)}`, x, y1);
   }
 
@@ -126,22 +130,26 @@ const drawXAxis = (
   ctx.restore();
 };
 
+export const DEFAULT_AXIS_SIZE = 50;
+export const DEFAULT_POSITION = "primary";
+
 export const drawAxes = (drawContext: DrawContext) => {
   const { ctx, chartArea, drawConfig, canvasSize, padding } = drawContext;
   const chartAreaLeft = chartArea.x;
   const chartAreaRight = chartArea.x + chartArea.width;
   const chartAreaTop = chartArea.y;
   const chartAreaBottom = chartArea.y + chartArea.height;
-  let currentLeftOffset = padding.bottom;
+  let currentLeftOffset = padding.left;
   let currentRightOffset = canvasSize.width - padding.right;
   let currentBottomOffset = canvasSize.height - padding.bottom;
   let currentTopOffset = padding.top;
+
   for (const axis of drawConfig.axes) {
     const scale = drawConfig.scales.find((scale) => scale.id === axis.scaleId);
     if (!scale) {
       continue;
     }
-    const size = axis.size ?? 50;
+    const size = axis.size ?? DEFAULT_AXIS_SIZE;
     const position = axis.position ?? "primary";
 
     if (isXScale(scale)) {
@@ -176,23 +184,11 @@ export const drawAxes = (drawContext: DrawContext) => {
       if (position === "primary") {
         currentLeftOffset += size;
         drawYAxis(ctx, axis, currentLeftOffset, chartAreaTop, chartAreaBottom);
-        drawYTicks(
-          drawContext,
-          axis,
-          scale,
-          currentLeftOffset,
-          currentLeftOffset - 6
-        );
+        drawYTicks(drawContext, axis, scale, currentLeftOffset);
       } else {
         currentRightOffset -= size;
         drawYAxis(ctx, axis, currentRightOffset, chartAreaTop, chartAreaBottom);
-        drawYTicks(
-          drawContext,
-          axis,
-          scale,
-          currentRightOffset,
-          currentRightOffset + 6
-        );
+        drawYTicks(drawContext, axis, scale, currentRightOffset);
       }
     }
   }

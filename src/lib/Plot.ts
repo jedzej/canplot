@@ -75,15 +75,15 @@ export class Plot<Extras = any> {
       const position = axis.position ?? "primary";
       if (isXScale(axis.scaleId)) {
         if (position === "primary") {
-          leftAxesSize += size;
-        } else {
-          rightAxesSize += size;
-        }
-      } else {
-        if (position === "primary") {
           bottomAxesSize += size;
         } else {
           topAxesSize += size;
+        }
+      } else {
+        if (position === "primary") {
+          leftAxesSize += size;
+        } else {
+          rightAxesSize += size;
         }
       }
     }
@@ -187,10 +187,9 @@ export class Plot<Extras = any> {
     for (const plugin of this.#staticConfig.plugins) {
       plugin.hooks?.afterSeries?.(drawingContext, this);
     }
-    
+
     // DRAW BOTTOM FACETS
     drawFacets(drawingContext, "middle");
-
 
     // DRAW AXES
     drawAxes(drawingContext);
