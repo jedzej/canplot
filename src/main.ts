@@ -152,9 +152,9 @@ const makePlugin = (): PlotPlugin => {
           const position: Record<Scale["id"], number> = {};
           for (const scale of drawContext.drawConfig.scales) {
             if (scale.id.startsWith("x-")) {
-              position[scale.id] = posToVal(drawContext, canvasX, scale.id);
+              position[scale.id] = posToVal(drawContext, canvasX, scale);
             } else {
-              position[scale.id] = posToVal(drawContext, canvasY, scale.id);
+              position[scale.id] = posToVal(drawContext, canvasY, scale);
             }
           }
           plot.incrementalUpdate((draft) => {

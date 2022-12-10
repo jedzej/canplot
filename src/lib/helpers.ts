@@ -68,14 +68,8 @@ export const pxToValDistance = (
 export const posToVal = (
   drawContext: DrawContext<any>,
   pos: number,
-  scaleId: XScaleId | YScaleId
+  scale: Scale
 ) => {
-  const scale = drawContext.drawConfig.scales.find(
-    (scale) => scale.id === scaleId
-  );
-  if (!scale) {
-    return 0;
-  }
   if (scale.limits.autorange) {
     return 0;
   }
