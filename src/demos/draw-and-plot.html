@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + TS</title>
+</head>
+
+<body>
+  <div style="display: flex; overflow:hidden;">
+    <div>
+      <div style="background-color:darkgray; color:black; width:50vw">
+        <div>input</div>
+        <canvas id="input"></canvas>
+        <div>model output: yIn * sin(x / 2)</div>
+        <canvas id="output"></canvas>
+      </div>
+    </div>
+    <div id="points" style="overflow-y: scroll; white-space:pre; height:400px;width:200px;"></div>
+  </div>
+  <script type="module" src="./draw-and-plot.ts"></script>
+</body>
+
+</html>

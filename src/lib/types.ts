@@ -35,6 +35,7 @@ export type Scale = {
 };
 
 export type SeriesBase<Extras = { plotter: Plotter }> = {
+  id?: string;
   xScaleId: XScaleId;
   yScaleId: YScaleId;
   x: (number | undefined)[];
@@ -55,8 +56,8 @@ export type Plotter<Extras = { plotter: Plotter }> = (
 
 export type PlotAxis = {
   scaleId: Scale["id"];
-  position: "primary" | "secondary";
-  size: number;
+  position?: "primary" | "secondary";
+  size?: number;
   style?: {
     line?: Partial<CanvasPathDrawingStyles>;
     strokeFill?: Partial<CanvasFillStrokeStyles>;

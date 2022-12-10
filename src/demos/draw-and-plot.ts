@@ -1,27 +1,13 @@
-import { posToVal } from "./lib/helpers";
-import { Plot } from "./lib/Plot";
+import { posToVal } from "../lib/helpers";
+import { Plot } from "../lib/Plot";
 import {
   HeatmapExtras,
   LineExtras,
   linePlotter,
   ScatterExtras,
-} from "./lib/plotters";
-import { PlotPlugin, Scale } from "./lib/types";
+} from "../lib/plotters";
+import { PlotPlugin, Scale } from "../lib/types";
 import "./style.css";
-
-document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-<div style="display: flex; overflow:hidden;">
-<div>
-<div style="background-color:darkgray; color:black; width:50vw">
-  <div>input</div>
-  <canvas id="input"></canvas>
-  <div>model output: yIn * sin(x / 2)</div>
-    <canvas id="output"></canvas>
-  </div>
-</div>
-<div id="points" style="overflow-y: scroll; white-space:pre; height:400px;width:200px;"></div>
-</div>
-`;
 
 const initialInput = {
   x: [...Array(100).keys()],

@@ -1,9 +1,10 @@
-import { valToPos, valToPxDistance } from "./helpers";
+import { applyStyles, valToPos, valToPxDistance } from "./helpers";
 import { Plotter } from "./types";
 
 export type ScatterExtras = {
   plotter: Plotter;
 };
+
 
 export const scatterPlotter: Plotter<ScatterExtras> = (
   drawContext,
@@ -12,6 +13,10 @@ export const scatterPlotter: Plotter<ScatterExtras> = (
   yScale
 ) => {
   const ctx = drawContext.ctx;
+  ctx.save();
+  ctx.beginPath();
+  applyStyles(ctx, singleSeries.style);
+  
   for (let i = 0; i < singleSeries.x.length; i++) {
     const x = singleSeries.x[i];
     const y = singleSeries.y[i];
@@ -23,7 +28,9 @@ export const scatterPlotter: Plotter<ScatterExtras> = (
     ctx.moveTo(xPos + 5, yPos);
     ctx.arc(xPos, yPos, 5, 0, 2 * Math.PI);
   }
+  ctx.closePath();
   ctx.stroke();
+  ctx.restore();
 };
 
 export type LineExtras = {
@@ -52,8 +59,9 @@ export const linePlotter: Plotter<LineExtras> = (
   const y0 = valToPos(drawContext, singleSeries.y[firstPoint]!, yScale);
   ctx.save();
   ctx.beginPath();
+  applyStyles(ctx, singleSeries.style);
+  
   ctx.moveTo(x0, y0);
-  ctx.strokeStyle = singleSeries.style?.strokeFill?.strokeStyle ?? "yellow";
   for (let i = 1; i < length; i++) {
     const x = singleSeries.x[i];
     const y = singleSeries.y[i];

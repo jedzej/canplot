@@ -2,13 +2,7 @@ import produce from "immer";
 import { drawAxes } from "./axes";
 import { isXScale } from "./helpers";
 import { drawSeries } from "./series";
-import {
-  PlotDrawConfig,
-  DrawContext,
-  Size,
-  StaticConfig,
-  SeriesBase,
-} from "./types";
+import { PlotDrawConfig, DrawContext, Size, StaticConfig } from "./types";
 
 const normalizePadding = (padding: PlotDrawConfig["padding"]) => {
   if (typeof padding === "number") {
@@ -76,17 +70,19 @@ export class Plot<Extras = any> {
     let bottomAxesSize = 0;
     let topAxesSize = 0;
     for (const axis of drawConfig.axes) {
+      const size = axis.size ?? 50;
+      const position = axis.position ?? "primary";
       if (isXScale(axis.scaleId)) {
-        if (axis.position === "primary") {
-          leftAxesSize += axis.size;
+        if (position === "primary") {
+          leftAxesSize += size;
         } else {
-          rightAxesSize += axis.size;
+          rightAxesSize += size;
         }
       } else {
-        if (axis.position === "primary") {
-          bottomAxesSize += axis.size;
+        if (position === "primary") {
+          bottomAxesSize += size;
         } else {
-          topAxesSize += axis.size;
+          topAxesSize += size;
         }
       }
     }
