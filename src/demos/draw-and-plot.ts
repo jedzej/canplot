@@ -29,24 +29,7 @@ const outputPlot = new Plot<LineExtras | ScatterExtras | HeatmapExtras>(
   },
   {
     padding: 10,
-    axes: [
-      {
-        scaleId: "x-1",
-        position: "primary",
-        size: 30,
-        // genTicks() {
-        //   return [0, 25, 50, 75, 100];
-        // },
-      },
-      {
-        scaleId: "y-1",
-        position: "primary",
-        size: 30,
-        genTicks() {
-          return [0, 0.25, 0.5, 0.75];
-        },
-      },
-    ],
+    axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
     scales: [
       {
         id: "x-1",
@@ -61,39 +44,13 @@ const outputPlot = new Plot<LineExtras | ScatterExtras | HeatmapExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
-        },
+        plotterOptions: { plotter: linePlotter },
         x: initialInput.x,
         y: initialInput.y.map((_, i) =>
           produceOutput(initialInput.x[i], initialInput.y[i])
         ),
-        style: {
-          strokeFill: {
-            strokeStyle: "blue",
-          },
-        },
+        style: { strokeFill: { strokeStyle: "blue" } },
       },
-      // {
-      //   xScaleId: "x-1",
-      //   yScaleId: "y-1",
-      //   plotOptions: {
-      //     type: "heatmap",
-      //     plotter: heatmapPlotter,
-      //     tileX: 1,
-      //     tileY: 1,
-      //     z: [],
-      //   },
-      //   x: initialInput.x,
-      //   y: initialInput.y.map((_, i) =>
-      //     produceOutput(initialInput.x[i], initialInput.y[i])
-      //   ),
-      //   style: {
-      //     strokeFill: {
-      //       strokeStyle: "blue",
-      //     },
-      //   },
-      // },
     ],
   }
 );
@@ -138,9 +95,9 @@ const makePlugin = (): PlotPlugin => {
           const position: Record<Scale["id"], number> = {};
           for (const scale of drawContext.drawConfig.scales) {
             if (scale.id.startsWith("x-")) {
-              position[scale.id] = posToVal(drawContext, canvasX, scale);
+              position[scale.id] = posToVal(drawContext, canvasX, scale.id);
             } else {
-              position[scale.id] = posToVal(drawContext, canvasY, scale);
+              position[scale.id] = posToVal(drawContext, canvasY, scale.id);
             }
           }
           plot.incrementalUpdate((draft) => {
@@ -192,27 +149,10 @@ new Plot(
   },
   {
     padding: 10,
-    axes: [
-      {
-        scaleId: "x-1",
-        position: "primary",
-        size: 30,
-      },
-      {
-        scaleId: "y-1",
-        position: "primary",
-        size: 30,
-      },
-    ],
+    axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
     scales: [
-      {
-        id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 100 } },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: -1, max: 1 } },
-      },
+      { id: "x-1", limits: { autorange: false, fixed: { min: 0, max: 100 } } },
+      { id: "y-1", limits: { autorange: false, fixed: { min: -1, max: 1 } } },
     ],
     series: [
       {
@@ -232,181 +172,3 @@ new Plot(
     ],
   }
 );
-
-// setInterval(() => {
-//   plot.incrementalImperativeUpdate((draft) => {
-//     draft.series[0].z = new Array(draft.series[0].z.length)
-//       .fill(0)
-//       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
-//   });
-// }, 16);
-
-// const plot = new Plot<HeatmapSeriesExtras>(
-//   {
-//     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
-//     plugins: [],
-//     dimensions: {
-//       width: "auto",
-//       height: "auto",
-//     },
-//   },
-//   {
-//     padding: 10,
-//     axes: [
-//       {
-//         scaleId: "x-1",
-//         position: "primary",
-//         size: 30,
-//       },
-//       {
-//         scaleId: "y-1",
-//         position: "primary",
-//         size: 30,
-//       },
-//     ],
-//     scales: [
-//       {
-//         id: "x-1",
-//         limits: { autorange: false, fixed: { min: 0, max: 5 } },
-//       },
-//       {
-//         id: "y-1",
-//         limits: { autorange: false, fixed: { min: 0, max: 4 } },
-//       },
-//     ],
-//     series: [
-//       {
-//         xScaleId: "x-1",
-//         yScaleId: "y-1",
-//         plotter: heatmapPlotter,
-//         tileX: 1,
-//         tileY: 1,
-//         x: [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
-//         y: [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-//         z: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-//       },
-//     ],
-//   }
-// );
-// setInterval(() => {
-//   plot.incrementalImperativeUpdate((draft) => {
-//     draft.series[0].z = new Array(draft.series[0].z.length)
-//       .fill(0)
-//       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
-//   });
-// }, 16);
-
-// const plot = new Plot<{ id: string }>(
-//   {
-//     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
-//     plugins: [],
-//     dimensions: {
-//       width: "auto",
-//       height: "auto",
-//     },
-//   },
-//   {
-//     padding: 10,
-//     axes: [
-//       {
-//         scaleId: "x-1",
-//         position: "primary",
-//         size: 30,
-//       },
-//       {
-//         scaleId: "x-2",
-//         position: "primary",
-//         size: 30,
-//       },
-//       {
-//         scaleId: "x-3",
-//         position: "primary",
-//         size: 30,
-//       },
-//       {
-//         scaleId: "y-1",
-//         position: "primary",
-//         size: 30,
-//       },
-//       {
-//         scaleId: "y-2",
-//         position: "primary",
-//         size: 30,
-//         style: {
-//           strokeFill: {
-//             strokeStyle: "blue",
-//           },
-//         },
-//       },
-//       {
-//         scaleId: "y-3",
-//         position: "primary",
-//         size: 30,
-//         style: {
-//           strokeFill: {
-//             strokeStyle: "red",
-//           },
-//         },
-//       },
-//       {
-//         scaleId: "y-4",
-//         position: "secondary",
-//         size: 40,
-//       },
-//       {
-//         scaleId: "x-4",
-//         position: "secondary",
-//         size: 40,
-//       },
-//       {
-//         scaleId: "x-5",
-//         position: "secondary",
-//         size: 40,
-//       },
-//     ],
-//     scales: [
-//       {
-//         id: "x-1",
-//         limits: { autorange: false, fixed: { min: 0, max: 10 } },
-//       },
-//       {
-//         id: "y-1",
-//         limits: { autorange: false, fixed: { min: 0, max: 10 } },
-//       },
-//       {
-//         id: "y-2",
-//         limits: { autorange: false, fixed: { min: 0, max: 20 } },
-//       },
-//     ],
-//     series: [
-//       {
-//         xScaleId: "x-1",
-//         yScaleId: "y-1",
-//         id: "series-1",
-//         x: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-//         y: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-//       },
-//       {
-//         xScaleId: "x-1",
-//         yScaleId: "y-2",
-//         id: "series-1",
-//         x: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-//         y: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-//         plotter: linePlotter,
-//       },
-//     ],
-//   }
-// );
-
-// setInterval(() => {
-//   plot.incrementalImperativeUpdate((draft) => {
-//     draft.series[0].x = new Array(10000).fill(0).map((_, x) => x / 100);
-//     draft.series[0].y = new Array(10000)
-//       .fill(0)
-//       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
-//     draft.series[1].x = new Array(1000).fill(0).map((_, x) => x / 100);
-//     draft.series[1].y = new Array(1000)
-//       .fill(0)
-//       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
-//   });
-// }, 15);

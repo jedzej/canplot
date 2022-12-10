@@ -1,5 +1,6 @@
 import produce from "immer";
 import { drawAxes } from "./axes";
+import { drawFacets } from "./facets";
 import { isXScale } from "./helpers";
 import { drawSeries } from "./series";
 import { PlotDrawConfig, DrawContext, Size, StaticConfig } from "./types";
@@ -122,8 +123,14 @@ export class Plot<Extras = any> {
   }
 
   incrementalUpdate(recipe: (draft: PlotDrawConfig<Extras>) => void) {
-    const config = produce(this.#lastDrawConfig_DO_NOT_USE, recipe);
-    this.update(config);
+    if (this.#phase === "initialized") {
+      try {
+        const config = produce(this.#lastDrawConfig_DO_NOT_USE, recipe);
+        this.update(config);
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
   destroy() {
@@ -171,12 +178,19 @@ export class Plot<Extras = any> {
       return;
     }
 
+    // DRAW BOTTOM FACETS
+    drawFacets(drawingContext, "bottom");
+
     // DRAW SERIES
     drawSeries(drawingContext);
 
     for (const plugin of this.#staticConfig.plugins) {
       plugin.hooks?.afterSeries?.(drawingContext, this);
     }
+    
+    // DRAW BOTTOM FACETS
+    drawFacets(drawingContext, "middle");
+
 
     // DRAW AXES
     drawAxes(drawingContext);
@@ -184,5 +198,8 @@ export class Plot<Extras = any> {
     for (const plugin of this.#staticConfig.plugins) {
       plugin.hooks?.afterAxes?.(drawingContext, this);
     }
+
+    // DRAW TOP FACETS
+    drawFacets(drawingContext, "top");
   }
 }

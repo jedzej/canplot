@@ -66,6 +66,59 @@ export type PlotAxis = {
   genTickLabels?: (tick: number) => string;
 };
 
+export type VLineFacet = {
+  type: "v-line";
+  x: number;
+  scaleId: XScaleId;
+  style?: {
+    line?: Partial<CanvasPathDrawingStyles>;
+    strokeFill?: Partial<CanvasFillStrokeStyles>;
+  };
+};
+
+export type HLineFacet = {
+  type: "h-line";
+  y: number;
+  scaleId: YScaleId;
+  style?: {
+    line?: Partial<CanvasPathDrawingStyles>;
+    strokeFill?: Partial<CanvasFillStrokeStyles>;
+  };
+};
+
+export type CustomFacet = {
+  type: "custom";
+  draw: (drawContext: DrawContext) => void;
+  style?: {
+    line?: Partial<CanvasPathDrawingStyles>;
+    strokeFill?: Partial<CanvasFillStrokeStyles>;
+  };
+};
+
+export type SpanFacet = {
+  type: "span";
+  x?: {
+    scaleId: XScaleId;
+    min?: number;
+    max?: number;
+  };
+  y?: {
+    scaleId: YScaleId;
+    min?: number;
+    max?: number;
+  };
+  style?: {
+    line?: Partial<CanvasPathDrawingStyles>;
+    strokeFill?: Partial<CanvasFillStrokeStyles>;
+  };
+};
+
+export type FacetLayer = "top" | "middle" | "bottom";
+
+export type Facet = (VLineFacet | HLineFacet | SpanFacet | CustomFacet) & {
+  layer?: FacetLayer;
+};
+
 type NormalizedPadding = {
   top: number;
   bottom: number;
@@ -77,6 +130,7 @@ export type PlotDrawConfig<Extras = any> = {
   padding?: number | NormalizedPadding;
   axes: PlotAxis[];
   scales: Scale[];
+  facets?: Facet[];
   series: SeriesBase<Extras>[];
 };
 

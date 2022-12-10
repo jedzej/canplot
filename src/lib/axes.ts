@@ -18,8 +18,8 @@ const genTicksDefault = <S extends SeriesBase = SeriesBase>(
   }
   const ticks = [];
   const space = 30;
-  const unnormmalizedIncr = pxToValDistance(drawContext, space, scale);
-  const incr = acceptable.find((a) => a > unnormmalizedIncr) ?? 1;
+  const unnormalizedIncr = pxToValDistance(drawContext, space, scale.id);
+  const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
   let curr =
     scale.limits.fixed.min % incr < Number.EPSILON
       ? scale.limits.fixed.min
@@ -53,7 +53,7 @@ const drawYTicks = (
   ctx.beginPath();
   const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
   for (const tick of ticks) {
-    const y = valToPos(drawContext, tick, scale);
+    const y = valToPos(drawContext, tick, scale.id);
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
     ctx.textAlign = "right";
@@ -96,7 +96,7 @@ const drawXTicks = (
   ctx.beginPath();
   const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
   for (const tick of ticks) {
-    const x = valToPos(drawContext, tick, scale);
+    const x = valToPos(drawContext, tick, scale.id);
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
     ctx.textAlign = "center";

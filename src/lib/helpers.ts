@@ -1,4 +1,4 @@
-import { DrawContext, Scale, SeriesBase } from "./types";
+import { DrawContext, Scale, SeriesBase, XScaleId, YScaleId } from "./types";
 import { clamp } from "./utils";
 
 export const isXScale = (scale: Scale | Scale["id"]) =>
@@ -24,13 +24,23 @@ export const valToPxDistance = (
 export const valToPos = (
   drawContext: DrawContext<any>,
   val: number,
-  scale: Scale
+  scaleId: XScaleId | YScaleId
 ) => {
+  const scale = drawContext.drawConfig.scales.find(
+    (scale) => scale.id === scaleId
+  );
+  if (!scale) {
+    return 0;
+  }
   if (scale.limits.autorange) {
     return 0;
   }
   const chartArea = drawContext.chartArea;
-  const relativePosition = valToPxDistance(drawContext, val - scale.limits.fixed.min, scale);
+  const relativePosition = valToPxDistance(
+    drawContext,
+    val - scale.limits.fixed.min,
+    scale
+  );
   if (isXScale(scale)) {
     return clamp(
       chartArea.x + relativePosition,
@@ -49,8 +59,14 @@ export const valToPos = (
 export const pxToValDistance = (
   drawContext: DrawContext<any>,
   pxDistance: number,
-  scale: Scale
+  scaleId: XScaleId | YScaleId
 ) => {
+  const scale = drawContext.drawConfig.scales.find(
+    (scale) => scale.id === scaleId
+  );
+  if (!scale) {
+    return 0;
+  }
   if (scale.limits.autorange) {
     return 0;
   }
@@ -64,19 +80,27 @@ export const pxToValDistance = (
 export const posToVal = (
   drawContext: DrawContext<any>,
   pos: number,
-  scale: Scale
+  scaleId: XScaleId | YScaleId
 ) => {
+  const scale = drawContext.drawConfig.scales.find(
+    (scale) => scale.id === scaleId
+  );
+  if (!scale) {
+    return 0;
+  }
   if (scale.limits.autorange) {
     return 0;
   }
-  const relativePosition = pxToValDistance(drawContext, pos, scale);
+  const relativePosition = pxToValDistance(drawContext, pos, scaleId);
   return isXScale(scale)
     ? scale.limits.fixed.min + relativePosition
     : scale.limits.fixed.max - relativePosition;
 };
 
-
-export const applyStyles = (ctx: CanvasRenderingContext2D, style: SeriesBase["style"]) => {
+export const applyStyles = (
+  ctx: CanvasRenderingContext2D,
+  style: SeriesBase["style"]
+) => {
   ctx.lineCap = style?.line?.lineCap ?? "butt";
   ctx.lineDashOffset = style?.line?.lineDashOffset ?? 0;
   ctx.lineJoin = style?.line?.lineJoin ?? "miter";
