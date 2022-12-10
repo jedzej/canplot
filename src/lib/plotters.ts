@@ -24,8 +24,8 @@ export const scatterPlotter: Plotter<ScatterExtras> = (
     if (x === undefined || y === undefined) {
       continue;
     }
-    const xPos = valToPos(drawContext, x, xScale.id);
-    const yPos = valToPos(drawContext, y, yScale.id);
+    const xPos = valToPos(drawContext, x, xScale);
+    const yPos = valToPos(drawContext, y, yScale);
     ctx.moveTo(xPos + radius, yPos);
     ctx.arc(xPos, yPos, radius, 0, 2 * Math.PI);
   }
@@ -56,8 +56,8 @@ export const linePlotter: Plotter<LineExtras> = (
       return;
     }
   }
-  const x0 = valToPos(drawContext, singleSeries.x[firstPoint]!, xScale.id);
-  const y0 = valToPos(drawContext, singleSeries.y[firstPoint]!, yScale.id);
+  const x0 = valToPos(drawContext, singleSeries.x[firstPoint]!, xScale);
+  const y0 = valToPos(drawContext, singleSeries.y[firstPoint]!, yScale);
   ctx.save();
   ctx.beginPath();
   applyStyles(ctx, singleSeries.style);
@@ -69,8 +69,8 @@ export const linePlotter: Plotter<LineExtras> = (
     if (x === undefined || y === undefined) {
       continue;
     }
-    const xPos = valToPos(drawContext, x, xScale.id);
-    const yPos = valToPos(drawContext, y, yScale.id);
+    const xPos = valToPos(drawContext, x, xScale);
+    const yPos = valToPos(drawContext, y, yScale);
     ctx.lineTo(xPos, yPos);
   }
   ctx.stroke();
@@ -122,8 +122,8 @@ export const heatmapPlotter: Plotter<HeatmapExtras> = (
     }
     drawContext.ctx.putImageData(
       imageData,
-      Math.round(valToPos(drawContext, x, xScale.id)),
-      Math.round(valToPos(drawContext, y, yScale.id) - tileYPx)
+      Math.round(valToPos(drawContext, x, xScale)),
+      Math.round(valToPos(drawContext, y, yScale) - tileYPx)
     );
   }
 };

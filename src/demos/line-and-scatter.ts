@@ -27,7 +27,7 @@ const plot = new Plot<LineExtras>(
     scales: [
       {
         id: "x-1",
-        limits: { autorange: false, fixed: { min: 0.05, max: 0.2 } },
+        limits: { autorange: false, fixed: { min: 0, max: 100 } },
       },
       {
         id: "y-1",
@@ -49,7 +49,7 @@ const plot = new Plot<LineExtras>(
             strokeStyle: "blue",
           },
         },
-        x: new Array(1000).fill(0).map((_, i) => i / 10),
+        x: new Array(10000).fill(0).map((_, i) => i / 10),
         y: [],
       },
       {
@@ -66,20 +66,33 @@ const plot = new Plot<LineExtras>(
             strokeStyle: "red",
           },
         },
-        x: new Array(1000).fill(0).map((_, i) => i / 10),
+        x: new Array(10000).fill(0).map((_, i) => i / 10),
         y: [],
       },
     ],
   }
 );
 
-setInterval(() => {
-  plot.incrementalUpdate((draft) => {
-    draft.series[0].y = new Array(draft.series[0].x.length)
-      .fill(0)
-      .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100));
-    draft.series[1].y = new Array(draft.series[1].x.length)
-      .fill(0)
-      .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100));
+const drawLoop = () =>
+  requestAnimationFrame(() => {
+    plot.incrementalUpdate((draft) => {
+      const t = performance.now() / 100;
+      const arr: number[] = [];
+      arr.length = draft.series[0].x.length;
+      arr.fill(0);
+      const s1 = [];
+      s1.length = draft.series[0].x.length
+      const s2 = [];
+      s2.length = draft.series[0].x.length
+
+      for(let i = 0; i < arr.length; i++) {
+        s1[i] = 5 + Math.sin(i / 10 + t);
+        s2[i] = 2 + Math.cos(i / 10 + t);
+      }
+      draft.series[0].y = s1;
+      draft.series[1].y = s2;
+    });
+    drawLoop();
   });
-}, 16);
+
+drawLoop();

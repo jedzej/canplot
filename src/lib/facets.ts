@@ -8,9 +8,23 @@ import {
   VLineFacet,
 } from "./types";
 
+const getScale = (drawContext: DrawContext, scaleId: string) => {
+  const scale = drawContext.drawConfig.scales.find(
+    (scale) => scale.id === scaleId
+  );
+  if (!scale) {
+    console.error("No scale found", scaleId);
+  }
+  return scale;
+};
+
 const drawVLineFacet = (drawContext: DrawContext, facet: VLineFacet) => {
   const { ctx, chartArea } = drawContext;
-  const x = valToPos(drawContext, facet.x, facet.scaleId);
+  const scale = getScale(drawContext, facet.scaleId);
+  if (!scale) {
+    return;
+  }
+  const x = valToPos(drawContext, facet.x, scale);
   ctx.save();
   applyStyles(ctx, facet.style);
   ctx.beginPath();
@@ -22,7 +36,11 @@ const drawVLineFacet = (drawContext: DrawContext, facet: VLineFacet) => {
 
 const drawHLineFacet = (drawContext: DrawContext, facet: HLineFacet) => {
   const { ctx, chartArea } = drawContext;
-  const y = valToPos(drawContext, facet.y, facet.scaleId);
+  const scale = getScale(drawContext, facet.scaleId);
+  if (!scale) {
+    return;
+  }
+  const y = valToPos(drawContext, facet.y, scale);
   ctx.save();
   applyStyles(ctx, facet.style);
   ctx.beginPath();
@@ -38,20 +56,29 @@ const drawSpanFacet = (drawContext: DrawContext, facet: SpanFacet) => {
   let x1 = chartArea.x + chartArea.width;
   let y0 = chartArea.y;
   let y1 = chartArea.y + chartArea.height;
+
   if (facet.x) {
+    const scale = getScale(drawContext, facet.x.scaleId);
+    if (!scale) {
+      return;
+    }
     if (typeof facet.x.min === "number") {
-      x0 = Math.ceil(valToPos(drawContext, facet.x.min, facet.x.scaleId));
+      x0 = Math.ceil(valToPos(drawContext, facet.x.min, scale));
     }
     if (typeof facet.x.max === "number") {
-      x1 = Math.ceil(valToPos(drawContext, facet.x.max, facet.x.scaleId));
+      x1 = Math.ceil(valToPos(drawContext, facet.x.max, scale));
     }
   }
   if (facet.y) {
+    const scale = getScale(drawContext, facet.y.scaleId);
+    if (!scale) {
+      return;
+    }
     if (typeof facet.y.min === "number") {
-      y0 = Math.ceil(valToPos(drawContext, facet.y.min, facet.y.scaleId));
+      y0 = Math.ceil(valToPos(drawContext, facet.y.min, scale));
     }
     if (typeof facet.y.max === "number") {
-      y1 = Math.ceil(valToPos(drawContext, facet.y.max, facet.y.scaleId));
+      y1 = Math.ceil(valToPos(drawContext, facet.y.max, scale));
     }
   }
   ctx.save();

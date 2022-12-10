@@ -1,6 +1,5 @@
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
 import { DrawContext, PlotAxis, Scale, SeriesBase } from "./types";
-import { sum } from "./utils";
 
 const acceptable: number[] = [];
 for (let i = -12; i <= 12; i++) {
@@ -19,7 +18,7 @@ const genTicksDefault = <S extends SeriesBase = SeriesBase>(
   }
   const ticks = [];
   const space = 30;
-  const unnormalizedIncr = pxToValDistance(drawContext, space, scale.id);
+  const unnormalizedIncr = pxToValDistance(drawContext, space, scale);
   const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
   let curr =
     scale.limits.fixed.min % incr < Number.EPSILON
@@ -57,7 +56,7 @@ const drawYTicks = (
   const x0 = x;
   const x1 = position === "primary" ? x - tickSize : x + tickSize;
   for (const tick of ticks) {
-    const y = valToPos(drawContext, tick, scale.id);
+    const y = valToPos(drawContext, tick, scale);
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
     ctx.textAlign = position === "primary" ? "right" : "left";
@@ -99,7 +98,7 @@ const drawXTicks = (
   ctx.beginPath();
   const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
   for (const tick of ticks) {
-    const x = valToPos(drawContext, tick, scale.id);
+    const x = valToPos(drawContext, tick, scale);
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
     ctx.textAlign = "center";

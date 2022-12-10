@@ -24,14 +24,8 @@ export const valToPxDistance = (
 export const valToPos = (
   drawContext: DrawContext<any>,
   val: number,
-  scaleId: XScaleId | YScaleId
+  scale: Scale
 ) => {
-  const scale = drawContext.drawConfig.scales.find(
-    (scale) => scale.id === scaleId
-  );
-  if (!scale) {
-    return 0;
-  }
   if (scale.limits.autorange) {
     return 0;
   }
@@ -59,14 +53,8 @@ export const valToPos = (
 export const pxToValDistance = (
   drawContext: DrawContext<any>,
   pxDistance: number,
-  scaleId: XScaleId | YScaleId
+  scale: Scale
 ) => {
-  const scale = drawContext.drawConfig.scales.find(
-    (scale) => scale.id === scaleId
-  );
-  if (!scale) {
-    return 0;
-  }
   if (scale.limits.autorange) {
     return 0;
   }
@@ -91,7 +79,7 @@ export const posToVal = (
   if (scale.limits.autorange) {
     return 0;
   }
-  const relativePosition = pxToValDistance(drawContext, pos, scaleId);
+  const relativePosition = pxToValDistance(drawContext, pos, scale);
   return isXScale(scale)
     ? scale.limits.fixed.min + relativePosition
     : scale.limits.fixed.max - relativePosition;
