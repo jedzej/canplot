@@ -5,13 +5,14 @@ import { isXScale } from "./helpers";
 import { drawSeries } from "./series";
 import { PlotDrawConfig, DrawContext, Size, StaticConfig } from "./types";
 
+const DEFAULT_PADDING = 10;
+
 const normalizePadding = (padding: PlotDrawConfig["padding"]) => {
-  if (typeof padding === "number") {
-    return { top: padding, right: padding, bottom: padding, left: padding };
+  if (typeof padding === "number" || typeof padding === "undefined") {
+    const paddingWithDefault = padding ?? DEFAULT_PADDING;
+    return { top: paddingWithDefault, right: paddingWithDefault, bottom: paddingWithDefault, left: paddingWithDefault };
   }
-  if (typeof padding === "undefined") {
-    return { top: 0, right: 0, bottom: 0, left: 0 };
-  }
+  
   return padding;
 };
 
