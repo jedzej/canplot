@@ -124,9 +124,7 @@ const makePlugin = (): PlotPlugin => {
           draft.series[0].y = drawContext.drawConfig.series[0].y.map((_, i) => {
             const x = drawContext.drawConfig.series[0].x[i];
             const y = drawContext.drawConfig.series[0].y[i];
-            return x === undefined || y === undefined
-              ? undefined
-              : produceOutput(x, y);
+            return produceOutput(x, y);
           });
         });
         document.getElementById("points")!.innerHTML =

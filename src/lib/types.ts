@@ -38,8 +38,8 @@ export type SeriesBase<Extras = { plotter: Plotter }> = {
   id?: string;
   xScaleId: XScaleId;
   yScaleId: YScaleId;
-  x: (number | undefined)[];
-  y: (number | undefined)[];
+  x: number[];
+  y: number[];
   style?: {
     line?: Partial<CanvasPathDrawingStyles>;
     strokeFill?: Partial<CanvasFillStrokeStyles>;

@@ -1,4 +1,4 @@
-import { DrawContext, Scale, SeriesBase, XScaleId, YScaleId } from "./types";
+import { DrawContext, Scale, SeriesBase } from "./types";
 import { clamp } from "./utils";
 
 export const isXScale = (scale: Scale | Scale["id"]) =>

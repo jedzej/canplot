@@ -1,5 +1,5 @@
 import { applyStyles, valToPos, valToPxDistance } from "./helpers";
-import { Plotter } from "./types";
+import { DrawContext, Plotter, Scale, SeriesBase } from "./types";
 
 export type ScatterExtras = {
   plotter: Plotter;
@@ -36,7 +36,34 @@ export const scatterPlotter: Plotter<ScatterExtras> = (
 
 export type LineExtras = {
   plotter: Plotter;
+  showDistrinct?: (drawContext: DrawContext<LineExtras>, idx: number, series: SeriesBase<LineExtras>, scale: Scale) => boolean;
+  radius?: number;
+  distinctDistance?: number;
 };
+
+const showDistrinctDefault: LineExtras["showDistrinct"] = (drawContext, idx, series, scale) => {
+  const distinctDistance = series.plotterOptions.distinctDistance ?? 50
+  let closestNeighborVal: number | undefined;
+  for (let i = 1; i < 100; i++) {
+    const leftValCandidate = series.x[idx - i];
+    if (leftValCandidate !== undefined) {
+      closestNeighborVal = leftValCandidate;
+      break;
+    }
+    const rightValCandidate = series.x[idx + i];
+    if (rightValCandidate !== undefined) {
+      closestNeighborVal = rightValCandidate;
+      break;
+    }
+  }
+  if (closestNeighborVal === undefined) {
+    return true;
+  }
+  if (Math.abs(valToPxDistance(drawContext, closestNeighborVal, scale) - valToPxDistance(drawContext, series.x[idx], scale)) > distinctDistance) {
+    return true;
+  }
+  return false;
+}
 
 export const linePlotter: Plotter<LineExtras> = (
   drawContext,
@@ -62,6 +89,9 @@ export const linePlotter: Plotter<LineExtras> = (
   ctx.beginPath();
   applyStyles(ctx, singleSeries.style);
 
+  const showDistrinct = singleSeries.plotterOptions.showDistrinct ?? showDistrinctDefault;
+  const radius = singleSeries.plotterOptions.radius ?? 2;
+
   ctx.moveTo(x0, y0);
   for (let i = 1; i < length; i++) {
     const x = singleSeries.x[i];
@@ -69,10 +99,15 @@ export const linePlotter: Plotter<LineExtras> = (
     if (x === undefined || y === undefined) {
       continue;
     }
-    const xPos = valToPos(drawContext, x, xScale);
-    const yPos = valToPos(drawContext, y, yScale);
-    ctx.lineTo(xPos, yPos);
+    const posX = valToPos(drawContext, x, xScale);
+    const posY = valToPos(drawContext, y, yScale);
+
+    ctx.lineTo(posX, posY);
+    if (showDistrinct(drawContext, i, singleSeries, xScale)) {
+      ctx.arc(posX + radius, posY, radius, 0, 2 * Math.PI);
+    }
   }
+
   ctx.stroke();
   ctx.restore();
 };
