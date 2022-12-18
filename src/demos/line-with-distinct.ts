@@ -43,8 +43,8 @@ const plot = new Plot<LineExtras>(
           showDistrinct: (_, idx, series) => {
             return (series.y[idx] ?? 0) < 2;
           },
+          style: { strokeStyle: "blue" },
         },
-        style: { strokeStyle: "blue" },
         x: Array(100)
           .fill(0)
           .map((_, i) => i),
@@ -56,8 +56,8 @@ const plot = new Plot<LineExtras>(
         plotterOptions: {
           plotter: linePlotter,
           distinctDistance: 10,
+          style: { strokeStyle: "red" },
         },
-        style: { strokeStyle: "red" },
         x: Array(100)
           .fill(0)
           .map((_, i) => i),

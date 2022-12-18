@@ -1,8 +1,9 @@
 import { applyStyles, valToPos, valToPxDistance } from "./helpers";
-import { DrawContext, Plotter, Scale, SeriesBase } from "./types";
+import { DrawContext, Plotter, Scale, SeriesBase, Style } from "./types";
 
 export type ScatterExtras = {
   plotter: Plotter;
+  style?: Style;
   radius?: number;
 };
 
@@ -15,7 +16,7 @@ export const scatterPlotter: Plotter<ScatterExtras> = (
   const ctx = drawContext.ctx;
   ctx.save();
   ctx.beginPath();
-  applyStyles(ctx, singleSeries.style);
+  applyStyles(ctx, singleSeries.plotterOptions.style);
   const radius = singleSeries.plotterOptions.radius ?? 5;
 
   for (let i = 0; i < singleSeries.x.length; i++) {
@@ -36,6 +37,7 @@ export const scatterPlotter: Plotter<ScatterExtras> = (
 
 export type LineExtras = {
   plotter: Plotter;
+  style?: Style;
   showDistrinct?: (drawContext: DrawContext<LineExtras>, idx: number, series: SeriesBase<LineExtras>, scale: Scale) => boolean;
   radius?: number;
   distinctDistance?: number;
@@ -76,7 +78,7 @@ export const linePlotter: Plotter<LineExtras> = (
   const y0 = valToPos(drawContext, singleSeries.y[0]!, yScale);
   ctx.save();
   ctx.beginPath();
-  applyStyles(ctx, singleSeries.style);
+  applyStyles(ctx, singleSeries.plotterOptions.style);
 
   const showDistrinct = singleSeries.plotterOptions.showDistrinct ?? showDistrinctDefault;
   const radius = (singleSeries.plotterOptions.radius ?? 3);

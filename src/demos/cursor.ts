@@ -84,8 +84,7 @@ new Plot<LineExtras | ScatterExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-2",
-        plotterOptions: { plotter: linePlotter },
-        style: { strokeStyle: "red" },
+        plotterOptions: { plotter: linePlotter, style: { strokeStyle: "red" } },
         x: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         y: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },

@@ -29,8 +29,8 @@ new Plot<LineExtras>(
         plotterOptions: {
           plotter: linePlotter,
           gapDistance: 1,
+          style: { strokeStyle: "blue" },
         },
-        style: { strokeStyle: "blue" },
         x: [0, 1, 2, 3, 5, 6, 7, 12, 13, 17],
         y: [0, 1, 2, 3, 5, 6, 7, 12, 13, 17],
       },

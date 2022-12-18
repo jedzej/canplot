@@ -50,7 +50,7 @@ export type SeriesBase<Extras = { plotter: Plotter }> = {
   yScaleId: YScaleId;
   x: number[];
   y: number[];
-  style?: Style;
+  // style?: Style;
   plotterOptions: Extras;
 };
 

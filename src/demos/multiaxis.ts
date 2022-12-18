@@ -50,10 +50,9 @@ const plot = new Plot<LineExtras | ScatterExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: { plotter: linePlotter },
-        style: {
-          lineCap: "round",
-          strokeStyle: "blue",
+        plotterOptions: {
+          plotter: linePlotter,
+          style: { lineCap: "round", strokeStyle: "blue" },
         },
         x: new Array(1000).fill(0).map((_, i) => i / 10),
         y: [],
@@ -64,10 +63,7 @@ const plot = new Plot<LineExtras | ScatterExtras>(
         plotterOptions: {
           plotter: scatterPlotter,
           radius: 10,
-        },
-        style: {
-          lineCap: "round",
-          strokeStyle: "red",
+          style: { lineCap: "round", strokeStyle: "red" },
         },
         x: new Array(100).fill(0).map((_, i) => i),
         y: [],

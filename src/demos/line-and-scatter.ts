@@ -40,10 +40,7 @@ const plot = new Plot<LineExtras>(
         yScaleId: "y-1",
         plotterOptions: {
           plotter: linePlotter,
-        },
-        style: {
-          lineCap: "round",
-          strokeStyle: "blue",
+          style: { lineCap: "round", strokeStyle: "blue" },
         },
         x: new Array(10000).fill(0).map((_, i) => i / 10),
         y: [],
@@ -53,10 +50,7 @@ const plot = new Plot<LineExtras>(
         yScaleId: "y-1",
         plotterOptions: {
           plotter: scatterPlotter,
-        },
-        style: {
-          lineCap: "round",
-          strokeStyle: "red",
+          style: { strokeStyle: "red" },
         },
         x: new Array(10000).fill(0).map((_, i) => i / 10),
         y: [],

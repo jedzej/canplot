@@ -77,14 +77,12 @@ const outputPlot = new Plot<LineExtras | ScatterExtras | HeatmapExtras>(
         yScaleId: "y-1",
         plotterOptions: {
           plotter: linePlotter,
+          style: { strokeStyle: "blue" },
         },
         x: initialInput.x,
         y: initialInput.y.map((_, i) =>
           produceOutput(initialInput.x[i], initialInput.y[i])
         ),
-        style: {
-          strokeStyle: "blue",
-        },
       },
       // {
       //   xScaleId: "x-1",
@@ -230,12 +228,10 @@ new Plot(
         yScaleId: "y-1",
         plotterOptions: {
           plotter: linePlotter,
+          style: { strokeStyle: "red" },
         },
         x: initialInput.x,
         y: initialInput.y,
-        style: {
-          strokeStyle: "red",
-        },
       },
     ],
   }
