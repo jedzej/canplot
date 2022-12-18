@@ -1,6 +1,7 @@
 import { Plot } from "../lib/Plot";
 import { LineExtras, linePlotter } from "../lib/plotters/line";
 import { ScatterExtras, scatterPlotter } from "../lib/plotters/scatter";
+import { animationLoop } from "./helpers";
 
 const plot = new Plot<LineExtras | ScatterExtras>(
   {
@@ -112,17 +113,13 @@ const plot = new Plot<LineExtras | ScatterExtras>(
   }
 );
 
-const drawLoop = () =>
-  requestAnimationFrame(() => {
-    plot.incrementalUpdate((draft) => {
-      draft.series[0].y = new Array(draft.series[0].x.length)
-        .fill(0)
-        .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100));
-      draft.series[1].y = new Array(draft.series[1].x.length)
-        .fill(0)
-        .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100));
-    });
-    drawLoop();
+animationLoop(() => {
+  plot.incrementalUpdate((draft) => {
+    draft.series[0].y = new Array(draft.series[0].x.length)
+      .fill(0)
+      .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100));
+    draft.series[1].y = new Array(draft.series[1].x.length)
+      .fill(0)
+      .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100));
   });
-
-drawLoop();
+});

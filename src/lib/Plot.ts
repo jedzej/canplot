@@ -123,6 +123,10 @@ export class Plot<Extras = any> {
     this.#draw(drawConfig);
   }
 
+  getDrawContext() {
+    return this.#makeDrawingContext(this.#lastDrawConfig_DO_NOT_USE);
+  }
+
   incrementalUpdate(recipe: (draft: PlotDrawConfig<Extras>) => void) {
     if (this.#phase === "initialized") {
       try {

@@ -1,5 +1,6 @@
 import { Plot } from "../lib/Plot";
 import { LineExtras, linePlotter } from "../lib/plotters/line";
+import { animationLoop } from "./helpers";
 
 const plot = new Plot<LineExtras>(
   {
@@ -67,26 +68,22 @@ const plot = new Plot<LineExtras>(
   }
 );
 
-const drawLoop = () =>
-  requestAnimationFrame(() => {
-    plot.incrementalUpdate((draft) => {
-      const t = performance.now() / 1000;
-      const arr: number[] = [];
-      arr.length = draft.series[0].x.length;
-      arr.fill(0);
-      const s1 = [];
-      s1.length = draft.series[0].x.length;
-      const s2 = [];
-      s2.length = draft.series[0].x.length;
+animationLoop(() => {
+  plot.incrementalUpdate((draft) => {
+    const t = performance.now() / 1000;
+    const arr: number[] = [];
+    arr.length = draft.series[0].x.length;
+    arr.fill(0);
+    const s1 = [];
+    s1.length = draft.series[0].x.length;
+    const s2 = [];
+    s2.length = draft.series[0].x.length;
 
-      for (let i = 0; i < arr.length; i++) {
-        s1[i] = 2 + Math.sin(i / 10 + t);
-        s2[i] = 1 + Math.sin(i / 10 + t);
-      }
-      draft.series[0].y = s1;
-      draft.series[1].y = s2;
-    });
-    drawLoop();
+    for (let i = 0; i < arr.length; i++) {
+      s1[i] = 2 + Math.sin(i / 10 + t);
+      s2[i] = 1 + Math.sin(i / 10 + t);
+    }
+    draft.series[0].y = s1;
+    draft.series[1].y = s2;
   });
-
-drawLoop();
+});

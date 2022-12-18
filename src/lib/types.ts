@@ -88,7 +88,8 @@ export type HLineFacet = {
 
 export type CustomFacet = {
   type: "custom";
-  draw: (drawContext: DrawContext) => void;
+  draw: (drawContext: DrawContext, facet: CustomFacet) => void;
+  payload?: unknown;
   style?: Style;
 };
 
@@ -110,6 +111,7 @@ export type SpanFacet = {
 export type FacetLayer = "top" | "middle" | "bottom";
 
 export type Facet = (VLineFacet | HLineFacet | SpanFacet | CustomFacet) & {
+  id?: string;
   layer?: FacetLayer;
 };
 

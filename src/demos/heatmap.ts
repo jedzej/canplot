@@ -1,5 +1,6 @@
 import { Plot } from "../lib/Plot";
 import { HeatmapExtras, heatmapPlotter } from "../lib/plotters/heatmap";
+import { animationLoop } from "./helpers";
 
 const plot = new Plot<HeatmapExtras>(
   {
@@ -50,7 +51,7 @@ const plot = new Plot<HeatmapExtras>(
     ],
   }
 );
-setInterval(() => {
+animationLoop(() => {
   plot.incrementalUpdate((draft) => {
     draft.series[0].plotterOptions.z = new Array(
       draft.series[0].plotterOptions.z.length
@@ -58,4 +59,4 @@ setInterval(() => {
       .fill(0)
       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
   });
-}, 16);
+});

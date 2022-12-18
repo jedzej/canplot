@@ -12,8 +12,8 @@ plugin.addHoverListener((event) => {
   tooltip.innerHTML = JSON.stringify(event.position, null, 2);
   if (event.position) {
     tooltip.style.display = "block";
-    tooltip.style.left = `${event.position.x}px`;
-    tooltip.style.top = `${event.position.y}px`;
+    tooltip.style.left = `${event.position.screen.x}px`;
+    tooltip.style.top = `${event.position.screen.y}px`;
   } else {
     tooltip.style.display = "none";
   }

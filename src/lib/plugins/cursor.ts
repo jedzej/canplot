@@ -4,8 +4,14 @@ import { DrawContext, PlotPlugin, Scale } from "../types";
 import { clamp } from "../utils";
 
 export type CursorPosition = {
-  x: number;
-  y: number;
+  screen: {
+    x: number;
+    y: number;
+  };
+  canvas: {
+    x: number;
+    y: number;
+  };
   scaled: Record<Scale["id"], number>;
 };
 
@@ -21,7 +27,7 @@ type ClickEvent = {
   position: CursorPosition;
 };
 
-type DragEvent = {
+type SpanSelectEvent = {
   phase: "start" | "move" | "end";
   plot: Plot;
   drawContext: DrawContext;
@@ -35,7 +41,7 @@ type DblclickListener = (event: ClickEvent) => void;
 
 type HoverListener = (event: HoverEvent) => void;
 
-type SpanSelectListener = (event: DragEvent) => void;
+type SpanSelectListener = (event: SpanSelectEvent) => void;
 
 type CursorPlugin = {
   bindings: PlotPlugin;
@@ -51,6 +57,14 @@ const getPosition = (
   fallbackToBoundaries = false
 ): CursorPosition | undefined => {
   const rect = drawContext.ctx.canvas.getBoundingClientRect();
+  const screen = {
+    x: e.clientX,
+    y: e.clientY,
+  };
+  const canvas = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
+  };
   const posX = e.clientX - rect.left - drawContext.chartArea.x;
   const posY = e.clientY - rect.top - drawContext.chartArea.y;
 
@@ -70,23 +84,40 @@ const getPosition = (
     }
   }
   return {
-    x: e.clientX,
-    y: e.clientY,
+    screen,
+    canvas,
     scaled,
   };
 };
 
-export const makeCursorPlugin = (): CursorPlugin => {
+type CursorPluginOptions = {
+  onSpanSelect?: SpanSelectListener;
+  onHover?: HoverListener;
+  onClick?: ClickListener;
+  onDblClick?: DblclickListener;
+};
+
+export const makeCursorPlugin = (
+  opts: CursorPluginOptions = {}
+): CursorPlugin => {
   let mouseMoveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseLeaveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseClickListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseDblClickListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseDownListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseUpListener: ((e: MouseEvent) => void) | undefined = undefined;
-  const hoverListeners = new Set<HoverListener>();
-  const clickListeners = new Set<ClickListener>();
-  const dblclickListeners = new Set<DblclickListener>();
-  const dragListeners = new Set<SpanSelectListener>();
+  const hoverListeners = new Set<HoverListener>(
+    opts.onHover ? [opts.onHover] : []
+  );
+  const clickListeners = new Set<ClickListener>(
+    opts.onClick ? [opts.onClick] : []
+  );
+  const dblclickListeners = new Set<DblclickListener>(
+    opts.onDblClick ? [opts.onDblClick] : []
+  );
+  const spanSelectListeners = new Set<SpanSelectListener>(
+    opts.onSpanSelect ? [opts.onSpanSelect] : []
+  );
 
   let positionStart: CursorPosition | undefined = undefined;
 
@@ -94,18 +125,19 @@ export const makeCursorPlugin = (): CursorPlugin => {
 
   const bindings: PlotPlugin = {
     hooks: {
-      onInit(drawContext, plot) {
-        const { canvas } = drawContext.ctx;
+      onInit(_, plot) {
+        const canvas = plot.getCanvas();
 
         // mouse down
         mouseDownListener = (e: MouseEvent) => {
-          if (dragListeners.size === 0) return;
+          if (spanSelectListeners.size === 0) return;
+          const drawContext = plot.getDrawContext();
 
           positionStart = getPosition(e, drawContext);
 
           if (!positionStart) return;
 
-          for (const listener of dragListeners) {
+          for (const listener of spanSelectListeners) {
             listener({
               phase: "start",
               plot,
@@ -119,7 +151,9 @@ export const makeCursorPlugin = (): CursorPlugin => {
 
         // mouse move
         mouseMoveListener = (e: MouseEvent) => {
-          if (hoverListeners.size === 0 && dragListeners.size === 0) return;
+          if (hoverListeners.size === 0 && spanSelectListeners.size === 0)
+            return;
+          const drawContext = plot.getDrawContext();
 
           const position = getPosition(e, drawContext);
 
@@ -131,7 +165,7 @@ export const makeCursorPlugin = (): CursorPlugin => {
 
           if (!positionStart || !positionEnd) return;
 
-          for (const listener of dragListeners) {
+          for (const listener of spanSelectListeners) {
             listener({
               phase: "move",
               plot,
@@ -145,15 +179,16 @@ export const makeCursorPlugin = (): CursorPlugin => {
 
         // mouse up
         mouseUpListener = (e: MouseEvent) => {
-          if (dragListeners.size === 0) return;
+          if (spanSelectListeners.size === 0) return;
 
           if (!positionStart) return;
+          const drawContext = plot.getDrawContext();
 
           const positionEnd = getPosition(e, drawContext, true);
 
           if (!positionEnd) return;
 
-          for (const listener of dragListeners) {
+          for (const listener of spanSelectListeners) {
             listener({
               phase: "end",
               plot,
@@ -169,6 +204,7 @@ export const makeCursorPlugin = (): CursorPlugin => {
         // mouse leave
         mouseLeaveListener = () => {
           if (hoverListeners.size === 0) return;
+          const drawContext = plot.getDrawContext();
 
           for (const listener of hoverListeners) {
             listener({ plot, drawContext });
@@ -190,6 +226,7 @@ export const makeCursorPlugin = (): CursorPlugin => {
           clickTimeout = setTimeout(() => {
             clickTimeout = undefined;
             if (clickListeners.size === 0) return;
+            const drawContext = plot.getDrawContext();
 
             const position = getPosition(e, drawContext);
 
@@ -205,6 +242,7 @@ export const makeCursorPlugin = (): CursorPlugin => {
         // dblclick
         mouseDblClickListener = (e) => {
           if (dblclickListeners.size === 0) return;
+          const drawContext = plot.getDrawContext();
 
           const position = getPosition(e, drawContext);
 
@@ -262,8 +300,8 @@ export const makeCursorPlugin = (): CursorPlugin => {
       return () => dblclickListeners.delete(listener);
     },
     addSpanSelectListener: (listener: SpanSelectListener) => {
-      dragListeners.add(listener);
-      return () => dragListeners.delete(listener);
+      spanSelectListeners.add(listener);
+      return () => spanSelectListeners.delete(listener);
     },
   };
 };

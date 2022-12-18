@@ -91,7 +91,7 @@ const drawSpanFacet = (drawContext: DrawContext, facet: SpanFacet) => {
 const drawCustomFacet = (drawContext: DrawContext, facet: CustomFacet) => {
   drawContext.ctx.save();
   applyStyles(drawContext.ctx, facet.style);
-  facet.draw(drawContext);
+  facet.draw(drawContext, facet);
   drawContext.ctx.restore();
 };
 
