@@ -1,11 +1,6 @@
 import { posToVal } from "../lib/helpers";
 import { Plot } from "../lib/Plot";
-import {
-  HeatmapExtras,
-  LineExtras,
-  linePlotter,
-  ScatterExtras,
-} from "../lib/plotters";
+import { LineExtras, linePlotter } from "../lib/plotters/line";
 import { PlotPlugin, Scale } from "../lib/types";
 import "./style.css";
 
@@ -18,7 +13,7 @@ const produceOutput = (x: number, yIn: number) => {
   return yIn * Math.sin(x / 2);
 };
 
-const outputPlot = new Plot<LineExtras | ScatterExtras | HeatmapExtras>(
+const outputPlot = new Plot<LineExtras>(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#output")!,
     plugins: [],

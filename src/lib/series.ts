@@ -1,4 +1,3 @@
-import { scatterPlotter } from "./plotters";
 import { DrawContext } from "./types";
 
 export const drawSeries = (drawContext: DrawContext) => {
@@ -22,8 +21,7 @@ export const drawSeries = (drawContext: DrawContext) => {
     if (xScale.limits.autorange || yScale.limits.autorange) {
       continue;
     }
-    const plotter = series.plotterOptions.plotter ?? scatterPlotter;
-    plotter(drawContext, series, xScale, yScale);
+    series.plotterOptions.plotter?.(drawContext, series, xScale, yScale);
   }
 
   drawContext.ctx.restore();

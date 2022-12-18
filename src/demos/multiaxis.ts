@@ -1,10 +1,6 @@
 import { Plot } from "../lib/Plot";
-import {
-  LineExtras,
-  linePlotter,
-  ScatterExtras,
-  scatterPlotter,
-} from "../lib/plotters";
+import { LineExtras, linePlotter } from "../lib/plotters/line";
+import { ScatterExtras, scatterPlotter } from "../lib/plotters/scatter";
 
 const plot = new Plot<LineExtras | ScatterExtras>(
   {

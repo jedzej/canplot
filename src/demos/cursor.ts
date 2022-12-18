@@ -1,5 +1,5 @@
 import { Plot } from "../lib/Plot";
-import { LineExtras, linePlotter, ScatterExtras } from "../lib/plotters";
+import { LineExtras, linePlotter } from "../lib/plotters/line";
 import { makeCursorPlugin } from "../lib/plugins/cursor";
 
 const plugin = makeCursorPlugin();
@@ -47,7 +47,7 @@ plugin.addDblClickListener((event) => {
   });
 });
 
-new Plot<LineExtras | ScatterExtras>(
+new Plot<LineExtras>(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
     plugins: [plugin.bindings],
