@@ -3,7 +3,7 @@ import { Plot } from "./Plot";
 export type SeriesExtrasBase = Record<string, unknown>;
 
 export type Hooks<Extras = any> = {
-  onInit?: (plot: Plot<Extras>) => void;
+  onInit?: (drawContext: DrawContext<Extras>,plot: Plot<Extras>) => void;
   beforeClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
   afterClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
   afterSeries?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;

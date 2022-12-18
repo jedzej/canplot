@@ -147,19 +147,20 @@ export class Plot<Extras = any> {
       return;
     }
     this.#updateCanvasSize();
-    if (this.#phase === "initializing") {
-      // ON INIT HOOK
-      for (const plugin of this.#staticConfig.plugins) {
-        plugin.hooks?.onInit?.(this);
-      }
-      this.#phase = "initialized";
-    }
     const drawConfig = this.#staticConfig.plugins.reduce(
       (acc, plugin) =>
         plugin.transformDrawConfig ? plugin.transformDrawConfig(acc) : acc,
       inputDrawConfig
     );
     const drawingContext = this.#makeDrawingContext(drawConfig);
+
+    if (this.#phase === "initializing") {
+      // ON INIT HOOK
+      for (const plugin of this.#staticConfig.plugins) {
+        plugin.hooks?.onInit?.(drawingContext, this);
+      }
+      this.#phase = "initialized";
+    }
 
     // CLEAR
     for (const plugin of this.#staticConfig.plugins) {
