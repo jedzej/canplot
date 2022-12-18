@@ -42,10 +42,12 @@ const plot = new Plot<LineExtras>(
           plotter: linePlotter,
           showDistrinct: (_, idx, series) => {
             return (series.y[idx] ?? 0) < 2;
-          }
+          },
         },
-        style: { strokeFill: { strokeStyle: "blue", }, },
-        x: Array(100).fill(0).map((_, i) => i),
+        style: { strokeStyle: "blue" },
+        x: Array(100)
+          .fill(0)
+          .map((_, i) => i),
         y: [],
       },
       {
@@ -55,8 +57,10 @@ const plot = new Plot<LineExtras>(
           plotter: linePlotter,
           distinctDistance: 10,
         },
-        style: { strokeFill: { strokeStyle: "red", }, },
-        x: Array(100).fill(0).map((_, i) => i),
+        style: { strokeStyle: "red" },
+        x: Array(100)
+          .fill(0)
+          .map((_, i) => i),
         y: [],
       },
     ],
@@ -71,9 +75,9 @@ const drawLoop = () =>
       arr.length = draft.series[0].x.length;
       arr.fill(0);
       const s1 = [];
-      s1.length = draft.series[0].x.length
+      s1.length = draft.series[0].x.length;
       const s2 = [];
-      s2.length = draft.series[0].x.length
+      s2.length = draft.series[0].x.length;
 
       for (let i = 0; i < arr.length; i++) {
         s1[i] = 2 + Math.sin(i / 10 + t);

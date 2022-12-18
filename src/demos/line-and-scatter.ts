@@ -42,12 +42,8 @@ const plot = new Plot<LineExtras>(
           plotter: linePlotter,
         },
         style: {
-          line: {
-            lineCap: "round",
-          },
-          strokeFill: {
-            strokeStyle: "blue",
-          },
+          lineCap: "round",
+          strokeStyle: "blue",
         },
         x: new Array(10000).fill(0).map((_, i) => i / 10),
         y: [],
@@ -59,12 +55,8 @@ const plot = new Plot<LineExtras>(
           plotter: scatterPlotter,
         },
         style: {
-          line: {
-            lineCap: "round",
-          },
-          strokeFill: {
-            strokeStyle: "red",
-          },
+          lineCap: "round",
+          strokeStyle: "red",
         },
         x: new Array(10000).fill(0).map((_, i) => i / 10),
         y: [],
@@ -81,11 +73,11 @@ const drawLoop = () =>
       arr.length = draft.series[0].x.length;
       arr.fill(0);
       const s1 = [];
-      s1.length = draft.series[0].x.length
+      s1.length = draft.series[0].x.length;
       const s2 = [];
-      s2.length = draft.series[0].x.length
+      s2.length = draft.series[0].x.length;
 
-      for(let i = 0; i < arr.length; i++) {
+      for (let i = 0; i < arr.length; i++) {
         s1[i] = 5 + Math.sin(i / 10 + t);
         s2[i] = 2 + Math.cos(i / 10 + t);
       }

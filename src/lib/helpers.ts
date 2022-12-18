@@ -1,4 +1,4 @@
-import { DrawContext, Scale, SeriesBase } from "./types";
+import { DrawContext, Scale, Style } from "./types";
 import { clamp } from "./utils";
 
 export const isXScale = (scale: Scale | Scale["id"]) =>
@@ -79,15 +79,12 @@ export const posToVal = (
     : scale.limits.fixed.max - relativePosition;
 };
 
-export const applyStyles = (
-  ctx: CanvasRenderingContext2D,
-  style: SeriesBase["style"]
-) => {
-  ctx.lineCap = style?.line?.lineCap ?? "butt";
-  ctx.lineDashOffset = style?.line?.lineDashOffset ?? 0;
-  ctx.lineJoin = style?.line?.lineJoin ?? "miter";
-  ctx.lineWidth = style?.line?.lineWidth ?? 1;
-  ctx.miterLimit = style?.line?.miterLimit ?? 10;
-  ctx.strokeStyle = style?.strokeFill?.strokeStyle ?? "black";
-  ctx.fillStyle = style?.strokeFill?.fillStyle ?? "black";
+export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
+  ctx.lineCap = style?.lineCap ?? "butt";
+  ctx.lineDashOffset = style?.lineDashOffset ?? 0;
+  ctx.lineJoin = style?.lineJoin ?? "miter";
+  ctx.lineWidth = style?.lineWidth ?? 1;
+  ctx.miterLimit = style?.miterLimit ?? 10;
+  ctx.strokeStyle = style?.strokeStyle ?? "black";
+  ctx.fillStyle = style?.fillStyle ?? "black";
 };

@@ -3,13 +3,23 @@ import { Plot } from "./Plot";
 export type SeriesExtrasBase = Record<string, unknown>;
 
 export type Hooks<Extras = any> = {
-  onInit?: (drawContext: DrawContext<Extras>,plot: Plot<Extras>) => void;
+  onInit?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
   beforeClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
   afterClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
   afterSeries?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
   afterAxes?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
   onDestroy?: (plot: Plot<Extras>) => void;
 };
+
+export type Style = {
+  fillStyle?: CanvasFillStrokeStyles["fillStyle"];
+  strokeStyle?: CanvasFillStrokeStyles["strokeStyle"];
+} & Partial<
+  Pick<
+    CanvasPathDrawingStyles,
+    "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
+  >
+>;
 
 export type Size = {
   width: number;
@@ -40,10 +50,7 @@ export type SeriesBase<Extras = { plotter: Plotter }> = {
   yScaleId: YScaleId;
   x: number[];
   y: number[];
-  style?: {
-    line?: Partial<CanvasPathDrawingStyles>;
-    strokeFill?: Partial<CanvasFillStrokeStyles>;
-  };
+  style?: Style;
   plotterOptions: Extras;
 };
 
@@ -58,15 +65,9 @@ export type PlotAxis = {
   scaleId: Scale["id"];
   position?: "primary" | "secondary";
   size?: number;
-  tickStyle?: {
-    size?: number
-    line?: Partial<CanvasPathDrawingStyles>;
-    strokeFill?: Partial<CanvasFillStrokeStyles>;
-  };
-  style?: {
-    line?: Partial<CanvasPathDrawingStyles>;
-    strokeFill?: Partial<CanvasFillStrokeStyles>;
-  };
+  tickStyle?: Style;
+  tickSize?: number;
+  style?: Style;
   genTicks?: (drawConfig: DrawContext, scale: Scale) => number[];
   genTickLabels?: (tick: number) => string;
 };
@@ -75,29 +76,20 @@ export type VLineFacet = {
   type: "v-line";
   x: number;
   scaleId: XScaleId;
-  style?: {
-    line?: Partial<CanvasPathDrawingStyles>;
-    strokeFill?: Partial<CanvasFillStrokeStyles>;
-  };
+  style?: Style;
 };
 
 export type HLineFacet = {
   type: "h-line";
   y: number;
   scaleId: YScaleId;
-  style?: {
-    line?: Partial<CanvasPathDrawingStyles>;
-    strokeFill?: Partial<CanvasFillStrokeStyles>;
-  };
+  style?: Style;
 };
 
 export type CustomFacet = {
   type: "custom";
   draw: (drawContext: DrawContext) => void;
-  style?: {
-    line?: Partial<CanvasPathDrawingStyles>;
-    strokeFill?: Partial<CanvasFillStrokeStyles>;
-  };
+  style?: Style;
 };
 
 export type SpanFacet = {
@@ -112,10 +104,7 @@ export type SpanFacet = {
     min?: number;
     max?: number;
   };
-  style?: {
-    line?: Partial<CanvasPathDrawingStyles>;
-    strokeFill?: Partial<CanvasFillStrokeStyles>;
-  };
+  style?: Style;
 };
 
 export type FacetLayer = "top" | "middle" | "bottom";

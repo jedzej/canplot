@@ -6,6 +6,9 @@ const plugin = makeCursorPlugin();
 
 plugin.addHoverListener((event) => {
   const tooltip = document.getElementById("tooltip")!;
+  tooltip.style.pointerEvents = "none";
+  tooltip.style.userSelect = "none";
+
   tooltip.innerHTML = JSON.stringify(event.position, null, 2);
   if (event.position) {
     tooltip.style.display = "block";
@@ -24,6 +27,21 @@ plugin.addClickListener((event) => {
         type: "v-line",
         scaleId: "x-1",
         x: event.position.scaled["x-1"],
+        style: { strokeStyle: "#ff000099" },
+      },
+    ];
+  });
+});
+
+plugin.addDblClickListener((event) => {
+  event.plot.incrementalUpdate((draft) => {
+    draft.facets = [
+      ...(draft.facets ?? []),
+      {
+        type: "h-line",
+        scaleId: "y-1",
+        y: event.position.scaled["y-1"],
+        style: { strokeStyle: "#00444499" },
       },
     ];
   });
@@ -67,7 +85,7 @@ new Plot<LineExtras | ScatterExtras>(
         xScaleId: "x-1",
         yScaleId: "y-2",
         plotterOptions: { plotter: linePlotter },
-        style: { strokeFill: { strokeStyle: "red" } },
+        style: { strokeStyle: "red" },
         x: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         y: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },

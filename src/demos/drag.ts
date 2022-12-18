@@ -9,7 +9,7 @@ plugin.addSpanSelectListener((event) => {
     event.plot.incrementalUpdate((draft) => {
       draft.facets![0] = {
         type: "span",
-        style: { strokeFill: { strokeStyle: "red", fillStyle: "#00000044" } },
+        style: { strokeStyle: "red", fillStyle: "#00000044" },
         x: {
           scaleId: "x-1",
           min: Math.min(
@@ -36,12 +36,12 @@ plugin.addSpanSelectListener((event) => {
     });
   } else if (event.phase === "end") {
     event.plot.incrementalUpdate((draft) => {
-      draft.facets![0].style = { strokeFill: { fillStyle: "transparent" } };
+      draft.facets![0].style = { fillStyle: "transparent" };
       draft.facets = [
         ...(draft.facets ?? []),
         {
           type: "span",
-          style: { strokeFill: { fillStyle: "#ff000033" } },
+          style: { fillStyle: "#ff000033" },
           x: {
             scaleId: "x-1",
             min: Math.min(
@@ -104,7 +104,7 @@ new Plot<LineExtras | ScatterExtras>(
     facets: [
       {
         type: "span",
-        style: { strokeFill: { fillStyle: "transparent" } },
+        style: { fillStyle: "transparent" },
         x: {
           scaleId: "x-1",
           min: 0,

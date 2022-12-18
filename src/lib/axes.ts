@@ -51,7 +51,7 @@ const drawYTicks = (
   applyStyles(ctx, { ...axis.style, ...axis.tickStyle });
   ctx.beginPath();
   const position = axis.position ?? DEFAULT_POSITION;
-  const tickSize = axis.tickStyle?.size ?? 5;
+  const tickSize = axis.tickSize ?? 5;
   const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
   const x0 = x;
   const x1 = position === "primary" ? x - tickSize : x + tickSize;

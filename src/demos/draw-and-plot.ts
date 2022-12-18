@@ -49,7 +49,7 @@ const outputPlot = new Plot<LineExtras | ScatterExtras | HeatmapExtras>(
         y: initialInput.y.map((_, i) =>
           produceOutput(initialInput.x[i], initialInput.y[i])
         ),
-        style: { strokeFill: { strokeStyle: "blue" } },
+        style: { strokeStyle: "blue" },
       },
     ],
   }
@@ -162,9 +162,7 @@ new Plot(
         x: initialInput.x,
         y: initialInput.y,
         style: {
-          strokeFill: {
-            strokeStyle: "red",
-          },
+          strokeStyle: "red",
         },
       },
     ],

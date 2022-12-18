@@ -23,12 +23,12 @@ const plot = new Plot<LineExtras | ScatterExtras>(
       { scaleId: "x-1", position: "secondary" },
       {
         scaleId: "y-1",
-        style: { strokeFill: { fillStyle: "red", strokeStyle: "red" } },
+        style: { fillStyle: "red", strokeStyle: "red" },
       },
       {
         scaleId: "y-1",
-        style: { strokeFill: { fillStyle: "red", strokeStyle: "red" } },
-        tickStyle: { size: 20, line: {  } },
+        style: { fillStyle: "red", strokeStyle: "red" },
+        tickSize: 20,
       },
       { scaleId: "y-1" },
       { scaleId: "y-1", position: "secondary" },
@@ -52,8 +52,8 @@ const plot = new Plot<LineExtras | ScatterExtras>(
         yScaleId: "y-1",
         plotterOptions: { plotter: linePlotter },
         style: {
-          line: { lineCap: "round" },
-          strokeFill: { strokeStyle: "blue" },
+          lineCap: "round",
+          strokeStyle: "blue",
         },
         x: new Array(1000).fill(0).map((_, i) => i / 10),
         y: [],
@@ -66,12 +66,8 @@ const plot = new Plot<LineExtras | ScatterExtras>(
           radius: 10,
         },
         style: {
-          line: {
-            lineCap: "round",
-          },
-          strokeFill: {
-            strokeStyle: "red",
-          },
+          lineCap: "round",
+          strokeStyle: "red",
         },
         x: new Array(100).fill(0).map((_, i) => i),
         y: [],

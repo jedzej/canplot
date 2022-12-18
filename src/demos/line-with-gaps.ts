@@ -11,10 +11,7 @@ new Plot<LineExtras>(
     },
   },
   {
-    axes: [
-      { scaleId: "x-1", },
-      { scaleId: "y-1", },
-    ],
+    axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
     scales: [
       {
         id: "x-1",
@@ -33,11 +30,10 @@ new Plot<LineExtras>(
           plotter: linePlotter,
           gapDistance: 1,
         },
-        style: { strokeFill: { strokeStyle: "blue", }, },
+        style: { strokeStyle: "blue" },
         x: [0, 1, 2, 3, 5, 6, 7, 12, 13, 17],
         y: [0, 1, 2, 3, 5, 6, 7, 12, 13, 17],
       },
-
     ],
   }
 );

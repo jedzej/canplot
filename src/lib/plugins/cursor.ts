@@ -31,6 +31,8 @@ type DragEvent = {
 
 type ClickListener = (event: ClickEvent) => void;
 
+type DblclickListener = (event: ClickEvent) => void;
+
 type HoverListener = (event: HoverEvent) => void;
 
 type SpanSelectListener = (event: DragEvent) => void;
@@ -39,6 +41,7 @@ type CursorPlugin = {
   bindings: PlotPlugin;
   addHoverListener: (listener: HoverListener) => () => void;
   addClickListener: (listener: ClickListener) => () => void;
+  addDblClickListener: (listener: DblclickListener) => () => void;
   addSpanSelectListener: (listener: SpanSelectListener) => () => void;
 };
 
@@ -77,49 +80,47 @@ export const makeCursorPlugin = (): CursorPlugin => {
   let mouseMoveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseLeaveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseClickListener: ((e: MouseEvent) => void) | undefined = undefined;
+  let mouseDblClickListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseDownListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseUpListener: ((e: MouseEvent) => void) | undefined = undefined;
   const hoverListeners = new Set<HoverListener>();
   const clickListeners = new Set<ClickListener>();
+  const dblclickListeners = new Set<DblclickListener>();
   const dragListeners = new Set<SpanSelectListener>();
 
-  let spanSelectStartPos: CursorPosition | undefined = undefined;
+  let positionStart: CursorPosition | undefined = undefined;
+
+  let clickTimeout: number | undefined = undefined;
 
   const bindings: PlotPlugin = {
     hooks: {
-      afterAxes(drawContext, plot) {
-        // mouse down
-        if (mouseDownListener) {
-          plot.getCanvas().removeEventListener("mousedown", mouseDownListener);
-        }
-        mouseDownListener = (e: MouseEvent) => {
-          if (dragListeners.size === 0) {
-            return;
-          }
-          spanSelectStartPos = getPosition(e, drawContext);
+      onInit(drawContext, plot) {
+        const { canvas } = drawContext.ctx;
 
-          if (spanSelectStartPos) {
-            for (const listener of dragListeners) {
-              listener({
-                plot,
-                drawContext,
-                positionStart: spanSelectStartPos,
-                positionEnd: spanSelectStartPos,
-                phase: "start",
-              });
-            }
+        // mouse down
+        mouseDownListener = (e: MouseEvent) => {
+          if (dragListeners.size === 0) return;
+
+          positionStart = getPosition(e, drawContext);
+
+          if (!positionStart) return;
+
+          for (const listener of dragListeners) {
+            listener({
+              phase: "start",
+              plot,
+              drawContext,
+              positionStart,
+              positionEnd: positionStart,
+            });
           }
         };
-        drawContext.ctx.canvas.addEventListener("mousedown", mouseDownListener);
+        canvas.addEventListener("mousedown", mouseDownListener);
 
         // mouse move
-        if (mouseMoveListener) {
-          plot.getCanvas().removeEventListener("mousemove", mouseMoveListener);
-        }
         mouseMoveListener = (e: MouseEvent) => {
-          if (hoverListeners.size === 0 && dragListeners.size === 0) {
-            return;
-          }
+          if (hoverListeners.size === 0 && dragListeners.size === 0) return;
+
           const position = getPosition(e, drawContext);
 
           for (const listener of hoverListeners) {
@@ -127,28 +128,26 @@ export const makeCursorPlugin = (): CursorPlugin => {
           }
 
           const positionEnd = getPosition(e, drawContext, true);
-          if (spanSelectStartPos && positionEnd) {
-            for (const listener of dragListeners) {
-              listener({
-                plot,
-                drawContext,
-                positionStart: spanSelectStartPos,
-                positionEnd,
-                phase: "move",
-              });
-            }
+
+          if (!positionStart || !positionEnd) return;
+
+          for (const listener of dragListeners) {
+            listener({
+              phase: "move",
+              plot,
+              drawContext,
+              positionStart,
+              positionEnd,
+            });
           }
         };
-        drawContext.ctx.canvas.addEventListener("mousemove", mouseMoveListener);
+        canvas.addEventListener("mousemove", mouseMoveListener);
 
         // mouse up
-        if (mouseUpListener) {
-          document.removeEventListener("mouseup", mouseUpListener);
-        }
         mouseUpListener = (e: MouseEvent) => {
           if (dragListeners.size === 0) return;
 
-          if (!spanSelectStartPos) return;
+          if (!positionStart) return;
 
           const positionEnd = getPosition(e, drawContext, true);
 
@@ -156,23 +155,18 @@ export const makeCursorPlugin = (): CursorPlugin => {
 
           for (const listener of dragListeners) {
             listener({
+              phase: "end",
               plot,
               drawContext,
-              positionStart: spanSelectStartPos,
+              positionStart,
               positionEnd,
-              phase: "end",
             });
           }
-          spanSelectStartPos = undefined;
+          positionStart = undefined;
         };
         document.addEventListener("mouseup", mouseUpListener);
 
         // mouse leave
-        if (mouseLeaveListener) {
-          plot
-            .getCanvas()
-            .removeEventListener("mouseleave", mouseLeaveListener);
-        }
         mouseLeaveListener = () => {
           if (hoverListeners.size === 0) return;
 
@@ -180,36 +174,49 @@ export const makeCursorPlugin = (): CursorPlugin => {
             listener({ plot, drawContext });
           }
         };
-        drawContext.ctx.canvas.addEventListener(
-          "mouseleave",
-          mouseLeaveListener
-        );
+        canvas.addEventListener("mouseleave", mouseLeaveListener);
 
-        // mouse click
-        if (mouseClickListener) {
-          plot.getCanvas().removeEventListener("click", mouseClickListener);
-        }
-
+        // click
         mouseClickListener = (e) => {
-          if (clickListeners.size === 0) {
+          if (clickTimeout) {
+            clearTimeout(clickTimeout);
+            clickTimeout = undefined;
             return;
           }
-          const position = getPosition(e, drawContext);
-          if (position) {
+          // ignore double clicks
+          if (e.detail > 1) {
+            return;
+          }
+          clickTimeout = setTimeout(() => {
+            clickTimeout = undefined;
+            if (clickListeners.size === 0) return;
+
+            const position = getPosition(e, drawContext);
+
+            if (!position) return;
+
             for (const listener of clickListeners) {
-              listener({
-                plot,
-                drawContext,
-                position,
-              });
+              listener({ plot, drawContext, position });
             }
+          }, 200);
+        };
+        canvas.addEventListener("click", mouseClickListener);
+
+        // dblclick
+        mouseDblClickListener = (e) => {
+          if (dblclickListeners.size === 0) return;
+
+          const position = getPosition(e, drawContext);
+
+          if (!position) return;
+
+          for (const listener of dblclickListeners) {
+            listener({ plot, drawContext, position });
           }
         };
-        drawContext.ctx.canvas.addEventListener("click", mouseClickListener);
-        drawContext.ctx.canvas.addEventListener("dblclick", () => {
-          console.log("double click");
-        });
+        canvas.addEventListener("dblclick", mouseDblClickListener);
       },
+
       onDestroy(plot) {
         const canvas = plot.getCanvas();
         if (mouseMoveListener) {
@@ -219,6 +226,22 @@ export const makeCursorPlugin = (): CursorPlugin => {
         if (mouseLeaveListener) {
           canvas.removeEventListener("mouseleave", mouseLeaveListener);
           mouseLeaveListener = undefined;
+        }
+        if (mouseClickListener) {
+          canvas.removeEventListener("click", mouseClickListener);
+          mouseClickListener = undefined;
+        }
+        if (mouseDblClickListener) {
+          canvas.removeEventListener("dblclick", mouseDblClickListener);
+          mouseDblClickListener = undefined;
+        }
+        if (mouseDownListener) {
+          canvas.removeEventListener("mousedown", mouseDownListener);
+          mouseDownListener = undefined;
+        }
+        if (mouseUpListener) {
+          document.removeEventListener("mouseup", mouseUpListener);
+          mouseUpListener = undefined;
         }
       },
     },
@@ -233,6 +256,10 @@ export const makeCursorPlugin = (): CursorPlugin => {
     addClickListener: (listener: ClickListener) => {
       clickListeners.add(listener);
       return () => clickListeners.delete(listener);
+    },
+    addDblClickListener: (listener: DblclickListener) => {
+      dblclickListeners.add(listener);
+      return () => dblclickListeners.delete(listener);
     },
     addSpanSelectListener: (listener: SpanSelectListener) => {
       dragListeners.add(listener);
