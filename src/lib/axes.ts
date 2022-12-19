@@ -1,3 +1,4 @@
+import { DEFAULT_AXIS_SIZE, DEFAULT_POSITION } from "./defaults";
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
 import { DrawContext, PlotAxis, Scale, SeriesBase } from "./types";
 
@@ -129,8 +130,6 @@ const drawXAxis = (
   ctx.restore();
 };
 
-export const DEFAULT_AXIS_SIZE = 50;
-export const DEFAULT_POSITION = "primary";
 
 export const drawAxes = (drawContext: DrawContext) => {
   const { ctx, chartArea, drawConfig, canvasSize, padding } = drawContext;
