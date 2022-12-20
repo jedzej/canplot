@@ -1,5 +1,4 @@
-import { Plot } from "../lib/Plot";
-import { LineExtras, linePlotter } from "../lib/plotters/line";
+import { Plot, LineExtras, linePlotter } from "../lib/main";
 
 new Plot<LineExtras>(
   {

@@ -1,6 +1,4 @@
-import { Plot } from "../lib/Plot";
-import { LineExtras, linePlotter } from "../lib/plotters/line";
-import { makeCursorPlugin } from "../lib/plugins/cursor";
+import { Plot, LineExtras, linePlotter, makeCursorPlugin } from "../lib/main";
 
 const plugin = makeCursorPlugin();
 

@@ -1,6 +1,4 @@
-import { Plot } from "../lib/Plot";
-import { linePlotter } from "../lib/plotters/line";
-import { scatterPlotter } from "../lib/plotters/scatter";
+import { Plot, linePlotter, scatterPlotter } from "../lib/main";
 import { animationLoop } from "./helpers";
 
 const plot = new Plot(
@@ -67,9 +65,9 @@ animationLoop(() => {
     const arr: number[] = [];
     arr.length = draft.series[0].x.length;
     arr.fill(0);
-    const s1 = [];
+    const s1: number[] = [];
     s1.length = draft.series[0].x.length;
-    const s2 = [];
+    const s2: number[] = [];
     s2.length = draft.series[0].x.length;
 
     for (let i = 0; i < arr.length; i++) {

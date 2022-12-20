@@ -1,7 +1,11 @@
-import { posToVal } from "../lib/helpers";
-import { Plot } from "../lib/Plot";
-import { LineExtras, linePlotter } from "../lib/plotters/line";
-import { PlotPlugin, Scale } from "../lib/types";
+import {
+  Plot,
+  LineExtras,
+  linePlotter,
+  PlotPlugin,
+  Scale,
+  helpers,
+} from "../lib/main";
 import "./style.css";
 
 const initialInput = {
@@ -90,9 +94,17 @@ const makePlugin = (): PlotPlugin => {
           const position: Record<Scale["id"], number> = {};
           for (const scale of drawContext.drawConfig.scales) {
             if (scale.id.startsWith("x-")) {
-              position[scale.id] = posToVal(drawContext, canvasX, scale);
+              position[scale.id] = helpers.posToVal(
+                drawContext,
+                canvasX,
+                scale
+              );
             } else {
-              position[scale.id] = posToVal(drawContext, canvasY, scale);
+              position[scale.id] = helpers.posToVal(
+                drawContext,
+                canvasY,
+                scale
+              );
             }
           }
           plot.incrementalUpdate((draft) => {

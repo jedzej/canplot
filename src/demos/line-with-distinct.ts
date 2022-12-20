@@ -1,5 +1,4 @@
-import { Plot } from "../lib/Plot";
-import { LineExtras, linePlotter } from "../lib/plotters/line";
+import { Plot, LineExtras, linePlotter } from "../lib/main";
 import { animationLoop } from "./helpers";
 
 const plot = new Plot<LineExtras>(
@@ -74,9 +73,9 @@ animationLoop(() => {
     const arr: number[] = [];
     arr.length = draft.series[0].x.length;
     arr.fill(0);
-    const s1 = [];
+    const s1: number[] = [];
     s1.length = draft.series[0].x.length;
-    const s2 = [];
+    const s2: number[] = [];
     s2.length = draft.series[0].x.length;
 
     for (let i = 0; i < arr.length; i++) {

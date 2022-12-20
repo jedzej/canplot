@@ -1,5 +1,4 @@
-import { Plot } from "../lib/Plot";
-import { HeatmapExtras, heatmapPlotter } from "../lib/plotters/heatmap";
+import { Plot, HeatmapExtras, heatmapPlotter } from "../lib/main";
 import { animationLoop } from "./helpers";
 
 const plot = new Plot<HeatmapExtras>(

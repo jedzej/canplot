@@ -1,6 +1,10 @@
-import { Plot } from "../lib/Plot";
-import { LineExtras, linePlotter } from "../lib/plotters/line";
-import { ScatterExtras, scatterPlotter } from "../lib/plotters/scatter";
+import {
+  Plot,
+  LineExtras,
+  linePlotter,
+  ScatterExtras,
+  scatterPlotter,
+} from "../lib/main";
 import { animationLoop } from "./helpers";
 
 const plot = new Plot<LineExtras | ScatterExtras>(
