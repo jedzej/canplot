@@ -33,12 +33,12 @@ const genTicksDefault = <S extends SeriesBase = SeriesBase>(
   return ticks;
 };
 
-const tickFormat = (tick: number, ticks: number[], scale: Scale) => {
+const tickFormat = (_: DrawContext, scale: Scale, ticks: number[]) => {
   if (scale.limits.autorange) {
     return "";
   }
   const span = Math.max(0, Math.ceil(-Math.log10(ticks[1] - ticks[0])));
-  return tick.toFixed(span);
+  return ticks.map((tick) => tick.toFixed(span));
 };
 
 const drawYTicks = (
@@ -54,15 +54,20 @@ const drawYTicks = (
   const position = axis.position ?? DEFAULT_POSITION;
   const tickSize = axis.tickSize ?? 5;
   const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
+  const labels = (axis.tickFormat ?? tickFormat)(drawContext, scale, ticks);
+
   const x0 = x;
   const x1 = position === "primary" ? x - tickSize : x + tickSize;
-  for (const tick of ticks) {
-    const y = valToPos(drawContext, tick, scale);
+  for (let i = 0; i < ticks.length; i++) {
+    const y = valToPos(drawContext, ticks[i], scale);
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
     ctx.textAlign = position === "primary" ? "right" : "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${tickFormat(tick, ticks, scale)}`, x1, y);
+    const labelLines = labels[i].split("\n");
+    for (let j = 0; j < labelLines.length; j++) {
+      ctx.fillText(labelLines[j], x1, y + j * 10);
+    }
   }
   ctx.closePath();
   ctx.stroke();
@@ -98,14 +103,18 @@ const drawXTicks = (
   applyStyles(ctx, axis.style);
   ctx.beginPath();
   const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
-  for (const tick of ticks) {
-    const x = valToPos(drawContext, tick, scale);
+  const labels = (axis.tickFormat ?? tickFormat)(drawContext, scale, ticks);
+  for (let i = 0; i < ticks.length; i++) {
+    const x = valToPos(drawContext, ticks[i], scale);
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
     ctx.textAlign = "center";
     ctx.textBaseline =
       (axis.position ?? DEFAULT_POSITION) === "primary" ? "top" : "bottom";
-    ctx.fillText(`${tickFormat(tick, ticks, scale)}`, x, y1);
+    const labelLines = labels[i].split("\n");
+    for (let j = 0; j < labelLines.length; j++) {
+      ctx.fillText(labelLines[j], x, y1 + j * 10);
+    }
   }
 
   ctx.closePath();
@@ -129,7 +138,6 @@ const drawXAxis = (
   ctx.stroke();
   ctx.restore();
 };
-
 
 export const drawAxes = (drawContext: DrawContext) => {
   const { ctx, chartArea, drawConfig, canvasSize, padding } = drawContext;

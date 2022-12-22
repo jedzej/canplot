@@ -69,7 +69,7 @@ export type PlotAxis = {
   tickSize?: number;
   style?: Style;
   genTicks?: (drawConfig: DrawContext, scale: Scale) => number[];
-  genTickLabels?: (tick: number) => string;
+  tickFormat?: (drawConfig: DrawContext, scale: Scale, ticks: number[]) => string[];
 };
 
 export type VLineFacet = {
