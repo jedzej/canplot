@@ -5,6 +5,7 @@ import {
   ScatterExtras,
   scatterPlotter,
   genTimeTicks,
+  genTickFormat,
 } from "../lib/main";
 import { animationLoop } from "./helpers";
 
@@ -29,10 +30,14 @@ const plot = new Plot<LineExtras | ScatterExtras>(
   {
     padding: 10,
     axes: [
-      { scaleId: "x-1" },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks,
+        genTicks: genTimeTicks("Europe/Warsaw"),
+        tickFormat: genTickFormat("Europe/Warsaw"),
+      },
+      {
+        scaleId: "x-2",
+        genTicks: genTimeTicks("Europe/Warsaw"),
         tickFormat: (_, __, ticks) =>
           ticks.map(
             (tick, i) => `${i % 2 ? "\n" : ""}${new Date(tick).toISOString()}`
@@ -48,6 +53,16 @@ const plot = new Plot<LineExtras | ScatterExtras>(
           fixed: {
             min: start,
             max: end,
+          },
+        },
+      },
+      {
+        id: "x-2",
+        limits: {
+          autorange: false,
+          fixed: {
+            min: Date.parse("2022-10-22T20:19:00Z"),
+            max: Date.parse("2022-10-22T22:20:22Z"),
           },
         },
       },
