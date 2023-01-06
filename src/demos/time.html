@@ -6,12 +6,19 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vite + TS</title>
+  <style type="text/css">
+    canvas {
+      background-color: white;
+    }
+
+    body {
+      background-color: gray;
+    }
+  </style>
 </head>
 
-<body style="background-color: gray;">
-  <div>
-    <canvas id="canvas" style="background-color: white;"></canvas>
-  </div>
+<body>
+  <div id="app" />
   <script type="module" src="./time.ts"></script>
 </body>
 

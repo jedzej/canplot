@@ -6,93 +6,170 @@ import {
   scatterPlotter,
   genTimeTicks,
   genTickFormat,
+  SeriesBase,
 } from "../lib/main";
 import { animationLoop } from "./helpers";
 
-const start = Date.parse("2022-10-22T20:20:22Z");
-const end = Date.parse("2022-11-22T20:20:22Z");
-
-const x = [start];
-while (x[x.length - 1] < end) {
-  x.push(x[x.length - 1] + 24 * 60 * 60 * 1000);
-}
-const y = x.map((x) => Math.sin(x) + 4);
-
-const plot = new Plot<LineExtras | ScatterExtras>(
-  {
-    canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
-    plugins: [],
-    dimensions: {
-      width: "auto",
-      height: 400,
+const makeSeries = (
+  from: number,
+  to: number,
+  interval: number
+): SeriesBase<ScatterExtras>[] => {
+  const x = [from];
+  while (x[x.length - 1] < to) {
+    x.push(x[x.length - 1] + interval);
+  }
+  const y = x.map((_, i) => (i % 5) + 4);
+  return [
+    {
+      xScaleId: "x-1",
+      yScaleId: "y-1",
+      plotterOptions: {
+        plotter: scatterPlotter,
+        radius: 1,
+        style: { lineCap: "round", strokeStyle: "red" },
+      },
+      x,
+      y,
     },
-  },
+  ];
+};
+
+const appNode = document.getElementById("app")!;
+
+// daily
+const dailyStart = Date.parse("2021-12-22T00:00:00Z");
+const dailyEnd = Date.parse("2022-01-18T00:00:00Z");
+
+const canvas1 = document.createElement("canvas");
+
+appNode.appendChild(canvas1);
+
+new Plot<ScatterExtras>(
+  { canvas: canvas1, plugins: [], dimensions: { width: "auto", height: 200 } },
   {
-    padding: 10,
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks("Europe/Warsaw"),
-        tickFormat: genTickFormat("Europe/Warsaw"),
-      },
-      {
-        scaleId: "x-2",
-        genTicks: genTimeTicks("Europe/Warsaw"),
-        tickFormat: (_, __, ticks) =>
-          ticks.map(
-            (tick, i) => `${i % 2 ? "\n" : ""}${new Date(tick).toISOString()}`
-          ),
-      },
-      { scaleId: "y-1" },
-    ],
     scales: [
       {
         id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: {
-            min: start,
-            max: end,
-          },
-        },
-      },
-      {
-        id: "x-2",
-        limits: {
-          autorange: false,
-          fixed: {
-            min: Date.parse("2022-10-22T20:19:00Z"),
-            max: Date.parse("2022-10-22T22:20:22Z"),
-          },
-        },
+        limits: { autorange: false, fixed: { min: dailyStart, max: dailyEnd } },
       },
       {
         id: "y-1",
         limits: { autorange: false, fixed: { min: 0, max: 10 } },
       },
     ],
-    series: [
+    axes: [
       {
-        xScaleId: "x-1",
-        yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
-          style: { lineCap: "round", strokeStyle: "blue" },
-        },
-        x: new Array(1000).fill(0).map((_, i) => i / 10),
-        y: [],
+        scaleId: "x-1",
+        genTicks: genTimeTicks("UTC"),
+        tickFormat: genTickFormat("UTC"),
+        label: "UTC",
       },
       {
-        xScaleId: "x-1",
-        yScaleId: "y-1",
-        plotterOptions: {
-          plotter: scatterPlotter,
-          radius: 10,
-          style: { lineCap: "round", strokeStyle: "red" },
-        },
-        x,
-        y,
+        scaleId: "x-1",
+        genTicks: genTimeTicks("Asia/Anadyr"),
+        tickFormat: genTickFormat("Asia/Anadyr"),
+        label: "Asia/Anadyr",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks("Pacific/Easter"),
+        tickFormat: genTickFormat("Pacific/Easter"),
+        label: "Pacific/Easter",
+      },
+      { scaleId: "y-1" },
+    ],
+    series: makeSeries(dailyStart, dailyEnd, 6 * 60 * 60 * 1000),
+  }
+);
+
+// monthly
+const monthlyStart = Date.parse("2020-01-01T00:00:00Z");
+const monthlyEnd = Date.parse("2022-01-01T00:00:00Z");
+
+const canvasMonthly = document.createElement("canvas");
+
+appNode.appendChild(canvasMonthly);
+
+new Plot<ScatterExtras>(
+  { canvas: canvasMonthly, plugins: [], dimensions: { width: "auto", height: 200 } },
+  {
+    scales: [
+      {
+        id: "x-1",
+        limits: { autorange: false, fixed: { min: monthlyStart, max: monthlyEnd } },
+      },
+      {
+        id: "y-1",
+        limits: { autorange: false, fixed: { min: 0, max: 10 } },
       },
     ],
+    axes: [
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks("UTC"),
+        tickFormat: genTickFormat("UTC"),
+        label: "UTC",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks("Asia/Anadyr"),
+        tickFormat: genTickFormat("Asia/Anadyr"),
+        label: "Asia/Anadyr",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks("Pacific/Easter"),
+        tickFormat: genTickFormat("Pacific/Easter"),
+        label: "Pacific/Easter",
+      },
+      { scaleId: "y-1" },
+    ],
+    series: makeSeries(monthlyStart, monthlyEnd, 30 * 24 * 60 * 60 * 1000),
+  }
+);
+// yearly
+const yearlyStart = Date.parse("2002-01-01T00:00:00Z");
+const yearlyEnd = Date.parse("2022-01-01T00:00:00Z");
+
+const canvasYearly = document.createElement("canvas");
+
+appNode.appendChild(canvasYearly);
+
+new Plot<ScatterExtras>(
+  { canvas: canvasYearly, plugins: [], dimensions: { width: "auto", height: 200 } },
+  {
+    scales: [
+      {
+        id: "x-1",
+        limits: { autorange: false, fixed: { min: yearlyStart, max: yearlyEnd } },
+      },
+      {
+        id: "y-1",
+        limits: { autorange: false, fixed: { min: 0, max: 10 } },
+      },
+    ],
+    axes: [
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks("UTC"),
+        tickFormat: genTickFormat("UTC"),
+        label: "UTC",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks("Asia/Anadyr"),
+        tickFormat: genTickFormat("Asia/Anadyr"),
+        label: "Asia/Anadyr",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks("Pacific/Easter"),
+        tickFormat: genTickFormat("Pacific/Easter"),
+        label: "Pacific/Easter",
+      },
+      { scaleId: "y-1" },
+    ],
+    series: makeSeries(yearlyStart, yearlyEnd, 365 * 24 * 60 * 60 * 1000),
   }
 );

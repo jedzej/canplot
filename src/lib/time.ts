@@ -1,10 +1,9 @@
-import { DrawContext, Scale, SeriesBase } from "./types";
+import { DrawContext, PlotAxis, Scale, SeriesBase } from "./types";
 const milisecond = 1;
 const second = 1000 * milisecond;
 const minute = 60 * second;
 const hour = 60 * minute;
 const day = 24 * hour;
-const week = 7 * day;
 const month = 30 * day;
 const year = 365 * day;
 type TimeUnit =
@@ -49,15 +48,14 @@ const TIME_INCRS: Duration[] = [
   [6, "hours"],
   [8, "hours"],
   [12, "hours"],
-  // month divisors TODO: need more?
+  // month divisors
   [1, "days"],
-  [2, "days"],
   [3, "days"],
   [5, "days"],
   [7, "days"],
   [10, "days"],
   [15, "days"],
-  // year divisors (# months, approx)
+  // year divisors
   [1, "months"],
   [2, "months"],
   [3, "months"],
@@ -164,62 +162,50 @@ const makeFirstTick = (
   timeZone: string = "UTC"
 ): number => {
   const [incrValue, incrUnit] = incr;
-  const result = new Date(minDate);
+  let result = new Date(minDate);
+  const setTimeToMidnight = () => {
+    result.setUTCHours(-getTimezoneOffsetHours(result, timeZone), 0, 0, 0);
+  };
   switch (incrUnit) {
     case "miliseconds":
       result.setUTCMilliseconds(
-        Math.floor(result.getUTCMilliseconds() / incrValue) * incrValue
+        Math.ceil(result.getUTCMilliseconds() / incrValue) * incrValue
       );
       break;
     case "seconds":
       result.setUTCSeconds(
-        Math.floor(result.getUTCSeconds() / incrValue) * incrValue,
+        Math.ceil(result.getUTCSeconds() / incrValue) * incrValue,
         0
       );
       break;
     case "minutes":
       result.setUTCMinutes(
-        Math.floor(result.getUTCMinutes() / incrValue) * incrValue,
+        Math.ceil(result.getUTCMinutes() / incrValue) * incrValue,
         0,
         0
       );
       break;
     case "hours":
       result.setUTCHours(
-        Math.floor(result.getUTCHours() / incrValue) * incrValue,
+        Math.ceil(result.getUTCHours() / incrValue) * incrValue,
         0,
         0,
         0
       );
       break;
     case "days":
-      result.setUTCDate(
-        Math.floor(result.getUTCDate() / incrValue) * incrValue
-      );
-      break;
     case "months":
-      result.setUTCMonth(
-        Math.floor(result.getUTCMonth() / incrValue) * incrValue,
-        0
-      );
-      break;
     case "years":
-      result.setUTCFullYear(
-        Math.floor(result.getUTCFullYear() / incrValue) * incrValue,
-        0,
-        0
-      );
+      if (incrUnit === "months") {
+        result.setUTCDate(1);
+      } else if (incrUnit === "years") {
+        result.setUTCMonth(0, 1);
+      }
+      setTimeToMidnight();
+      if (result.getTime() < minDate) {
+        result = new Date(addUTC(result, [1, incrUnit]));
+      }
       break;
-  }
-  switch (incrUnit) {
-    case "years":
-    case "months":
-    case "days":
-      result.setUTCHours(-getTimezoneOffsetHours(result, timeZone), 0, 0, 0);
-      break;
-  }
-  if (result.getTime() < minDate) {
-    return addUTC(result, incr);
   }
   return result.getTime();
 };
@@ -245,18 +231,35 @@ export const genTimeTicks =
     const firstTickOffset = getTimezoneOffsetHours(firstTick, timeZone);
 
     const splits: number[] = [firstTick];
-    console.log(splits);
 
-    while (splits[splits.length - 1] < scale.limits.fixed.max) {
-      const ticknoDST = addUTC(firstTick, [
-        splits.length * incrValue,
-        incrUnit,
-      ]);
-      const tickDST = addUTC(ticknoDST, [
-        firstTickOffset - getTimezoneOffsetHours(ticknoDST, timeZone),
-        "hours",
-      ]);
-      splits.push(tickDST);
+    let candidate: number;
+    while (true) {
+      if (incrUnit === "months") {
+        const tickNoDST = addUTC(
+          addUTC(addUTC(firstTick, [firstTickOffset, "hours"]), [
+            splits.length * incrValue,
+            incrUnit,
+          ]),
+          [-firstTickOffset, "hours"]
+        );
+        candidate = addUTC(tickNoDST, [
+          firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
+          "hours",
+        ]);
+      } else {
+        const tickNoDST = addUTC(firstTick, [
+          splits.length * incrValue,
+          incrUnit,
+        ]);
+        candidate = addUTC(tickNoDST, [
+          firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
+          "hours",
+        ]);
+      }
+      if (candidate > scale.limits.fixed.max) {
+        break;
+      }
+      splits.push(candidate);
     }
 
     return splits;
@@ -287,12 +290,10 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
     timeZone,
   });
   return (drawContext: DrawContext<S>, scale: Scale, ticks: number[]) => {
-    const date = new Date(ticks[0]);
     const splitMs = ticks[1] - ticks[0];
-    const showHours = true || splitMs < durationToMiliseconds([1, "days"]);
-    const showSeconds = true || splitMs < durationToMiliseconds([1, "minutes"]);
-    const showMiliseconds =
-      true || splitMs < durationToMiliseconds([1, "seconds"]);
+    const showHours = splitMs < durationToMiliseconds([1, "days"]);
+    const showSeconds = splitMs < durationToMiliseconds([1, "minutes"]);
+    const showMiliseconds = splitMs < durationToMiliseconds([1, "seconds"]);
 
     return ticks
       .map((tick, i) => {
@@ -304,6 +305,8 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
           index === 0 || isTimeFormatPartDifferent(curr, prev, "year");
         const newDay =
           index === 0 || isTimeFormatPartDifferent(curr, prev, "day");
+        const newMonth =
+          index === 0 || isTimeFormatPartDifferent(curr, prev, "month");
         const newHour =
           showHours &&
           (index === 0 || isTimeFormatPartDifferent(curr, prev, "hour"));
@@ -331,11 +334,14 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
           }
           visibleParts.push(item);
         }
-        if (newDay) {
+        if (newDay || newMonth) {
           visibleParts.push(
-            `${curr.find((a) => a.type === "month")?.value} ${
-              curr.find((a) => a.type === "day")?.value
-            }`
+            [
+              newMonth && curr.find((a) => a.type === "month")?.value,
+              newDay && curr.find((a) => a.type === "day")?.value,
+            ]
+              .filter(Boolean)
+              .join(" ")
           );
         }
         if (newYear) {

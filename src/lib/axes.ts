@@ -53,7 +53,8 @@ const drawYTicks = (
   ctx.beginPath();
   const position = axis.position ?? DEFAULT_POSITION;
   const tickSize = axis.tickSize ?? 5;
-  const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
+  const ticks =
+    (axis.genTicks ?? genTicksDefault)(drawContext, scale, axis) ?? [];
   const labels = (axis.tickFormat ?? tickFormat)(drawContext, scale, ticks);
 
   const x0 = x;
@@ -102,7 +103,8 @@ const drawXTicks = (
   ctx.save();
   applyStyles(ctx, axis.style);
   ctx.beginPath();
-  const ticks = (axis.genTicks ?? genTicksDefault)(drawContext, scale) ?? [];
+  const ticks =
+    (axis.genTicks ?? genTicksDefault)(drawContext, scale, axis) ?? [];
   const labels = (axis.tickFormat ?? tickFormat)(drawContext, scale, ticks);
   for (let i = 0; i < ticks.length; i++) {
     const x = valToPos(drawContext, ticks[i], scale);
@@ -119,6 +121,32 @@ const drawXTicks = (
 
   ctx.closePath();
   ctx.stroke();
+  ctx.restore();
+};
+const drawXLabel = (drawContext: DrawContext, axis: PlotAxis, y: number) => {
+  if (!axis.label) return;
+  const { ctx } = drawContext;
+  ctx.save();
+  ctx.textAlign = "center";
+  let x: number;
+  let textAlign: CanvasTextAlign;
+  switch (axis.labelAlign ?? "center") {
+    case "left":
+      textAlign = "left";
+      x = drawContext.chartArea.x;
+      break;
+    case "right":
+      textAlign = "right";
+      x = drawContext.chartArea.x + drawContext.chartArea.width;
+      break;
+    case "center":
+      textAlign = "center";
+      x = drawContext.chartArea.x + drawContext.chartArea.width / 2;
+      break;
+  }
+  ctx.textBaseline = "top";
+  applyStyles(ctx, { textBaseline: "top", textAlign, ...axis.labelStyle });
+  ctx.fillText(axis.label, x, y + (axis.labelOffset ?? 26));
   ctx.restore();
 };
 
@@ -173,8 +201,9 @@ export const drawAxes = (drawContext: DrawContext) => {
           axis,
           scale,
           currentBottomOffset,
-          currentBottomOffset + 6
+          currentBottomOffset + (axis.tickSize ?? 6)
         );
+        drawXLabel(drawContext, axis, currentBottomOffset);
       } else {
         currentTopOffset += size;
         drawXAxis(ctx, axis, currentTopOffset, chartAreaLeft, chartAreaRight);

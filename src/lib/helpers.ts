@@ -87,4 +87,9 @@ export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
   ctx.miterLimit = style?.miterLimit ?? 10;
   ctx.strokeStyle = style?.strokeStyle ?? "black";
   ctx.fillStyle = style?.fillStyle ?? "black";
+  ctx.font = style?.font ?? "10px sans-serif";
+  ctx.textAlign = style?.textAlign ?? "start";
+  ctx.direction = style?.direction ?? "inherit";
+  ctx.textBaseline = style?.textBaseline ?? "alphabetic";
+  ctx.fontKerning = style?.fontKerning ?? "auto";
 };
