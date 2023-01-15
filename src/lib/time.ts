@@ -234,27 +234,39 @@ export const genTimeTicks =
 
     let candidate: number;
     while (true) {
-      if (incrUnit === "months") {
-        const tickNoDST = addUTC(
-          addUTC(addUTC(firstTick, [firstTickOffset, "hours"]), [
+      switch (incrUnit) {
+        case "miliseconds":
+        case "seconds":
+        case "minutes":
+        case "hours": {
+          candidate = addUTC(firstTick, [splits.length * incrValue, incrUnit]);
+          break;
+        }
+        case "days": {
+          const tickNoDST = addUTC(firstTick, [
             splits.length * incrValue,
             incrUnit,
-          ]),
-          [-firstTickOffset, "hours"]
-        );
-        candidate = addUTC(tickNoDST, [
-          firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
-          "hours",
-        ]);
-      } else {
-        const tickNoDST = addUTC(firstTick, [
-          splits.length * incrValue,
-          incrUnit,
-        ]);
-        candidate = addUTC(tickNoDST, [
-          firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
-          "hours",
-        ]);
+          ]);
+          candidate = addUTC(tickNoDST, [
+            firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
+            "hours",
+          ]);
+        }
+        case "months":
+        case "years": {
+          const tickNoDST = addUTC(
+            addUTC(addUTC(firstTick, [firstTickOffset, "hours"]), [
+              splits.length * incrValue,
+              incrUnit,
+            ]),
+            [-firstTickOffset, "hours"]
+          );
+          candidate = addUTC(tickNoDST, [
+            firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
+            "hours",
+          ]);
+          break;
+        }
       }
       if (candidate > scale.limits.fixed.max) {
         break;
@@ -287,6 +299,7 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
     minute: "numeric",
     second: "numeric",
     fractionalSecondDigits: 3,
+    timeZoneName: "short",
     timeZone,
   });
   return (drawContext: DrawContext<S>, scale: Scale, ticks: number[]) => {
@@ -300,6 +313,7 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
         return formatter.formatToParts(new Date(tick));
       })
       .map((curr, index, arr) => {
+        console.log(curr.find((a) => a.type === "timeZoneName")?.value);
         const prev = arr[index - 1];
         const newYear =
           index === 0 || isTimeFormatPartDifferent(curr, prev, "year");
@@ -310,6 +324,10 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
         const newHour =
           showHours &&
           (index === 0 || isTimeFormatPartDifferent(curr, prev, "hour"));
+        const newTimeZoneName =
+          showHours &&
+          (index === 0 ||
+            isTimeFormatPartDifferent(curr, prev, "timeZoneName"));
         const newMinute =
           showHours &&
           (index === 0 || isTimeFormatPartDifferent(curr, prev, "minute"));
@@ -320,19 +338,21 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
           isTimeFormatPartDifferent(curr, prev, "fractionalSecond");
 
         const visibleParts: (string | undefined)[] = [];
-        if (newHour || newMinute) {
-          let item = `${curr.find((a) => a.type === "hour")?.value}:${
-            curr.find((a) => a.type === "minute")?.value
-          }`;
-          if (showSeconds) {
-            item += `:${curr.find((a) => a.type === "second")?.value}`;
-            if (showMiliseconds) {
-              item += `.${
-                curr.find((a) => a.type === "fractionalSecond")?.value
-              }`;
-            }
+        if (newHour || newMinute || newTimeZoneName) {
+          const h = curr.find((a) => a.type === "hour")?.value;
+          const m = curr.find((a) => a.type === "minute")?.value;
+          const tz = curr.find((a) => a.type === "timeZoneName")?.value;
+          visibleParts.push(newTimeZoneName ? `${h}:${m} ${tz}` : `${h}:${m}`);
+          if (showSeconds || showMiliseconds) {
+            const s = curr.find((a) => a.type === "second")?.value;
+            const ms = curr.find((a) => a.type === "fractionalSecond")?.value;
+            visibleParts.push(
+              newTimeZoneName ? `${h}:${m} ${tz}` : `${h}:${m}`
+            );
+            visibleParts.push(
+              (showSeconds ? `:${s}` : "") + (showMiliseconds ? `:${ms}` : "")
+            );
           }
-          visibleParts.push(item);
         }
         if (newDay || newMonth) {
           visibleParts.push(
