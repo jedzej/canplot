@@ -19,7 +19,8 @@ export type Style = {
     CanvasPathDrawingStyles,
     "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
   >
-> & Partial<CanvasTextDrawingStyles>;
+> &
+  Partial<CanvasTextDrawingStyles>;
 
 export type Size = {
   width: number;
@@ -61,6 +62,21 @@ export type Plotter<Extras = { plotter: Plotter }> = (
   yScale: Scale
 ) => void;
 
+export type PlotAxisGenTicksOpts = {
+  drawContext: DrawContext;
+  scale: Scale;
+  axis: PlotAxis;
+};
+
+export type PlotAxisTickFormatOpts = {
+  drawContext: DrawContext;
+  scale: Scale;
+  ticks: number[];
+};
+
+export type PlotAxisGenTicks = (opts: PlotAxisGenTicksOpts) => number[];
+export type PlotAxisTickFormat = (opts: PlotAxisTickFormatOpts) => string[];
+
 export type PlotAxis = {
   id?: string;
   scaleId: Scale["id"];
@@ -73,16 +89,8 @@ export type PlotAxis = {
   labelStyle?: Style;
   labelOffset?: number;
   labelAlign?: "left" | "center" | "right";
-  genTicks?: (
-    drawConfig: DrawContext,
-    scale: Scale,
-    axis: PlotAxis
-  ) => number[];
-  tickFormat?: (
-    drawConfig: DrawContext,
-    scale: Scale,
-    ticks: number[]
-  ) => string[];
+  genTicks?: PlotAxisGenTicks;
+  tickFormat?: PlotAxisTickFormat;
 };
 
 export type VLineFacet = {

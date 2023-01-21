@@ -1,6 +1,10 @@
-import { DEFAULT_AXIS_SIZE, DEFAULT_POSITION } from "./defaults";
+import {
+  DEFAULT_AXIS_SIZE,
+  DEFAULT_POSITION,
+  DEFAULT_SPLIT_SPACE,
+} from "./defaults";
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
-import { DrawContext, PlotAxis, Scale, SeriesBase } from "./types";
+import { DrawContext, PlotAxis, PlotAxisGenTicks, Scale } from "./types";
 
 const acceptable: number[] = [];
 for (let i = -12; i <= 12; i++) {
@@ -9,33 +13,36 @@ for (let i = -12; i <= 12; i++) {
   acceptable.push(5 * 10 ** i);
 }
 
-const genTicksDefault = <S extends SeriesBase = SeriesBase>(
-  // @ts-ignore
-  drawContext: DrawContext<S>,
-  scale: Scale
-) => {
-  if (scale.limits.autorange) {
-    return [];
-  }
-  const ticks = [];
-  const space = 30;
-  const unnormalizedIncr = pxToValDistance(drawContext, space, scale);
-  const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
-  let curr =
-    scale.limits.fixed.min % incr < Number.EPSILON
-      ? scale.limits.fixed.min
-      : scale.limits.fixed.min + incr - (scale.limits.fixed.min % incr);
-  while (curr <= scale.limits.fixed.max) {
-    ticks.push(curr);
-    curr += incr;
-  }
-
-  return ticks;
+type MakeGenTicksDefaultOpts = {
+  space?: number;
 };
 
-const tickFormat = (_: DrawContext, scale: Scale, ticks: number[]) => {
+export const makeGenTicksDefault = ({
+  space = DEFAULT_SPLIT_SPACE,
+}: MakeGenTicksDefaultOpts = {}): PlotAxisGenTicks => {
+  return ({ drawContext, scale }) => {
+    if (scale.limits.autorange) {
+      return [];
+    }
+    const ticks = [];
+    const unnormalizedIncr = pxToValDistance(drawContext, space, scale);
+    const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
+    let curr =
+      scale.limits.fixed.min % incr < Number.EPSILON
+        ? scale.limits.fixed.min
+        : scale.limits.fixed.min + incr - (scale.limits.fixed.min % incr);
+    while (curr <= scale.limits.fixed.max) {
+      ticks.push(curr);
+      curr += incr;
+    }
+
+    return ticks;
+  };
+};
+
+const tickFormat: PlotAxis["tickFormat"] = ({ scale, ticks }) => {
   if (scale.limits.autorange) {
-    return "";
+    return [""];
   }
   const span = Math.max(0, Math.ceil(-Math.log10(ticks[1] - ticks[0])));
   return ticks.map((tick) => tick.toFixed(span));
@@ -54,8 +61,9 @@ const drawYTicks = (
   const position = axis.position ?? DEFAULT_POSITION;
   const tickSize = axis.tickSize ?? 5;
   const ticks =
-    (axis.genTicks ?? genTicksDefault)(drawContext, scale, axis) ?? [];
-  const labels = (axis.tickFormat ?? tickFormat)(drawContext, scale, ticks);
+    (axis.genTicks ?? makeGenTicksDefault())({ drawContext, scale, axis }) ??
+    [];
+  const labels = (axis.tickFormat ?? tickFormat)({ drawContext, scale, ticks });
 
   const x0 = x;
   const x1 = position === "primary" ? x - tickSize : x + tickSize;
@@ -104,8 +112,9 @@ const drawXTicks = (
   applyStyles(ctx, axis.style);
   ctx.beginPath();
   const ticks =
-    (axis.genTicks ?? genTicksDefault)(drawContext, scale, axis) ?? [];
-  const labels = (axis.tickFormat ?? tickFormat)(drawContext, scale, ticks);
+    (axis.genTicks ?? makeGenTicksDefault())({ drawContext, scale, axis }) ??
+    [];
+  const labels = (axis.tickFormat ?? tickFormat)({ drawContext, scale, ticks });
   for (let i = 0; i < ticks.length; i++) {
     const x = valToPos(drawContext, ticks[i], scale);
     ctx.moveTo(x, y0);

@@ -3,7 +3,7 @@ import {
   ScatterExtras,
   scatterPlotter,
   genTimeTicks,
-  genTickFormat,
+  makeTimeTickFormat,
   SeriesBase,
 } from "../lib/main";
 
@@ -33,6 +33,184 @@ const makeSeries = (
 };
 
 const appNode = document.getElementById("app")!;
+
+// millisecondly
+const millisecondlyStart1 = Date.parse("2021-03-27T18:00:00Z");
+const millisecondlyEnd1 = Date.parse("2021-03-27T18:00:05Z");
+
+const canvasMillisecondly = document.createElement("canvas");
+
+appNode.appendChild(canvasMillisecondly);
+
+new Plot<ScatterExtras>(
+  {
+    canvas: canvasMillisecondly,
+    plugins: [],
+    dimensions: { width: "auto", height: 250 },
+  },
+  {
+    padding: { left: 20, right: 40, top: 0, bottom: 0 },
+    scales: [
+      {
+        id: "x-1",
+        limits: {
+          autorange: false,
+          fixed: { min: millisecondlyStart1, max: millisecondlyEnd1 },
+        },
+      },
+      {
+        id: "y-1",
+        limits: { autorange: false, fixed: { min: 0, max: 10 } },
+      },
+    ],
+    axes: [
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
+        label: "UTC",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
+        label: "Europe/Warsaw",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
+        label: "Asia/Anadyr",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
+        label: "Pacific/Easter",
+      },
+      { scaleId: "y-1" },
+    ],
+    series: makeSeries(millisecondlyStart1, millisecondlyEnd1, 10),
+  }
+);
+
+// secondly
+const secondlyStart1 = Date.parse("2021-03-27T18:00:00Z");
+const secondlyEnd1 = Date.parse("2021-03-27T18:02:00Z");
+
+const canvasSecondly = document.createElement("canvas");
+
+appNode.appendChild(canvasSecondly);
+
+new Plot<ScatterExtras>(
+  {
+    canvas: canvasSecondly,
+    plugins: [],
+    dimensions: { width: "auto", height: 250 },
+  },
+  {
+    scales: [
+      {
+        id: "x-1",
+        limits: {
+          autorange: false,
+          fixed: { min: secondlyStart1, max: secondlyEnd1 },
+        },
+      },
+      {
+        id: "y-1",
+        limits: { autorange: false, fixed: { min: 0, max: 10 } },
+      },
+    ],
+    axes: [
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
+        label: "UTC",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
+        label: "Europe/Warsaw",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
+        label: "Asia/Anadyr",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
+        label: "Pacific/Easter",
+      },
+      { scaleId: "y-1" },
+    ],
+    series: makeSeries(secondlyStart1, secondlyEnd1, 1000),
+  }
+);
+
+// minutely
+const minutelyStart1 = Date.parse("2021-03-27T18:00:00Z");
+const minutelyEnd1 = Date.parse("2021-03-27T19:00:00Z");
+
+const canvasMinutely = document.createElement("canvas");
+
+appNode.appendChild(canvasMinutely);
+
+new Plot<ScatterExtras>(
+  {
+    canvas: canvasMinutely,
+    plugins: [],
+    dimensions: { width: "auto", height: 250 },
+  },
+  {
+    scales: [
+      {
+        id: "x-1",
+        limits: {
+          autorange: false,
+          fixed: { min: minutelyStart1, max: minutelyEnd1 },
+        },
+      },
+      {
+        id: "y-1",
+        limits: { autorange: false, fixed: { min: 0, max: 10 } },
+      },
+    ],
+    axes: [
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
+        label: "UTC",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
+        label: "Europe/Warsaw",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
+        label: "Asia/Anadyr",
+      },
+      {
+        scaleId: "x-1",
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
+        label: "Pacific/Easter",
+      },
+      { scaleId: "y-1" },
+    ],
+    series: makeSeries(minutelyStart1, minutelyEnd1, 60 * 1000),
+  }
+);
 
 // hourly spring DST
 const hourlyStart1 = Date.parse("2021-03-27T18:00:00Z");
@@ -65,26 +243,26 @@ new Plot<ScatterExtras>(
     axes: [
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("UTC"),
-        tickFormat: genTickFormat("UTC"),
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
         label: "UTC",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Europe/Warsaw"),
-        tickFormat: genTickFormat("Europe/Warsaw"),
+        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
         label: "Europe/Warsaw",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Asia/Anadyr"),
-        tickFormat: genTickFormat("Asia/Anadyr"),
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
         label: "Asia/Anadyr",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Pacific/Easter"),
-        tickFormat: genTickFormat("Pacific/Easter"),
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
         label: "Pacific/Easter",
       },
       { scaleId: "y-1" },
@@ -124,26 +302,26 @@ new Plot<ScatterExtras>(
     axes: [
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("UTC"),
-        tickFormat: genTickFormat("UTC"),
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
         label: "UTC",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Europe/Warsaw"),
-        tickFormat: genTickFormat("Europe/Warsaw"),
+        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
         label: "Europe/Warsaw",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Asia/Anadyr"),
-        tickFormat: genTickFormat("Asia/Anadyr"),
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
         label: "Asia/Anadyr",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Pacific/Easter"),
-        tickFormat: genTickFormat("Pacific/Easter"),
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
         label: "Pacific/Easter",
       },
       { scaleId: "y-1" },
@@ -176,20 +354,20 @@ new Plot<ScatterExtras>(
     axes: [
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("UTC"),
-        tickFormat: genTickFormat("UTC"),
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
         label: "UTC",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Asia/Anadyr"),
-        tickFormat: genTickFormat("Asia/Anadyr"),
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
         label: "Asia/Anadyr",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Pacific/Easter"),
-        tickFormat: genTickFormat("Pacific/Easter"),
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
         label: "Pacific/Easter",
       },
       { scaleId: "y-1" },
@@ -229,20 +407,20 @@ new Plot<ScatterExtras>(
     axes: [
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("UTC"),
-        tickFormat: genTickFormat("UTC"),
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
         label: "UTC",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Asia/Anadyr"),
-        tickFormat: genTickFormat("Asia/Anadyr"),
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
         label: "Asia/Anadyr",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Pacific/Easter"),
-        tickFormat: genTickFormat("Pacific/Easter"),
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
         label: "Pacific/Easter",
       },
       { scaleId: "y-1" },
@@ -282,20 +460,20 @@ new Plot<ScatterExtras>(
     axes: [
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("UTC"),
-        tickFormat: genTickFormat("UTC"),
+        genTicks: genTimeTicks({ timeZone: "UTC" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
         label: "UTC",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Asia/Anadyr"),
-        tickFormat: genTickFormat("Asia/Anadyr"),
+        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
         label: "Asia/Anadyr",
       },
       {
         scaleId: "x-1",
-        genTicks: genTimeTicks("Pacific/Easter"),
-        tickFormat: genTickFormat("Pacific/Easter"),
+        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
+        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
         label: "Pacific/Easter",
       },
       { scaleId: "y-1" },

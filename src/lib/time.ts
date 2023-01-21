@@ -1,13 +1,15 @@
-import { DrawContext, PlotAxis, Scale, SeriesBase } from "./types";
-const milisecond = 1;
-const second = 1000 * milisecond;
+import { DEFAULT_SPLIT_SPACE, DEFAULT_TIMEZONE } from "./defaults";
+import { PlotAxis } from "./types";
+const millisecond = 1;
+const second = 1000 * millisecond;
 const minute = 60 * second;
 const hour = 60 * minute;
 const day = 24 * hour;
 const month = 30 * day;
 const year = 365 * day;
+
 type TimeUnit =
-  | "miliseconds"
+  | "milliseconds"
   | "seconds"
   | "minutes"
   | "hours"
@@ -19,15 +21,15 @@ type Duration = [number, TimeUnit];
 
 const TIME_INCRS: Duration[] = [
   // second divisors
-  [1, "miliseconds"],
-  [2, "miliseconds"],
-  [5, "miliseconds"],
-  [10, "miliseconds"],
-  [20, "miliseconds"],
-  [50, "miliseconds"],
-  [100, "miliseconds"],
-  [200, "miliseconds"],
-  [500, "miliseconds"],
+  [1, "milliseconds"],
+  [2, "milliseconds"],
+  [5, "milliseconds"],
+  [10, "milliseconds"],
+  [20, "milliseconds"],
+  [50, "milliseconds"],
+  [100, "milliseconds"],
+  [200, "milliseconds"],
+  [500, "milliseconds"],
   // minute divisors
   [1, "seconds"],
   [5, "seconds"],
@@ -71,10 +73,10 @@ const TIME_INCRS: Duration[] = [
   [100, "years"],
 ];
 
-const durationToMiliseconds = (duration: Duration): number => {
+const durationToMilliseconds = (duration: Duration): number => {
   const [value, unit] = duration;
   switch (unit) {
-    case "miliseconds":
+    case "milliseconds":
       return value;
     case "seconds":
       return value * second;
@@ -91,9 +93,9 @@ const durationToMiliseconds = (duration: Duration): number => {
   }
 };
 
-const addUTCMiliseconds = (date: number | Date, deltaMiliseconds: number) => {
+const addUTCMilliseconds = (date: number | Date, deltaMilliseconds: number) => {
   const result = new Date(date);
-  result.setUTCMilliseconds(result.getUTCMilliseconds() + deltaMiliseconds);
+  result.setUTCMilliseconds(result.getUTCMilliseconds() + deltaMilliseconds);
   return result.getTime();
 };
 
@@ -127,13 +129,11 @@ const addUTCMonths = (date: number | Date, deltaMonths: number) => {
   return result.getTime();
 };
 
-const space = 60;
-
 const addUTC = (date: number | Date, delta: Duration): number => {
   const [deltaValue, deltaUnit] = delta;
   switch (deltaUnit) {
-    case "miliseconds":
-      return addUTCMiliseconds(date, deltaValue);
+    case "milliseconds":
+      return addUTCMilliseconds(date, deltaValue);
     case "seconds":
       return addUTCSeconds(date, deltaValue);
     case "minutes":
@@ -167,7 +167,7 @@ const makeFirstTick = (
     result.setUTCHours(-getTimezoneOffsetHours(result, timeZone), 0, 0, 0);
   };
   switch (incrUnit) {
-    case "miliseconds":
+    case "milliseconds":
       result.setUTCMilliseconds(
         Math.ceil(result.getUTCMilliseconds() / incrValue) * incrValue
       );
@@ -210,9 +210,16 @@ const makeFirstTick = (
   return result.getTime();
 };
 
-export const genTimeTicks =
-  <S extends SeriesBase = SeriesBase>(timeZone: string = "UTC") =>
-  (drawContext: DrawContext<S>, scale: Scale) => {
+type GenTimeTicksOpts = {
+  timeZone?: string;
+  space?: number;
+};
+
+export const genTimeTicks = ({
+  timeZone = DEFAULT_TIMEZONE,
+  space = DEFAULT_SPLIT_SPACE,
+}: GenTimeTicksOpts): PlotAxis["genTicks"] => {
+  return ({ drawContext, scale }) => {
     if (scale.limits.autorange) {
       return [];
     }
@@ -220,8 +227,8 @@ export const genTimeTicks =
     const range = scale.limits.fixed.max - scale.limits.fixed.min;
     const splitDistance = range / splitsCount;
     const [incrValue, incrUnit] = TIME_INCRS.find(
-      (a) => durationToMiliseconds(a) >= splitDistance
-    ) ?? [1, "miliseconds"];
+      (a) => durationToMilliseconds(a) >= splitDistance
+    ) ?? [1, "milliseconds"];
 
     const firstTick = makeFirstTick(
       scale.limits.fixed.min,
@@ -235,7 +242,7 @@ export const genTimeTicks =
     let candidate: number;
     while (true) {
       switch (incrUnit) {
-        case "miliseconds":
+        case "milliseconds":
         case "seconds":
         case "minutes":
         case "hours": {
@@ -276,6 +283,7 @@ export const genTimeTicks =
 
     return splits;
   };
+};
 
 const isTimeFormatPartDifferent = (
   a: Intl.DateTimeFormatPart[],
@@ -287,9 +295,14 @@ const isTimeFormatPartDifferent = (
     b.find((candidate) => candidate.type === type)?.value
   );
 };
-export const genTickFormat = <S extends SeriesBase = SeriesBase>(
-  timeZone: string = "UTC"
-) => {
+
+type MakeTimeTickFormatOpts = {
+  timeZone?: string;
+};
+
+export const makeTimeTickFormat = ({
+  timeZone = DEFAULT_TIMEZONE,
+}: MakeTimeTickFormatOpts): PlotAxis["tickFormat"] => {
   const formatter = new Intl.DateTimeFormat("en", {
     year: "numeric",
     day: "numeric",
@@ -302,14 +315,14 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
     timeZoneName: "short",
     timeZone,
   });
-  return (drawContext: DrawContext<S>, scale: Scale, ticks: number[]) => {
+  return ({ ticks }) => {
     const splitMs = ticks[1] - ticks[0];
-    const showHours = splitMs < durationToMiliseconds([1, "days"]);
-    const showSeconds = splitMs < durationToMiliseconds([1, "minutes"]);
-    const showMiliseconds = splitMs < durationToMiliseconds([1, "seconds"]);
+    const showHours = splitMs < durationToMilliseconds([1, "days"]);
+    const showSeconds = splitMs < durationToMilliseconds([1, "minutes"]);
+    const showMilliseconds = splitMs < durationToMilliseconds([1, "seconds"]);
 
     return ticks
-      .map((tick, i) => {
+      .map((tick) => {
         return formatter.formatToParts(new Date(tick));
       })
       .map((curr, index, arr) => {
@@ -322,42 +335,43 @@ export const genTickFormat = <S extends SeriesBase = SeriesBase>(
         const newMonth =
           index === 0 || isTimeFormatPartDifferent(curr, prev, "month");
         const newHour =
-          showHours &&
-          (index === 0 || isTimeFormatPartDifferent(curr, prev, "hour"));
+          index === 0 || isTimeFormatPartDifferent(curr, prev, "hour");
         const newTimeZoneName =
-          showHours &&
-          (index === 0 ||
-            isTimeFormatPartDifferent(curr, prev, "timeZoneName"));
+          index === 0 || isTimeFormatPartDifferent(curr, prev, "timeZoneName");
         const newMinute =
-          showHours &&
-          (index === 0 || isTimeFormatPartDifferent(curr, prev, "minute"));
+          index === 0 || isTimeFormatPartDifferent(curr, prev, "minute");
         const newSecond =
           index === 0 || isTimeFormatPartDifferent(curr, prev, "second");
-        const newMilisecond =
+        const newMillisecond =
           index === 0 ||
           isTimeFormatPartDifferent(curr, prev, "fractionalSecond");
 
         const visibleParts: (string | undefined)[] = [];
-        if (newHour || newMinute || newTimeZoneName) {
+        if (
+          showHours &&
+          (newHour ||
+            newMinute ||
+            newTimeZoneName ||
+            newSecond ||
+            newMillisecond)
+        ) {
           const h = curr.find((a) => a.type === "hour")?.value;
           const m = curr.find((a) => a.type === "minute")?.value;
           const tz = curr.find((a) => a.type === "timeZoneName")?.value;
-          visibleParts.push(newTimeZoneName ? `${h}:${m} ${tz}` : `${h}:${m}`);
-          if (showSeconds || showMiliseconds) {
+          let secondsPart = "";
+          if (showSeconds) {
             const s = curr.find((a) => a.type === "second")?.value;
             const ms = curr.find((a) => a.type === "fractionalSecond")?.value;
-            visibleParts.push(
-              newTimeZoneName ? `${h}:${m} ${tz}` : `${h}:${m}`
-            );
-            visibleParts.push(
-              (showSeconds ? `:${s}` : "") + (showMiliseconds ? `:${ms}` : "")
-            );
+            secondsPart = `:${s}` + (showMilliseconds ? `.${ms}` : "");
           }
+          visibleParts.push(
+            `${h}:${m}${secondsPart}` + (newTimeZoneName ? ` ${tz}` : "")
+          );
         }
         if (newDay || newMonth) {
           visibleParts.push(
             [
-              newMonth && curr.find((a) => a.type === "month")?.value,
+              curr.find((a) => a.type === "month")?.value,
               newDay && curr.find((a) => a.type === "day")?.value,
             ]
               .filter(Boolean)
