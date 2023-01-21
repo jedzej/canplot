@@ -57,21 +57,21 @@ const plot = new Plot(
       },
       {
         type: "custom",
-        draw: (drawContext) => {
-          drawContext.ctx.beginPath();
-          drawContext.ctx.fillStyle = "green";
-          drawContext.ctx.fillRect(10, 10, 100, 100);
-          drawContext.ctx.closePath();
+        draw: (frame) => {
+          frame.ctx.beginPath();
+          frame.ctx.fillStyle = "green";
+          frame.ctx.fillRect(10, 10, 100, 100);
+          frame.ctx.closePath();
         },
       },
       {
         type: "custom",
         layer: "top",
-        draw: (drawContext) => {
-          drawContext.ctx.beginPath();
-          drawContext.ctx.fillStyle = "green";
-          drawContext.ctx.fillRect(10, 200, 100, 100);
-          drawContext.ctx.closePath();
+        draw: (frame) => {
+          frame.ctx.beginPath();
+          frame.ctx.fillStyle = "green";
+          frame.ctx.fillRect(10, 200, 100, 100);
+          frame.ctx.closePath();
         },
       },
     ],

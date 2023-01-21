@@ -1,15 +1,15 @@
 import { applyStyles, valToPos } from "./helpers";
 import {
   CustomFacet,
-  DrawContext,
+  PlotDrawFrame,
   FacetLayer,
   HLineFacet,
   SpanFacet,
   VLineFacet,
 } from "./types";
 
-const getScale = (drawContext: DrawContext, scaleId: string) => {
-  const scale = drawContext.drawConfig.scales.find(
+const getScale = (frame: PlotDrawFrame, scaleId: string) => {
+  const scale = frame.inputParams.scales.find(
     (scale) => scale.id === scaleId
   );
   if (!scale) {
@@ -18,13 +18,13 @@ const getScale = (drawContext: DrawContext, scaleId: string) => {
   return scale;
 };
 
-const drawVLineFacet = (drawContext: DrawContext, facet: VLineFacet) => {
-  const { ctx, chartArea } = drawContext;
-  const scale = getScale(drawContext, facet.scaleId);
+const drawVLineFacet = (frame: PlotDrawFrame, facet: VLineFacet) => {
+  const { ctx, chartArea } = frame;
+  const scale = getScale(frame, facet.scaleId);
   if (!scale) {
     return;
   }
-  const x = valToPos(drawContext, facet.x, scale);
+  const x = valToPos(frame, facet.x, scale);
   ctx.save();
   applyStyles(ctx, facet.style);
   ctx.beginPath();
@@ -34,13 +34,13 @@ const drawVLineFacet = (drawContext: DrawContext, facet: VLineFacet) => {
   ctx.restore();
 };
 
-const drawHLineFacet = (drawContext: DrawContext, facet: HLineFacet) => {
-  const { ctx, chartArea } = drawContext;
-  const scale = getScale(drawContext, facet.scaleId);
+const drawHLineFacet = (frame: PlotDrawFrame, facet: HLineFacet) => {
+  const { ctx, chartArea } = frame;
+  const scale = getScale(frame, facet.scaleId);
   if (!scale) {
     return;
   }
-  const y = valToPos(drawContext, facet.y, scale);
+  const y = valToPos(frame, facet.y, scale);
   ctx.save();
   applyStyles(ctx, facet.style);
   ctx.beginPath();
@@ -50,35 +50,35 @@ const drawHLineFacet = (drawContext: DrawContext, facet: HLineFacet) => {
   ctx.restore();
 };
 
-const drawSpanFacet = (drawContext: DrawContext, facet: SpanFacet) => {
-  const { ctx, chartArea } = drawContext;
+const drawSpanFacet = (frame: PlotDrawFrame, facet: SpanFacet) => {
+  const { ctx, chartArea } = frame;
   let x0 = chartArea.x;
   let x1 = chartArea.x + chartArea.width;
   let y0 = chartArea.y;
   let y1 = chartArea.y + chartArea.height;
 
   if (facet.x) {
-    const scale = getScale(drawContext, facet.x.scaleId);
+    const scale = getScale(frame, facet.x.scaleId);
     if (!scale) {
       return;
     }
     if (typeof facet.x.min === "number") {
-      x0 = Math.ceil(valToPos(drawContext, facet.x.min, scale));
+      x0 = Math.ceil(valToPos(frame, facet.x.min, scale));
     }
     if (typeof facet.x.max === "number") {
-      x1 = Math.ceil(valToPos(drawContext, facet.x.max, scale));
+      x1 = Math.ceil(valToPos(frame, facet.x.max, scale));
     }
   }
   if (facet.y) {
-    const scale = getScale(drawContext, facet.y.scaleId);
+    const scale = getScale(frame, facet.y.scaleId);
     if (!scale) {
       return;
     }
     if (typeof facet.y.min === "number") {
-      y0 = Math.ceil(valToPos(drawContext, facet.y.min, scale));
+      y0 = Math.ceil(valToPos(frame, facet.y.min, scale));
     }
     if (typeof facet.y.max === "number") {
-      y1 = Math.ceil(valToPos(drawContext, facet.y.max, scale));
+      y1 = Math.ceil(valToPos(frame, facet.y.max, scale));
     }
   }
   ctx.save();
@@ -88,15 +88,15 @@ const drawSpanFacet = (drawContext: DrawContext, facet: SpanFacet) => {
   ctx.restore();
 };
 
-const drawCustomFacet = (drawContext: DrawContext, facet: CustomFacet) => {
-  drawContext.ctx.save();
-  applyStyles(drawContext.ctx, facet.style);
-  facet.draw(drawContext, facet);
-  drawContext.ctx.restore();
+const drawCustomFacet = (frame: PlotDrawFrame, facet: CustomFacet) => {
+  frame.ctx.save();
+  applyStyles(frame.ctx, facet.style);
+  facet.draw(frame, facet);
+  frame.ctx.restore();
 };
 
-export const drawFacets = (drawContext: DrawContext, layer: FacetLayer) => {
-  const { drawConfig } = drawContext;
+export const drawFacets = (frame: PlotDrawFrame, layer: FacetLayer) => {
+  const { inputParams: drawConfig } = frame;
   const facets =
     drawConfig.facets?.filter((facet) => {
       const currentLayer = facet.layer ?? "bottom";
@@ -106,16 +106,16 @@ export const drawFacets = (drawContext: DrawContext, layer: FacetLayer) => {
   for (const facet of facets) {
     switch (facet.type) {
       case "custom":
-        drawCustomFacet(drawContext, facet);
+        drawCustomFacet(frame, facet);
         break;
       case "v-line":
-        drawVLineFacet(drawContext, facet);
+        drawVLineFacet(frame, facet);
         break;
       case "h-line":
-        drawHLineFacet(drawContext, facet);
+        drawHLineFacet(frame, facet);
         break;
       case "span":
-        drawSpanFacet(drawContext, facet);
+        drawSpanFacet(frame, facet);
         break;
     }
   }

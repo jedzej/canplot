@@ -1,10 +1,10 @@
 import { isXScale } from "./helpers";
 import { MakeLimits } from "./types";
 
-export const makeAutoLimits: MakeLimits = ({ drawContext, scaleId }) => {
+export const makeAutoLimits: MakeLimits = ({ frame, scaleId }) => {
   let min = +Infinity;
   let max = -Infinity;
-  for (const series of drawContext.drawConfig.series) {
+  for (const series of frame.inputParams.series) {
     if (isXScale(scaleId)) {
       if (series.xScaleId !== scaleId) {
         continue;

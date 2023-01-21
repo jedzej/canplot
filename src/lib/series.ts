@@ -1,7 +1,7 @@
-import { DrawContext } from "./types";
+import { PlotDrawFrame } from "./types";
 
-export const drawSeries = (drawContext: DrawContext) => {
-  const { ctx, chartArea, drawConfig } = drawContext;
+export const drawSeries = (frame: PlotDrawFrame) => {
+  const { ctx, chartArea, inputParams: drawConfig } = frame;
   ctx.save();
 
   const clipPath = new Path2D();
@@ -18,8 +18,8 @@ export const drawSeries = (drawContext: DrawContext) => {
     if (!xScale || !yScale) {
       continue;
     }
-    series.plotter?.(drawContext, series, xScale, yScale);
+    series.plotter?.(frame, series, xScale, yScale);
   }
 
-  drawContext.ctx.restore();
+  frame.ctx.restore();
 };

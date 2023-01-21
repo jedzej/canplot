@@ -10,8 +10,8 @@ export const scatterPlotter = ({
   style,
   radius = 5,
 }: ScatterPlotterOpts = {}): Plotter => {
-  return (drawContext, singleSeries, xScale, yScale) => {
-    const ctx = drawContext.ctx;
+  return (frame, singleSeries, xScale, yScale) => {
+    const ctx = frame.ctx;
     ctx.save();
     ctx.beginPath();
     applyStyles(ctx, style);
@@ -22,8 +22,8 @@ export const scatterPlotter = ({
       if (x === undefined || y === undefined) {
         continue;
       }
-      const xPos = valToPos(drawContext, x, xScale);
-      const yPos = valToPos(drawContext, y, yScale);
+      const xPos = valToPos(frame, x, xScale);
+      const yPos = valToPos(frame, y, yScale);
       ctx.moveTo(xPos + radius, yPos);
       ctx.arc(xPos, yPos, radius, 0, 2 * Math.PI);
     }

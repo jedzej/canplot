@@ -1,11 +1,11 @@
 import { Plot } from "./Plot";
 
 export type Hooks = {
-  onInit?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
-  beforeClear?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
-  afterClear?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
-  afterSeries?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
-  afterAxes?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
+  onInit?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
+  beforeClear?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
+  afterClear?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
+  afterSeries?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
+  afterAxes?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
   onDestroy?: (opts: { plot: Plot }) => void;
 };
 
@@ -39,7 +39,7 @@ export type XScaleId = `x-${string}`;
 export type YScaleId = `y-${string}`;
 
 export type MakeLimitsOpts = {
-  drawContext: Omit<DrawContext, "limits">;
+  frame: Omit<PlotDrawFrame, "limits">;
   scaleId: XScaleId | YScaleId;
 };
 
@@ -56,25 +56,24 @@ export type SeriesBase = {
   yScaleId: YScaleId;
   x: number[];
   y: number[];
-  // style?: Style;
   plotter: Plotter;
 };
 
 export type Plotter = (
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   series: SeriesBase,
   xScale: Scale,
   yScale: Scale
 ) => void;
 
 export type PlotAxisGenTicksOpts = {
-  drawContext: DrawContext;
+  frame: PlotDrawFrame;
   scale: Scale;
   axis: PlotAxis;
 };
 
 export type PlotAxisTickFormatOpts = {
-  drawContext: DrawContext;
+  frame: PlotDrawFrame;
   scale: Scale;
   ticks: number[];
 };
@@ -114,7 +113,7 @@ export type HLineFacet = {
 
 export type CustomFacet = {
   type: "custom";
-  draw: (drawContext: DrawContext, facet: CustomFacet) => void;
+  draw: (frame: PlotDrawFrame, facet: CustomFacet) => void;
   payload?: unknown;
   style?: Style;
 };
@@ -148,7 +147,7 @@ type NormalizedPadding = {
   left: number;
 };
 
-export type PlotDrawConfig = {
+export type PlotDrawInputParams = {
   padding?: number | NormalizedPadding;
   axes: PlotAxis[];
   scales: Scale[];
@@ -157,12 +156,13 @@ export type PlotDrawConfig = {
 };
 
 export type PlotPlugin = {
-  transformDrawConfig?: (params: PlotDrawConfig) => PlotDrawConfig;
+  transformInputParams?: (inputParams: PlotDrawInputParams) => PlotDrawInputParams;
+  transformFrame?: (frame: PlotDrawFrame) => PlotDrawFrame;
   hooks?: Hooks;
 };
 
-export type DrawContext = {
-  drawConfig: PlotDrawConfig;
+export type PlotDrawFrame = {
+  inputParams: PlotDrawInputParams;
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
   limits: Record<Scale["id"], Limits>;

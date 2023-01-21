@@ -5,7 +5,7 @@ import {
 } from "./defaults";
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
 import {
-  DrawContext,
+  PlotDrawFrame,
   PlotAxis,
   PlotAxisGenTicks,
   PlotAxisTickFormat,
@@ -26,10 +26,10 @@ type MakeGenTicksDefaultOpts = {
 export const makeGenTicksDefault = ({
   space = DEFAULT_SPLIT_SPACE,
 }: MakeGenTicksDefaultOpts = {}): PlotAxisGenTicks => {
-  return ({ drawContext, scale }) => {
-    const limits = drawContext.limits[scale.id];
+  return ({ frame: frame, scale }) => {
+    const limits = frame.limits[scale.id];
     const ticks = [];
-    const unnormalizedIncr = pxToValDistance(drawContext, space, scale);
+    const unnormalizedIncr = pxToValDistance(frame, space, scale);
     const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
     let curr =
       limits.min % incr < Number.EPSILON
@@ -50,26 +50,30 @@ const tickFormat: PlotAxisTickFormat = ({ ticks }) => {
 };
 
 const drawYTicks = (
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   axis: PlotAxis,
   scale: Scale,
   x: number
 ) => {
-  const { ctx } = drawContext;
+  const { ctx } = frame;
   ctx.save();
   applyStyles(ctx, { ...axis.style, ...axis.tickStyle });
   ctx.beginPath();
   const position = axis.position ?? DEFAULT_POSITION;
   const tickSize = axis.tickSize ?? 5;
   const ticks =
-    (axis.genTicks ?? makeGenTicksDefault())({ drawContext, scale, axis }) ??
+    (axis.genTicks ?? makeGenTicksDefault())({ frame: frame, scale, axis }) ??
     [];
-  const labels = (axis.tickFormat ?? tickFormat)({ drawContext, scale, ticks });
+  const labels = (axis.tickFormat ?? tickFormat)({
+    frame: frame,
+    scale,
+    ticks,
+  });
 
   const x0 = x;
   const x1 = position === "primary" ? x - tickSize : x + tickSize;
   for (let i = 0; i < ticks.length; i++) {
-    const y = valToPos(drawContext, ticks[i], scale);
+    const y = valToPos(frame, ticks[i], scale);
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
     ctx.textAlign = position === "primary" ? "right" : "left";
@@ -102,22 +106,26 @@ const drawYAxis = (
 };
 
 const drawXTicks = (
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   axis: PlotAxis,
   scale: Scale,
   y0: number,
   y1: number
 ) => {
-  const { ctx } = drawContext;
+  const { ctx } = frame;
   ctx.save();
   applyStyles(ctx, axis.style);
   ctx.beginPath();
   const ticks =
-    (axis.genTicks ?? makeGenTicksDefault())({ drawContext, scale, axis }) ??
+    (axis.genTicks ?? makeGenTicksDefault())({ frame: frame, scale, axis }) ??
     [];
-  const labels = (axis.tickFormat ?? tickFormat)({ drawContext, scale, ticks });
+  const labels = (axis.tickFormat ?? tickFormat)({
+    frame: frame,
+    scale,
+    ticks,
+  });
   for (let i = 0; i < ticks.length; i++) {
-    const x = valToPos(drawContext, ticks[i], scale);
+    const x = valToPos(frame, ticks[i], scale);
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
     ctx.textAlign = "center";
@@ -133,9 +141,9 @@ const drawXTicks = (
   ctx.stroke();
   ctx.restore();
 };
-const drawXLabel = (drawContext: DrawContext, axis: PlotAxis, y: number) => {
+const drawXLabel = (frame: PlotDrawFrame, axis: PlotAxis, y: number) => {
   if (!axis.label) return;
-  const { ctx } = drawContext;
+  const { ctx } = frame;
   ctx.save();
   ctx.textAlign = "center";
   let x: number;
@@ -143,15 +151,15 @@ const drawXLabel = (drawContext: DrawContext, axis: PlotAxis, y: number) => {
   switch (axis.labelAlign ?? "center") {
     case "left":
       textAlign = "left";
-      x = drawContext.chartArea.x;
+      x = frame.chartArea.x;
       break;
     case "right":
       textAlign = "right";
-      x = drawContext.chartArea.x + drawContext.chartArea.width;
+      x = frame.chartArea.x + frame.chartArea.width;
       break;
     case "center":
       textAlign = "center";
-      x = drawContext.chartArea.x + drawContext.chartArea.width / 2;
+      x = frame.chartArea.x + frame.chartArea.width / 2;
       break;
   }
   ctx.textBaseline = "top";
@@ -177,8 +185,14 @@ const drawXAxis = (
   ctx.restore();
 };
 
-export const drawAxes = (drawContext: DrawContext) => {
-  const { ctx, chartArea, drawConfig, canvasSize, padding } = drawContext;
+export const drawAxes = (frame: PlotDrawFrame) => {
+  const {
+    ctx,
+    chartArea,
+    inputParams: drawConfig,
+    canvasSize,
+    padding,
+  } = frame;
   const chartAreaLeft = chartArea.x;
   const chartAreaRight = chartArea.x + chartArea.width;
   const chartAreaTop = chartArea.y;
@@ -207,33 +221,27 @@ export const drawAxes = (drawContext: DrawContext) => {
           chartAreaRight
         );
         drawXTicks(
-          drawContext,
+          frame,
           axis,
           scale,
           currentBottomOffset,
           currentBottomOffset + (axis.tickSize ?? 6)
         );
-        drawXLabel(drawContext, axis, currentBottomOffset);
+        drawXLabel(frame, axis, currentBottomOffset);
       } else {
         currentTopOffset += size;
         drawXAxis(ctx, axis, currentTopOffset, chartAreaLeft, chartAreaRight);
-        drawXTicks(
-          drawContext,
-          axis,
-          scale,
-          currentTopOffset,
-          currentTopOffset - 6
-        );
+        drawXTicks(frame, axis, scale, currentTopOffset, currentTopOffset - 6);
       }
     } else {
       if (position === "primary") {
         currentLeftOffset += size;
         drawYAxis(ctx, axis, currentLeftOffset, chartAreaTop, chartAreaBottom);
-        drawYTicks(drawContext, axis, scale, currentLeftOffset);
+        drawYTicks(frame, axis, scale, currentLeftOffset);
       } else {
         currentRightOffset -= size;
         drawYAxis(ctx, axis, currentRightOffset, chartAreaTop, chartAreaBottom);
-        drawYTicks(drawContext, axis, scale, currentRightOffset);
+        drawYTicks(frame, axis, scale, currentRightOffset);
       }
     }
   }

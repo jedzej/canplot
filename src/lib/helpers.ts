@@ -1,4 +1,4 @@
-import { DrawContext, Scale, Style } from "./types";
+import { PlotDrawFrame, Scale, Style } from "./types";
 import { clamp } from "./utils";
 
 export const isXScale = (scale: Scale | Scale["id"]) =>
@@ -7,25 +7,25 @@ export const isXScale = (scale: Scale | Scale["id"]) =>
     : scale.id.startsWith("x-");
 
 export const valToPxDistance = (
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   val: number,
   scale: Scale
 ) => {
-  const chartArea = drawContext.chartArea;
-  const { min, max } = drawContext.limits[scale.id];
+  const chartArea = frame.chartArea;
+  const { min, max } = frame.limits[scale.id];
   const factor =
     (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
   return val * factor;
 };
 
 export const valToPos = (
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   val: number,
   scale: Scale
 ) => {
-  const { min } = drawContext.limits[scale.id];
-  const chartArea = drawContext.chartArea;
-  const relativePosition = valToPxDistance(drawContext, val - min, scale);
+  const { min } = frame.limits[scale.id];
+  const chartArea = frame.chartArea;
+  const relativePosition = valToPxDistance(frame, val - min, scale);
   if (isXScale(scale)) {
     return clamp(
       chartArea.x + relativePosition,
@@ -42,24 +42,24 @@ export const valToPos = (
 };
 
 export const pxToValDistance = (
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   pxDistance: number,
   scale: Scale
 ) => {
-  const { min, max } = drawContext.limits[scale.id];
-  const chartArea = drawContext.chartArea;
+  const { min, max } = frame.limits[scale.id];
+  const chartArea = frame.chartArea;
   const factor =
     (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
   return pxDistance / factor;
 };
 
 export const posToVal = (
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   pos: number,
   scale: Scale
 ) => {
-  const { min, max } = drawContext.limits[scale.id];
-  const relativePosition = pxToValDistance(drawContext, pos, scale);
+  const { min, max } = frame.limits[scale.id];
+  const relativePosition = pxToValDistance(frame, pos, scale);
   return isXScale(scale) ? min + relativePosition : max - relativePosition;
 };
 

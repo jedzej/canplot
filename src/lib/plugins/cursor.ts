@@ -1,6 +1,6 @@
 import { posToVal } from "../helpers";
 import { Plot } from "../Plot";
-import { DrawContext, PlotPlugin, Scale } from "../types";
+import { PlotDrawFrame, PlotPlugin, Scale } from "../types";
 import { clamp } from "../utils";
 
 export type CursorPosition = {
@@ -17,20 +17,20 @@ export type CursorPosition = {
 
 type HoverEvent = {
   plot: Plot;
-  drawContext: DrawContext;
+  frame: PlotDrawFrame;
   position?: CursorPosition;
 };
 
 type ClickEvent = {
   plot: Plot;
-  drawContext: DrawContext;
+  frame: PlotDrawFrame;
   position: CursorPosition;
 };
 
 type SpanSelectEvent = {
   phase: "start" | "move" | "end";
   plot: Plot;
-  drawContext: DrawContext;
+  frame: PlotDrawFrame;
   positionStart: CursorPosition;
   positionEnd: CursorPosition;
 };
@@ -53,10 +53,10 @@ type CursorPlugin = {
 
 const getPosition = (
   e: MouseEvent,
-  drawContext: DrawContext,
+  frame: PlotDrawFrame,
   fallbackToBoundaries = false
 ): CursorPosition | undefined => {
-  const rect = drawContext.ctx.canvas.getBoundingClientRect();
+  const rect = frame.ctx.canvas.getBoundingClientRect();
   const screen = {
     x: e.clientX,
     y: e.clientY,
@@ -65,22 +65,22 @@ const getPosition = (
     x: e.clientX - rect.left,
     y: e.clientY - rect.top,
   };
-  const posX = e.clientX - rect.left - drawContext.chartArea.x;
-  const posY = e.clientY - rect.top - drawContext.chartArea.y;
+  const posX = e.clientX - rect.left - frame.chartArea.x;
+  const posY = e.clientY - rect.top - frame.chartArea.y;
 
-  const clampedPosX = clamp(posX, 0, drawContext.chartArea.width);
-  const clampedPosY = clamp(posY, 0, drawContext.chartArea.height);
+  const clampedPosX = clamp(posX, 0, frame.chartArea.width);
+  const clampedPosY = clamp(posY, 0, frame.chartArea.height);
 
   if (!fallbackToBoundaries && (clampedPosX !== posX || clampedPosY !== posY)) {
     return undefined;
   }
 
   const scaled: Record<Scale["id"], number> = {};
-  for (const scale of drawContext.drawConfig.scales) {
+  for (const scale of frame.inputParams.scales) {
     if (scale.id.startsWith("x-")) {
-      scaled[scale.id] = posToVal(drawContext, clampedPosX, scale);
+      scaled[scale.id] = posToVal(frame, clampedPosX, scale);
     } else {
-      scaled[scale.id] = posToVal(drawContext, clampedPosY, scale);
+      scaled[scale.id] = posToVal(frame, clampedPosY, scale);
     }
   }
   return {
@@ -131,9 +131,9 @@ export const makeCursorPlugin = (
         // mouse down
         mouseDownListener = (e: MouseEvent) => {
           if (spanSelectListeners.size === 0) return;
-          const drawContext = plot.getDrawContext();
+          const frame = plot.getDrawContext();
 
-          positionStart = getPosition(e, drawContext);
+          positionStart = getPosition(e, frame);
 
           if (!positionStart) return;
 
@@ -141,7 +141,7 @@ export const makeCursorPlugin = (
             listener({
               phase: "start",
               plot,
-              drawContext,
+              frame,
               positionStart,
               positionEnd: positionStart,
             });
@@ -153,15 +153,15 @@ export const makeCursorPlugin = (
         mouseMoveListener = (e: MouseEvent) => {
           if (hoverListeners.size === 0 && spanSelectListeners.size === 0)
             return;
-          const drawContext = plot.getDrawContext();
+          const frame = plot.getDrawContext();
 
-          const position = getPosition(e, drawContext);
+          const position = getPosition(e, frame);
 
           for (const listener of hoverListeners) {
-            listener({ plot, drawContext, position });
+            listener({ plot, frame, position });
           }
 
-          const positionEnd = getPosition(e, drawContext, true);
+          const positionEnd = getPosition(e, frame, true);
 
           if (!positionStart || !positionEnd) return;
 
@@ -169,7 +169,7 @@ export const makeCursorPlugin = (
             listener({
               phase: "move",
               plot,
-              drawContext,
+              frame,
               positionStart,
               positionEnd,
             });
@@ -182,9 +182,9 @@ export const makeCursorPlugin = (
           if (spanSelectListeners.size === 0) return;
 
           if (!positionStart) return;
-          const drawContext = plot.getDrawContext();
+          const frame = plot.getDrawContext();
 
-          const positionEnd = getPosition(e, drawContext, true);
+          const positionEnd = getPosition(e, frame, true);
 
           if (!positionEnd) return;
 
@@ -192,7 +192,7 @@ export const makeCursorPlugin = (
             listener({
               phase: "end",
               plot,
-              drawContext,
+              frame,
               positionStart,
               positionEnd,
             });
@@ -204,10 +204,10 @@ export const makeCursorPlugin = (
         // mouse leave
         mouseLeaveListener = () => {
           if (hoverListeners.size === 0) return;
-          const drawContext = plot.getDrawContext();
+          const frame = plot.getDrawContext();
 
           for (const listener of hoverListeners) {
-            listener({ plot, drawContext });
+            listener({ plot, frame });
           }
         };
         canvas.addEventListener("mouseleave", mouseLeaveListener);
@@ -226,14 +226,14 @@ export const makeCursorPlugin = (
           clickTimeout = setTimeout(() => {
             clickTimeout = undefined;
             if (clickListeners.size === 0) return;
-            const drawContext = plot.getDrawContext();
+            const frame = plot.getDrawContext();
 
-            const position = getPosition(e, drawContext);
+            const position = getPosition(e, frame);
 
             if (!position) return;
 
             for (const listener of clickListeners) {
-              listener({ plot, drawContext, position });
+              listener({ plot, frame, position });
             }
           }, 200);
         };
@@ -242,14 +242,14 @@ export const makeCursorPlugin = (
         // dblclick
         mouseDblClickListener = (e) => {
           if (dblclickListeners.size === 0) return;
-          const drawContext = plot.getDrawContext();
+          const frame = plot.getDrawContext();
 
-          const position = getPosition(e, drawContext);
+          const position = getPosition(e, frame);
 
           if (!position) return;
 
           for (const listener of dblclickListeners) {
-            listener({ plot, drawContext, position });
+            listener({ plot, frame, position });
           }
         };
         canvas.addEventListener("dblclick", mouseDblClickListener);

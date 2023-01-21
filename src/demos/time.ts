@@ -4,7 +4,7 @@ import {
   genTimeTicks,
   makeTimeTickFormat,
   SeriesBase,
-  PlotDrawConfig,
+  PlotDrawInputParams,
 } from "../lib/main";
 
 const makeSeries = (
@@ -31,7 +31,7 @@ const makeSeries = (
   ];
 };
 
-const drawConfig: PlotDrawConfig = {
+const drawConfig: PlotDrawInputParams = {
   padding: { left: 20, right: 40, top: 20, bottom: 0 },
   scales: [{ id: "x-1" }, { id: "y-1" }],
   axes: [

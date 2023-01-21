@@ -32,12 +32,12 @@ export const heatmapPlotter = ({
   tileY,
   colorSpace,
 }: HeatmapPlotterOpts): Plotter => {
-  return (drawContext, series, xScale, yScale) => {
+  return (frame, series, xScale, yScale) => {
     const maxZ = Math.max(...z);
     const minZ = Math.min(...z);
     const normalizedZ = z.map((v) => (v - minZ) / (maxZ - minZ));
-    const tileXPx = Math.floor(valToPxDistance(drawContext, tileX, xScale)) + 1;
-    const tileYPx = Math.floor(valToPxDistance(drawContext, tileY, yScale)) + 1;
+    const tileXPx = Math.floor(valToPxDistance(frame, tileX, xScale)) + 1;
+    const tileYPx = Math.floor(valToPxDistance(frame, tileY, yScale)) + 1;
     for (let i = 0; i < series.x.length; i++) {
       const x = series.x[i];
       const y = series.y[i];
@@ -47,7 +47,7 @@ export const heatmapPlotter = ({
         continue;
       }
 
-      const imageData = drawContext.ctx.createImageData(tileXPx, tileYPx);
+      const imageData = frame.ctx.createImageData(tileXPx, tileYPx);
       for (let j = 0; j < imageData.data.length; j += 4) {
         const [r, g, b, a] = colorSpace?.(z) ?? defaultColorSpace(z);
         imageData.data[j] = r;
@@ -55,10 +55,10 @@ export const heatmapPlotter = ({
         imageData.data[j + 2] = b;
         imageData.data[j + 3] = a;
       }
-      drawContext.ctx.putImageData(
+      frame.ctx.putImageData(
         imageData,
-        Math.round(valToPos(drawContext, x, xScale)),
-        Math.round(valToPos(drawContext, y, yScale) - tileYPx)
+        Math.round(valToPos(frame, x, xScale)),
+        Math.round(valToPos(frame, y, yScale) - tileYPx)
       );
     }
   };

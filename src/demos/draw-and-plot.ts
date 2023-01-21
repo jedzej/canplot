@@ -43,19 +43,19 @@ const makePlugin = (): PlotPlugin => {
   let isTracking = false;
   return {
     hooks: {
-      afterSeries: ({ drawContext }) => {
+      afterSeries: ({ frame }) => {
         outputPlot.update((plot) => {
-          plot.series[0].y = drawContext.drawConfig.series[0].y.map((_, i) => {
-            const x = drawContext.drawConfig.series[0].x[i];
-            const y = drawContext.drawConfig.series[0].y[i];
+          plot.series[0].y = frame.inputParams.series[0].y.map((_, i) => {
+            const x = frame.inputParams.series[0].x[i];
+            const y = frame.inputParams.series[0].y[i];
             return produceOutput(x, y);
           });
           return plot;
         });
         document.getElementById("points")!.innerHTML =
-          drawContext.drawConfig.series[0].y.join("\n");
+          frame.inputParams.series[0].y.join("\n");
       },
-      afterAxes({ drawContext, plot }) {
+      afterAxes({ frame, plot }) {
         if (moveListener) {
           plot.getCanvas().removeEventListener("mousemove", moveListener);
         }
@@ -70,22 +70,14 @@ const makePlugin = (): PlotPlugin => {
             return;
           }
           const rect = plot.getCanvas().getBoundingClientRect();
-          const canvasX = e.clientX - rect.left - drawContext.chartArea.x;
-          const canvasY = e.clientY - rect.top - drawContext.chartArea.y;
+          const canvasX = e.clientX - rect.left - frame.chartArea.x;
+          const canvasY = e.clientY - rect.top - frame.chartArea.y;
           const position: Record<Scale["id"], number> = {};
-          for (const scale of drawContext.drawConfig.scales) {
+          for (const scale of frame.inputParams.scales) {
             if (scale.id.startsWith("x-")) {
-              position[scale.id] = helpers.posToVal(
-                drawContext,
-                canvasX,
-                scale
-              );
+              position[scale.id] = helpers.posToVal(frame, canvasX, scale);
             } else {
-              position[scale.id] = helpers.posToVal(
-                drawContext,
-                canvasY,
-                scale
-              );
+              position[scale.id] = helpers.posToVal(frame, canvasY, scale);
             }
           }
           plot.update((plot) => {
@@ -103,9 +95,9 @@ const makePlugin = (): PlotPlugin => {
             return plot;
           });
         };
-        drawContext.ctx.canvas.addEventListener("mousemove", moveListener);
-        drawContext.ctx.canvas.addEventListener("mousedown", mouseDownListener);
-        drawContext.ctx.canvas.addEventListener("mouseup", mouseUpListener);
+        frame.ctx.canvas.addEventListener("mousemove", moveListener);
+        frame.ctx.canvas.addEventListener("mousedown", mouseDownListener);
+        frame.ctx.canvas.addEventListener("mouseup", mouseUpListener);
       },
       onDestroy({ plot }) {
         const canvas = plot.getCanvas();
