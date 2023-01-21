@@ -5,6 +5,7 @@ import {
   genTimeTicks,
   makeTimeTickFormat,
   SeriesBase,
+  PlotDrawConfig,
 } from "../lib/main";
 
 const makeSeries = (
@@ -32,6 +33,43 @@ const makeSeries = (
   ];
 };
 
+const drawConfig: PlotDrawConfig = {
+  padding: { left: 20, right: 40, top: 20, bottom: 0 },
+  scales: [{ id: "x-1" }, { id: "y-1" }],
+  axes: [
+    {
+      scaleId: "x-1",
+      genTicks: genTimeTicks({ timeZone: "UTC", space: 80 }),
+      tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
+      label: "UTC",
+      labelAlign:"right"
+    },
+    {
+      scaleId: "x-1",
+      genTicks: genTimeTicks({ timeZone: "Europe/Warsaw", space: 80 }),
+      tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
+      label: "Europe/Warsaw",
+      labelAlign:"right"
+    },
+    {
+      scaleId: "x-1",
+      genTicks: genTimeTicks({ timeZone: "Asia/Anadyr", space: 80 }),
+      tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
+      label: "Asia/Anadyr",
+      labelAlign:"right"
+    },
+    {
+      scaleId: "x-1",
+      genTicks: genTimeTicks({ timeZone: "Pacific/Easter", space: 80 }),
+      tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
+      label: "Pacific/Easter",
+      labelAlign:"right"
+    },
+    { scaleId: "y-1" },
+  ],
+  series: [],
+};
+
 const appNode = document.getElementById("app")!;
 
 // millisecondly
@@ -41,41 +79,9 @@ const canvasMillisecondly = document.createElement("canvas");
 appNode.appendChild(canvasMillisecondly);
 
 new Plot<ScatterExtras>(
+  { canvas: canvasMillisecondly, dimensions: { width: "auto", height: 350 } },
   {
-    canvas: canvasMillisecondly,
-    plugins: [],
-    dimensions: { width: "auto", height: 250 },
-  },
-  {
-    padding: { left: 20, right: 40, top: 0, bottom: 0 },
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
-        label: "Europe/Warsaw",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2021-03-27T18:00:00Z"),
       Date.parse("2021-03-27T18:00:05Z"),
@@ -91,40 +97,9 @@ const canvasSecondly = document.createElement("canvas");
 appNode.appendChild(canvasSecondly);
 
 new Plot<ScatterExtras>(
+  { canvas: canvasSecondly, dimensions: { width: "auto", height: 350 } },
   {
-    canvas: canvasSecondly,
-    plugins: [],
-    dimensions: { width: "auto", height: 250 },
-  },
-  {
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
-        label: "Europe/Warsaw",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2021-03-27T18:00:00Z"),
       Date.parse("2021-03-27T18:02:00Z"),
@@ -140,40 +115,9 @@ const canvasMinutely = document.createElement("canvas");
 appNode.appendChild(canvasMinutely);
 
 new Plot<ScatterExtras>(
+  { canvas: canvasMinutely, dimensions: { width: "auto", height: 350 } },
   {
-    canvas: canvasMinutely,
-    plugins: [],
-    dimensions: { width: "auto", height: 250 },
-  },
-  {
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
-        label: "Europe/Warsaw",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2021-03-27T18:00:00Z"),
       Date.parse("2021-03-27T19:00:00Z"),
@@ -189,40 +133,9 @@ const canvasHourly1 = document.createElement("canvas");
 appNode.appendChild(canvasHourly1);
 
 new Plot<ScatterExtras>(
+  { canvas: canvasHourly1, dimensions: { width: "auto", height: 350 } },
   {
-    canvas: canvasHourly1,
-    plugins: [],
-    dimensions: { width: "auto", height: 250 },
-  },
-  {
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
-        label: "Europe/Warsaw",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2021-03-27T18:00:00Z"),
       Date.parse("2021-03-29T00:00:00Z"),
@@ -238,40 +151,9 @@ const canvasHourly = document.createElement("canvas");
 appNode.appendChild(canvasHourly);
 
 new Plot<ScatterExtras>(
+  { canvas: canvasHourly, dimensions: { width: "auto", height: 350 } },
   {
-    canvas: canvasHourly,
-    plugins: [],
-    dimensions: { width: "auto", height: 250 },
-  },
-  {
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Europe/Warsaw" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
-        label: "Europe/Warsaw",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2021-10-30T18:00:00Z"),
       Date.parse("2021-11-01T00:00:00Z"),
@@ -287,30 +169,9 @@ const canvas1 = document.createElement("canvas");
 appNode.appendChild(canvas1);
 
 new Plot<ScatterExtras>(
-  { canvas: canvas1, plugins: [], dimensions: { width: "auto", height: 200 } },
+  { canvas: canvas1, dimensions: { width: "auto", height: 350 } },
   {
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2021-12-22T00:00:00Z"),
       Date.parse("2022-01-18T00:00:00Z"),
@@ -326,34 +187,9 @@ const canvasMonthly = document.createElement("canvas");
 appNode.appendChild(canvasMonthly);
 
 new Plot<ScatterExtras>(
+  { canvas: canvasMonthly, dimensions: { width: "auto", height: 350 } },
   {
-    canvas: canvasMonthly,
-    plugins: [],
-    dimensions: { width: "auto", height: 200 },
-  },
-  {
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2020-01-01T00:00:00Z"),
       Date.parse("2022-01-01T00:00:00Z"),
@@ -371,32 +207,10 @@ appNode.appendChild(canvasYearly);
 new Plot<ScatterExtras>(
   {
     canvas: canvasYearly,
-    plugins: [],
-    dimensions: { width: "auto", height: 200 },
+    dimensions: { width: "auto", height: 350 },
   },
   {
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "UTC" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
-        label: "UTC",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Asia/Anadyr" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
-        label: "Asia/Anadyr",
-      },
-      {
-        scaleId: "x-1",
-        genTicks: genTimeTicks({ timeZone: "Pacific/Easter" }),
-        tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
-        label: "Pacific/Easter",
-      },
-      { scaleId: "y-1" },
-    ],
+    ...drawConfig,
     series: makeSeries(
       Date.parse("2002-01-01T00:00:00Z"),
       Date.parse("2022-01-01T00:00:00Z"),

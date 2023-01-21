@@ -42,7 +42,6 @@ const makeAutorangedLimits: MakeLimits = ({ drawContext, scaleId }) => {
 const plot = new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
-    plugins: [],
     dimensions: {
       width: "auto",
       height: 400,

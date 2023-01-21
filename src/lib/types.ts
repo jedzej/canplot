@@ -181,6 +181,6 @@ export type DrawContext<Extras = any> = {
 
 export type StaticConfig<Extras = any> = {
   canvas: HTMLCanvasElement;
-  plugins: PlotPlugin<Extras>[];
+  plugins?: PlotPlugin<Extras>[];
   dimensions: Dimensions;
 };

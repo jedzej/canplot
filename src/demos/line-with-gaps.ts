@@ -3,7 +3,6 @@ import { Plot, LineExtras, linePlotter } from "../lib/main";
 new Plot<LineExtras>(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
-    plugins: [],
     dimensions: {
       width: "auto",
       height: 400,

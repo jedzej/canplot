@@ -10,7 +10,6 @@ import { animationLoop } from "./helpers";
 const plot = new Plot<LineExtras | ScatterExtras>(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
-    plugins: [],
     dimensions: {
       width: "auto",
       height: 400,

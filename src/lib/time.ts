@@ -1,4 +1,8 @@
-import { DEFAULT_SPLIT_SPACE, DEFAULT_TIMEZONE } from "./defaults";
+import {
+  DEFAULT_LOCALE,
+  DEFAULT_SPLIT_SPACE,
+  DEFAULT_TIMEZONE,
+} from "./defaults";
 import { PlotAxis } from "./types";
 const millisecond = 1;
 const second = 1000 * millisecond;
@@ -296,12 +300,16 @@ const isTimeFormatPartDifferent = (
 
 type MakeTimeTickFormatOpts = {
   timeZone?: string;
+  locale?: string;
+  showTimezone?: boolean;
 };
 
 export const makeTimeTickFormat = ({
   timeZone = DEFAULT_TIMEZONE,
+  locale = DEFAULT_LOCALE,
+  showTimezone = true,
 }: MakeTimeTickFormatOpts): PlotAxis["tickFormat"] => {
-  const formatter = new Intl.DateTimeFormat("en", {
+  const formatter = new Intl.DateTimeFormat(locale, {
     year: "numeric",
     day: "numeric",
     month: "short",
@@ -362,7 +370,8 @@ export const makeTimeTickFormat = ({
             secondsPart = `:${s}` + (showMilliseconds ? `.${ms}` : "");
           }
           visibleParts.push(
-            `${h}:${m}${secondsPart}` + (newTimeZoneName ? ` ${tz}` : "")
+            `${h}:${m}${secondsPart}` +
+              (showTimezone && newTimeZoneName ? ` ${tz}` : "")
           );
         }
         if (newDay || newMonth) {

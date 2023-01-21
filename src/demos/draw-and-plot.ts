@@ -20,7 +20,6 @@ const produceOutput = (x: number, yIn: number) => {
 const outputPlot = new Plot<LineExtras>(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#output")!,
-    plugins: [],
     dimensions: {
       width: "auto",
       height: 400,

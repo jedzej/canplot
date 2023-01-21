@@ -160,7 +160,7 @@ export class Plot<Extras = any> {
   destroy() {
     this.parentResizeObserver.disconnect();
     this.#phase = "destroyed";
-    for (const plugin of this.#staticConfig.plugins) {
+    for (const plugin of this.#staticConfig.plugins ?? []) {
       plugin.hooks?.onDestroy?.(this);
     }
   }
@@ -170,7 +170,8 @@ export class Plot<Extras = any> {
       return;
     }
     this.#updateCanvasSize();
-    const drawConfig = this.#staticConfig.plugins.reduce(
+    const plugins = this.#staticConfig.plugins ?? [];
+    const drawConfig = plugins.reduce(
       (acc, plugin) =>
         plugin.transformDrawConfig ? plugin.transformDrawConfig(acc) : acc,
       inputDrawConfig
@@ -179,20 +180,20 @@ export class Plot<Extras = any> {
 
     if (this.#phase === "initializing") {
       // ON INIT HOOK
-      for (const plugin of this.#staticConfig.plugins) {
+      for (const plugin of plugins) {
         plugin.hooks?.onInit?.(drawingContext, this);
       }
       this.#phase = "initialized";
     }
 
     // CLEAR
-    for (const plugin of this.#staticConfig.plugins) {
+    for (const plugin of plugins) {
       plugin.hooks?.beforeClear?.(drawingContext, this);
     }
 
     clearCanvas(drawingContext);
 
-    for (const plugin of this.#staticConfig.plugins) {
+    for (const plugin of plugins) {
       plugin.hooks?.afterClear?.(drawingContext, this);
     }
 
@@ -209,7 +210,7 @@ export class Plot<Extras = any> {
     // DRAW SERIES
     drawSeries(drawingContext);
 
-    for (const plugin of this.#staticConfig.plugins) {
+    for (const plugin of plugins) {
       plugin.hooks?.afterSeries?.(drawingContext, this);
     }
 
@@ -219,7 +220,7 @@ export class Plot<Extras = any> {
     // DRAW AXES
     drawAxes(drawingContext);
 
-    for (const plugin of this.#staticConfig.plugins) {
+    for (const plugin of plugins) {
       plugin.hooks?.afterAxes?.(drawingContext, this);
     }
 
