@@ -1,4 +1,3 @@
-import produce from "immer";
 import { drawAxes } from "./axes";
 import { drawFacets } from "./facets";
 import { isXScale } from "./helpers";
@@ -137,24 +136,33 @@ export class Plot<Extras = any> {
     };
   }
 
-  update(drawConfig: PlotDrawConfig<Extras>) {
-    this.#lastDrawConfig_DO_NOT_USE = drawConfig;
-    this.#draw(drawConfig);
+  update(
+    drawConfig:
+      | PlotDrawConfig<Extras>
+      | ((old: PlotDrawConfig<Extras>) => PlotDrawConfig<Extras>)
+  ) {
+    let effectiveDrawConfig: PlotDrawConfig<Extras>;
+    if (drawConfig instanceof Function) {
+      if (this.#phase === "initialized") {
+        try {
+          effectiveDrawConfig = drawConfig(this.#lastDrawConfig_DO_NOT_USE);
+        } catch (e) {
+          console.error(e);
+          return;
+        }
+      } else {
+        console.error("Cannot update plot before it is initialized");
+        return;
+      }
+    } else {
+      effectiveDrawConfig = drawConfig;
+    }
+    this.#lastDrawConfig_DO_NOT_USE = effectiveDrawConfig;
+    this.#draw(effectiveDrawConfig);
   }
 
   getDrawContext() {
     return this.#makeDrawingContext(this.#lastDrawConfig_DO_NOT_USE);
-  }
-
-  incrementalUpdate(recipe: (draft: PlotDrawConfig<Extras>) => void) {
-    if (this.#phase === "initialized") {
-      try {
-        const config = produce(this.#lastDrawConfig_DO_NOT_USE, recipe);
-        this.update(config);
-      } catch (e) {
-        console.error(e);
-      }
-    }
   }
 
   destroy() {

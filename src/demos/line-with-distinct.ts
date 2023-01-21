@@ -58,21 +58,22 @@ const plot = new Plot<LineExtras>(
 );
 
 animationLoop(() => {
-  plot.incrementalUpdate((draft) => {
+  plot.update((plot) => {
     const t = performance.now() / 1000;
     const arr: number[] = [];
-    arr.length = draft.series[0].x.length;
+    arr.length = plot.series[0].x.length;
     arr.fill(0);
     const s1: number[] = [];
-    s1.length = draft.series[0].x.length;
+    s1.length = plot.series[0].x.length;
     const s2: number[] = [];
-    s2.length = draft.series[0].x.length;
+    s2.length = plot.series[0].x.length;
 
     for (let i = 0; i < arr.length; i++) {
       s1[i] = 2 + Math.sin(i / 10 + t);
       s2[i] = 1 + Math.sin(i / 10 + t);
     }
-    draft.series[0].y = s1;
-    draft.series[1].y = s2;
+    plot.series[0].y = s1;
+    plot.series[1].y = s2;
+    return plot;
   });
 });

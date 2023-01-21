@@ -18,31 +18,33 @@ plugin.addHoverListener((event) => {
 });
 
 plugin.addClickListener((event) => {
-  event.plot.incrementalUpdate((draft) => {
-    draft.facets = [
-      ...(draft.facets ?? []),
+  event.plot.update((old) => ({
+    ...old,
+    facets: [
+      ...(old.facets ?? []),
       {
         type: "v-line",
         scaleId: "x-1",
         x: event.position.scaled["x-1"],
         style: { strokeStyle: "#ff000099" },
       },
-    ];
-  });
+    ],
+  }));
 });
 
 plugin.addDblClickListener((event) => {
-  event.plot.incrementalUpdate((draft) => {
-    draft.facets = [
-      ...(draft.facets ?? []),
+  event.plot.update((old) => ({
+    ...old,
+    facets: [
+      ...(old.facets ?? []),
       {
         type: "h-line",
         scaleId: "y-1",
         y: event.position.scaled["y-1"],
         style: { strokeStyle: "#00444499" },
       },
-    ];
-  });
+    ],
+  }));
 });
 
 new Plot<LineExtras>(

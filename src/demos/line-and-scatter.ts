@@ -121,19 +121,19 @@ const plot = new Plot(
 );
 
 animationLoop(() => {
-  plot.incrementalUpdate((draft) => {
+  plot.update((plot) => {
     const t = performance.now() / 100;
     const arr: number[] = [];
-    arr.length = draft.series[0].x.length;
+    arr.length = plot.series[0].x.length;
     arr.fill(0);
     const s1: number[] = [];
-    s1.length = draft.series[0].x.length;
+    s1.length = plot.series[0].x.length;
     const s2: number[] = [];
-    s2.length = draft.series[0].x.length;
+    s2.length = plot.series[0].x.length;
     const s3: number[] = [];
-    s3.length = draft.series[0].x.length;
+    s3.length = plot.series[0].x.length;
     const s4: number[] = [];
-    s4.length = draft.series[0].x.length;
+    s4.length = plot.series[0].x.length;
 
     for (let i = 0; i < arr.length; i++) {
       s1[i] = 1 + Math.cos(i / 10 + t);
@@ -141,9 +141,10 @@ animationLoop(() => {
       s3[i] = 3 + Math.cos(i / 10 + t);
       s4[i] = 4 + Math.cos(i / 10 + t);
     }
-    draft.series[0].y = s1;
-    draft.series[1].y = s2;
-    draft.series[2].y = s3;
-    draft.series[3].y = s4;
+    plot.series[0].y = s1;
+    plot.series[1].y = s2;
+    plot.series[2].y = s3;
+    plot.series[3].y = s4;
+    return plot;
   });
 });

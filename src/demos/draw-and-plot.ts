@@ -54,12 +54,13 @@ const makePlugin = (): PlotPlugin => {
   return {
     hooks: {
       afterSeries: (drawContext) => {
-        outputPlot.incrementalUpdate((draft) => {
-          draft.series[0].y = drawContext.drawConfig.series[0].y.map((_, i) => {
+        outputPlot.update((plot) => {
+          plot.series[0].y = drawContext.drawConfig.series[0].y.map((_, i) => {
             const x = drawContext.drawConfig.series[0].x[i];
             const y = drawContext.drawConfig.series[0].y[i];
             return produceOutput(x, y);
           });
+          return plot;
         });
         document.getElementById("points")!.innerHTML =
           drawContext.drawConfig.series[0].y.join("\n");
@@ -97,19 +98,20 @@ const makePlugin = (): PlotPlugin => {
               );
             }
           }
-          plot.incrementalUpdate((draft) => {
+          plot.update((plot) => {
             let closestIndex = 0;
-            for (let i = 0; i < draft.series[0].x.length; i++) {
+            for (let i = 0; i < plot.series[0].x.length; i++) {
               closestIndex =
-                Math.abs((draft.series[0].x[i] ?? Infinity) - position["x-1"]) <
+                Math.abs((plot.series[0].x[i] ?? Infinity) - position["x-1"]) <
                 Math.abs(
-                  (draft.series[0].x[closestIndex] ?? Infinity) -
+                  (plot.series[0].x[closestIndex] ?? Infinity) -
                     position["x-1"]
                 )
                   ? i
                   : closestIndex;
             }
-            draft.series[0].y[closestIndex] = position["y-1"];
+            plot.series[0].y[closestIndex] = position["y-1"];
+            return plot;
           });
         };
         drawContext.ctx.canvas.addEventListener("mousemove", moveListener);

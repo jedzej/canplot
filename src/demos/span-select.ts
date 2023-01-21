@@ -7,11 +7,11 @@ new Plot<LineExtras>(
       makeCursorPlugin({
         onSpanSelect: (event) => {
           if (event.phase === "move") {
-            event.plot.incrementalUpdate((draft) => {
-              const spannerFacetIndex = draft.facets?.findIndex(
+            event.plot.update((plot) => {
+              const spannerFacetIndex = plot.facets?.findIndex(
                 (f) => f.id === "spanner"
               )!;
-              draft.facets![spannerFacetIndex] = {
+              plot.facets![spannerFacetIndex] = {
                 id: "spanner",
                 type: "span",
                 style: { strokeStyle: "red", fillStyle: "#00000044" },
@@ -38,17 +38,18 @@ new Plot<LineExtras>(
                   ),
                 },
               };
+              return plot;
             });
           } else if (event.phase === "end") {
-            event.plot.incrementalUpdate((draft) => {
-              const spannerFacetIndex = draft.facets?.findIndex(
+            event.plot.update((plot) => {
+              const spannerFacetIndex = plot.facets?.findIndex(
                 (f) => f.id === "spanner"
               )!;
-              draft.facets![spannerFacetIndex].style = {
+              plot.facets![spannerFacetIndex].style = {
                 fillStyle: "transparent",
               };
-              draft.facets = [
-                ...(draft.facets ?? []),
+              plot.facets = [
+                ...(plot.facets ?? []),
                 {
                   type: "span",
                   style: { fillStyle: "#ff000033" },
@@ -76,15 +77,18 @@ new Plot<LineExtras>(
                   },
                 },
               ];
+              return plot;
             });
           }
         },
       }).bindings,
       makeCursorPlugin({
         onHover: (event) => {
-          event.plot.incrementalUpdate((draft) => {
-            const facet = draft.facets?.find((f) => f.id === "spikeline");
-            if (!facet || facet.type !== "custom") return;
+          event.plot.update((plot) => {
+            const facet = plot.facets?.find((f) => f.id === "spikeline");
+            if (!facet || facet.type !== "custom") {
+              return plot;
+            }
             facet.style = {
               strokeStyle: event.position ? "red" : "transparent",
             };
@@ -94,6 +98,7 @@ new Plot<LineExtras>(
                 posY: event.position.canvas.y,
               };
             }
+            return plot;
           });
         },
       }).bindings,

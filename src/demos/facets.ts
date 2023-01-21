@@ -108,12 +108,13 @@ const plot = new Plot<LineExtras | ScatterExtras>(
 );
 
 animationLoop(() => {
-  plot.incrementalUpdate((draft) => {
-    draft.series[0].y = new Array(draft.series[0].x.length)
+  plot.update((plot) => {
+    plot.series[0].y = new Array(plot.series[0].x.length)
       .fill(0)
       .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100));
-    draft.series[1].y = new Array(draft.series[1].x.length)
+    plot.series[1].y = new Array(plot.series[1].x.length)
       .fill(0)
       .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100));
+    return plot;
   });
 });

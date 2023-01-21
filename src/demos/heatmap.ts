@@ -44,11 +44,12 @@ const plot = new Plot<HeatmapExtras>(
   }
 );
 animationLoop(() => {
-  plot.incrementalUpdate((draft) => {
-    draft.series[0].plotterOptions.z = new Array(
-      draft.series[0].plotterOptions.z.length
+  plot.update((plot) => {
+    plot.series[0].plotterOptions.z = new Array(
+      plot.series[0].plotterOptions.z.length
     )
       .fill(0)
       .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
+    return plot;
   });
 });
