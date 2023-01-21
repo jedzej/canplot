@@ -1,6 +1,5 @@
 import {
   Plot,
-  ScatterExtras,
   scatterPlotter,
   genTimeTicks,
   makeTimeTickFormat,
@@ -12,7 +11,7 @@ const makeSeries = (
   from: number,
   to: number,
   interval: number
-): SeriesBase<ScatterExtras>[] => {
+): SeriesBase[] => {
   const x = [from];
   while (x[x.length - 1] < to) {
     x.push(x[x.length - 1] + interval);
@@ -22,11 +21,10 @@ const makeSeries = (
     {
       xScaleId: "x-1",
       yScaleId: "y-1",
-      plotterOptions: {
-        plotter: scatterPlotter,
+      plotter: scatterPlotter({
         radius: 1,
         style: { lineCap: "round", strokeStyle: "red" },
-      },
+      }),
       x,
       y,
     },
@@ -42,28 +40,28 @@ const drawConfig: PlotDrawConfig = {
       genTicks: genTimeTicks({ timeZone: "UTC", space: 80 }),
       tickFormat: makeTimeTickFormat({ timeZone: "UTC" }),
       label: "UTC",
-      labelAlign:"right"
+      labelAlign: "right",
     },
     {
       scaleId: "x-1",
       genTicks: genTimeTicks({ timeZone: "Europe/Warsaw", space: 80 }),
       tickFormat: makeTimeTickFormat({ timeZone: "Europe/Warsaw" }),
       label: "Europe/Warsaw",
-      labelAlign:"right"
+      labelAlign: "right",
     },
     {
       scaleId: "x-1",
       genTicks: genTimeTicks({ timeZone: "Asia/Anadyr", space: 80 }),
       tickFormat: makeTimeTickFormat({ timeZone: "Asia/Anadyr" }),
       label: "Asia/Anadyr",
-      labelAlign:"right"
+      labelAlign: "right",
     },
     {
       scaleId: "x-1",
       genTicks: genTimeTicks({ timeZone: "Pacific/Easter", space: 80 }),
       tickFormat: makeTimeTickFormat({ timeZone: "Pacific/Easter" }),
       label: "Pacific/Easter",
-      labelAlign:"right"
+      labelAlign: "right",
     },
     { scaleId: "y-1" },
   ],
@@ -78,7 +76,7 @@ const canvasMillisecondly = document.createElement("canvas");
 
 appNode.appendChild(canvasMillisecondly);
 
-new Plot<ScatterExtras>(
+new Plot(
   { canvas: canvasMillisecondly, dimensions: { width: "auto", height: 350 } },
   {
     ...drawConfig,
@@ -96,7 +94,7 @@ const canvasSecondly = document.createElement("canvas");
 
 appNode.appendChild(canvasSecondly);
 
-new Plot<ScatterExtras>(
+new Plot(
   { canvas: canvasSecondly, dimensions: { width: "auto", height: 350 } },
   {
     ...drawConfig,
@@ -114,7 +112,7 @@ const canvasMinutely = document.createElement("canvas");
 
 appNode.appendChild(canvasMinutely);
 
-new Plot<ScatterExtras>(
+new Plot(
   { canvas: canvasMinutely, dimensions: { width: "auto", height: 350 } },
   {
     ...drawConfig,
@@ -132,7 +130,7 @@ const canvasHourly1 = document.createElement("canvas");
 
 appNode.appendChild(canvasHourly1);
 
-new Plot<ScatterExtras>(
+new Plot(
   { canvas: canvasHourly1, dimensions: { width: "auto", height: 350 } },
   {
     ...drawConfig,
@@ -150,7 +148,7 @@ const canvasHourly = document.createElement("canvas");
 
 appNode.appendChild(canvasHourly);
 
-new Plot<ScatterExtras>(
+new Plot(
   { canvas: canvasHourly, dimensions: { width: "auto", height: 350 } },
   {
     ...drawConfig,
@@ -168,7 +166,7 @@ const canvas1 = document.createElement("canvas");
 
 appNode.appendChild(canvas1);
 
-new Plot<ScatterExtras>(
+new Plot(
   { canvas: canvas1, dimensions: { width: "auto", height: 350 } },
   {
     ...drawConfig,
@@ -186,7 +184,7 @@ const canvasMonthly = document.createElement("canvas");
 
 appNode.appendChild(canvasMonthly);
 
-new Plot<ScatterExtras>(
+new Plot(
   { canvas: canvasMonthly, dimensions: { width: "auto", height: 350 } },
   {
     ...drawConfig,
@@ -204,7 +202,7 @@ const canvasYearly = document.createElement("canvas");
 
 appNode.appendChild(canvasYearly);
 
-new Plot<ScatterExtras>(
+new Plot(
   {
     canvas: canvasYearly,
     dimensions: { width: "auto", height: 350 },

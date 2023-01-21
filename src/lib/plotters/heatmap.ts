@@ -19,55 +19,47 @@ const defaultColorSpace = (z: number) => {
   return [color, color, color, 255];
 };
 
-export type HeatmapExtras = {
-  plotter: typeof heatmapPlotter;
+export type HeatmapPlotterOpts = {
   z: number[];
   tileX: number;
   tileY: number;
-  colorScale?: (z: number) => [r: number, g: number, b: number, alpha: number];
+  colorSpace?: (z: number) => [r: number, g: number, b: number, alpha: number];
 };
 
-export const heatmapPlotter: Plotter<HeatmapExtras> = (
-  drawContext,
-  series,
-  xScale,
-  yScale
-) => {
-  const maxZ = Math.max(...series.plotterOptions.z);
-  const minZ = Math.min(...series.plotterOptions.z);
-  const normalizedZ = series.plotterOptions.z.map(
-    (v) => (v - minZ) / (maxZ - minZ)
-  );
-  const tileXPx =
-    Math.floor(
-      valToPxDistance(drawContext, series.plotterOptions.tileX, xScale)
-    ) + 1;
-  const tileYPx =
-    Math.floor(
-      valToPxDistance(drawContext, series.plotterOptions.tileY, yScale)
-    ) + 1;
-  for (let i = 0; i < series.x.length; i++) {
-    const x = series.x[i];
-    const y = series.y[i];
-    const z = normalizedZ[i];
+export const heatmapPlotter = ({
+  z,
+  tileX,
+  tileY,
+  colorSpace,
+}: HeatmapPlotterOpts): Plotter => {
+  return (drawContext, series, xScale, yScale) => {
+    const maxZ = Math.max(...z);
+    const minZ = Math.min(...z);
+    const normalizedZ = z.map((v) => (v - minZ) / (maxZ - minZ));
+    const tileXPx = Math.floor(valToPxDistance(drawContext, tileX, xScale)) + 1;
+    const tileYPx = Math.floor(valToPxDistance(drawContext, tileY, yScale)) + 1;
+    for (let i = 0; i < series.x.length; i++) {
+      const x = series.x[i];
+      const y = series.y[i];
+      const z = normalizedZ[i];
 
-    if (x === undefined || y === undefined || z === undefined) {
-      continue;
-    }
+      if (x === undefined || y === undefined || z === undefined) {
+        continue;
+      }
 
-    const imageData = drawContext.ctx.createImageData(tileXPx, tileYPx);
-    for (let j = 0; j < imageData.data.length; j += 4) {
-      const [r, g, b, a] =
-        series.plotterOptions.colorScale?.(z) ?? defaultColorSpace(z);
-      imageData.data[j] = r;
-      imageData.data[j + 1] = g;
-      imageData.data[j + 2] = b;
-      imageData.data[j + 3] = a;
+      const imageData = drawContext.ctx.createImageData(tileXPx, tileYPx);
+      for (let j = 0; j < imageData.data.length; j += 4) {
+        const [r, g, b, a] = colorSpace?.(z) ?? defaultColorSpace(z);
+        imageData.data[j] = r;
+        imageData.data[j + 1] = g;
+        imageData.data[j + 2] = b;
+        imageData.data[j + 3] = a;
+      }
+      drawContext.ctx.putImageData(
+        imageData,
+        Math.round(valToPos(drawContext, x, xScale)),
+        Math.round(valToPos(drawContext, y, yScale) - tileYPx)
+      );
     }
-    drawContext.ctx.putImageData(
-      imageData,
-      Math.round(valToPos(drawContext, x, xScale)),
-      Math.round(valToPos(drawContext, y, yScale) - tileYPx)
-    );
-  }
+  };
 };

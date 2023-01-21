@@ -1,12 +1,9 @@
-import { Plot, LineExtras, linePlotter } from "../lib/main";
+import { Plot, linePlotter } from "../lib/main";
 
-new Plot<LineExtras>(
+new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
-    dimensions: {
-      width: "auto",
-      height: 400,
-    },
+    dimensions: { width: "auto", height: 400 },
   },
   {
     axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
@@ -15,11 +12,10 @@ new Plot<LineExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
+        plotter: linePlotter({
           gapDistance: 1,
           style: { strokeStyle: "blue" },
-        },
+        }),
         x: [0, 1, 2, 3, 5, 6, 7, 12, 13, 17],
         y: [0, 1, 2, 3, 5, 6, 7, 12, 13, 17],
       },

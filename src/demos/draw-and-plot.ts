@@ -1,11 +1,4 @@
-import {
-  Plot,
-  LineExtras,
-  linePlotter,
-  PlotPlugin,
-  Scale,
-  helpers,
-} from "../lib/main";
+import { Plot, linePlotter, PlotPlugin, Scale, helpers } from "../lib/main";
 import "./style.css";
 
 const initialInput = {
@@ -17,7 +10,7 @@ const produceOutput = (x: number, yIn: number) => {
   return yIn * Math.sin(x / 2);
 };
 
-const outputPlot = new Plot<LineExtras>(
+const outputPlot = new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#output")!,
     dimensions: {
@@ -33,10 +26,7 @@ const outputPlot = new Plot<LineExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
-          style: { strokeStyle: "blue" },
-        },
+        plotter: linePlotter({ style: { strokeStyle: "blue" } }),
         x: initialInput.x,
         y: initialInput.y.map((_, i) =>
           produceOutput(initialInput.x[i], initialInput.y[i])
@@ -53,7 +43,7 @@ const makePlugin = (): PlotPlugin => {
   let isTracking = false;
   return {
     hooks: {
-      afterSeries: (drawContext) => {
+      afterSeries: ({ drawContext }) => {
         outputPlot.update((plot) => {
           plot.series[0].y = drawContext.drawConfig.series[0].y.map((_, i) => {
             const x = drawContext.drawConfig.series[0].x[i];
@@ -65,7 +55,7 @@ const makePlugin = (): PlotPlugin => {
         document.getElementById("points")!.innerHTML =
           drawContext.drawConfig.series[0].y.join("\n");
       },
-      afterAxes(drawContext, plot) {
+      afterAxes({ drawContext, plot }) {
         if (moveListener) {
           plot.getCanvas().removeEventListener("mousemove", moveListener);
         }
@@ -104,8 +94,7 @@ const makePlugin = (): PlotPlugin => {
               closestIndex =
                 Math.abs((plot.series[0].x[i] ?? Infinity) - position["x-1"]) <
                 Math.abs(
-                  (plot.series[0].x[closestIndex] ?? Infinity) -
-                    position["x-1"]
+                  (plot.series[0].x[closestIndex] ?? Infinity) - position["x-1"]
                 )
                   ? i
                   : closestIndex;
@@ -118,7 +107,7 @@ const makePlugin = (): PlotPlugin => {
         drawContext.ctx.canvas.addEventListener("mousedown", mouseDownListener);
         drawContext.ctx.canvas.addEventListener("mouseup", mouseUpListener);
       },
-      onDestroy(plot) {
+      onDestroy({ plot }) {
         const canvas = plot.getCanvas();
         if (moveListener) {
           canvas.removeEventListener("mousemove", moveListener);
@@ -157,10 +146,7 @@ new Plot(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
-          style: { strokeStyle: "red" },
-        },
+        plotter: linePlotter({ style: { strokeStyle: "red" } }),
         x: initialInput.x,
         y: initialInput.y,
       },

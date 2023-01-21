@@ -18,7 +18,7 @@ export const drawSeries = (drawContext: DrawContext) => {
     if (!xScale || !yScale) {
       continue;
     }
-    series.plotterOptions.plotter?.(drawContext, series, xScale, yScale);
+    series.plotter?.(drawContext, series, xScale, yScale);
   }
 
   drawContext.ctx.restore();

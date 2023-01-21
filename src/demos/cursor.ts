@@ -1,4 +1,4 @@
-import { Plot, LineExtras, linePlotter, makeCursorPlugin } from "../lib/main";
+import { Plot, LinePlotterOpts, linePlotter, makeCursorPlugin } from "../lib/main";
 
 const plugin = makeCursorPlugin();
 
@@ -47,7 +47,7 @@ plugin.addDblClickListener((event) => {
   }));
 });
 
-new Plot<LineExtras>(
+new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
     plugins: [plugin.bindings],

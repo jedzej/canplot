@@ -1,13 +1,7 @@
-import {
-  Plot,
-  LineExtras,
-  linePlotter,
-  ScatterExtras,
-  scatterPlotter,
-} from "../lib/main";
+import { Plot, linePlotter, scatterPlotter } from "../lib/main";
 import { animationLoop } from "./helpers";
 
-const plot = new Plot<LineExtras | ScatterExtras>(
+const plot = new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
     dimensions: {
@@ -41,21 +35,14 @@ const plot = new Plot<LineExtras | ScatterExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
-          style: { lineCap: "round", strokeStyle: "blue" },
-        },
+        plotter: linePlotter({ style: { strokeStyle: "blue" } }),
         x: new Array(1000).fill(0).map((_, i) => i / 10),
         y: [],
       },
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: scatterPlotter,
-          radius: 10,
-          style: { lineCap: "round", strokeStyle: "red" },
-        },
+        plotter: linePlotter({ style: { strokeStyle: "red" } }),
         x: new Array(100).fill(0).map((_, i) => i),
         y: [],
       },

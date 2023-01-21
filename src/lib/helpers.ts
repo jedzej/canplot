@@ -7,7 +7,7 @@ export const isXScale = (scale: Scale | Scale["id"]) =>
     : scale.id.startsWith("x-");
 
 export const valToPxDistance = (
-  drawContext: DrawContext<any>,
+  drawContext: DrawContext,
   val: number,
   scale: Scale
 ) => {
@@ -19,7 +19,7 @@ export const valToPxDistance = (
 };
 
 export const valToPos = (
-  drawContext: DrawContext<any>,
+  drawContext: DrawContext,
   val: number,
   scale: Scale
 ) => {
@@ -42,7 +42,7 @@ export const valToPos = (
 };
 
 export const pxToValDistance = (
-  drawContext: DrawContext<any>,
+  drawContext: DrawContext,
   pxDistance: number,
   scale: Scale
 ) => {
@@ -54,7 +54,7 @@ export const pxToValDistance = (
 };
 
 export const posToVal = (
-  drawContext: DrawContext<any>,
+  drawContext: DrawContext,
   pos: number,
   scale: Scale
 ) => {

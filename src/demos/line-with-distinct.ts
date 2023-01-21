@@ -1,7 +1,7 @@
-import { Plot, LineExtras, linePlotter } from "../lib/main";
+import { Plot, linePlotter } from "../lib/main";
 import { animationLoop } from "./helpers";
 
-const plot = new Plot<LineExtras>(
+const plot = new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
     dimensions: {
@@ -28,13 +28,12 @@ const plot = new Plot<LineExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
-          showDistrinct: (_, idx, series) => {
+        plotter: linePlotter({
+          showDistrinct: ({ idx, series }) => {
             return (series.y[idx] ?? 0) < 2;
           },
           style: { strokeStyle: "blue" },
-        },
+        }),
         x: Array(100)
           .fill(0)
           .map((_, i) => i),
@@ -43,11 +42,10 @@ const plot = new Plot<LineExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
+        plotter: linePlotter({
           distinctDistance: 10,
           style: { strokeStyle: "red" },
-        },
+        }),
         x: Array(100)
           .fill(0)
           .map((_, i) => i),

@@ -1,14 +1,12 @@
 import { Plot } from "./Plot";
 
-export type SeriesExtrasBase = Record<string, unknown>;
-
-export type Hooks<Extras = any> = {
-  onInit?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
-  beforeClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
-  afterClear?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
-  afterSeries?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
-  afterAxes?: (drawContext: DrawContext<Extras>, plot: Plot<Extras>) => void;
-  onDestroy?: (plot: Plot<Extras>) => void;
+export type Hooks = {
+  onInit?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
+  beforeClear?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
+  afterClear?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
+  afterSeries?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
+  afterAxes?: (opts: { drawContext: DrawContext; plot: Plot }) => void;
+  onDestroy?: (opts: { plot: Plot }) => void;
 };
 
 export type Style = {
@@ -45,26 +43,26 @@ export type MakeLimitsOpts = {
   scaleId: XScaleId | YScaleId;
 };
 
-export type MakeLimits = (opts: MakeLimitsOpts) => Limits
+export type MakeLimits = (opts: MakeLimitsOpts) => Limits;
 
 export type Scale = {
   id: XScaleId | YScaleId;
   makeLimits?: MakeLimits;
 };
 
-export type SeriesBase<Extras = { plotter: Plotter }> = {
+export type SeriesBase = {
   id?: string;
   xScaleId: XScaleId;
   yScaleId: YScaleId;
   x: number[];
   y: number[];
   // style?: Style;
-  plotterOptions: Extras;
+  plotter: Plotter;
 };
 
-export type Plotter<Extras = { plotter: Plotter }> = (
+export type Plotter = (
   drawContext: DrawContext,
-  series: SeriesBase<Extras>,
+  series: SeriesBase,
   xScale: Scale,
   yScale: Scale
 ) => void;
@@ -150,23 +148,21 @@ type NormalizedPadding = {
   left: number;
 };
 
-export type PlotDrawConfig<Extras = any> = {
+export type PlotDrawConfig = {
   padding?: number | NormalizedPadding;
   axes: PlotAxis[];
   scales: Scale[];
   facets?: Facet[];
-  series: SeriesBase<Extras>[];
+  series: SeriesBase[];
 };
 
-export type PlotPlugin<Extras = any> = {
-  transformDrawConfig?: (
-    params: PlotDrawConfig<Extras>
-  ) => PlotDrawConfig<Extras>;
-  hooks?: Hooks<Extras>;
+export type PlotPlugin = {
+  transformDrawConfig?: (params: PlotDrawConfig) => PlotDrawConfig;
+  hooks?: Hooks;
 };
 
-export type DrawContext<Extras = any> = {
-  drawConfig: PlotDrawConfig<Extras>;
+export type DrawContext = {
+  drawConfig: PlotDrawConfig;
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
   limits: Record<Scale["id"], Limits>;
@@ -179,8 +175,8 @@ export type DrawContext<Extras = any> = {
   padding: NormalizedPadding;
 };
 
-export type StaticConfig<Extras = any> = {
+export type StaticConfig = {
   canvas: HTMLCanvasElement;
-  plugins?: PlotPlugin<Extras>[];
+  plugins?: PlotPlugin[];
   dimensions: Dimensions;
 };

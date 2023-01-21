@@ -1,6 +1,6 @@
-import { Plot, LineExtras, linePlotter, makeCursorPlugin } from "../lib/main";
+import { Plot, linePlotter, makeCursorPlugin } from "../lib/main";
 
-new Plot<LineExtras>(
+new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
     plugins: [
@@ -116,7 +116,7 @@ new Plot<LineExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: { plotter: linePlotter },
+        plotter: linePlotter(),
         x: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         y: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       },

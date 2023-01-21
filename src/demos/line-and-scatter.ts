@@ -1,43 +1,5 @@
-import { isXScale } from "../lib/helpers";
-import { Plot, linePlotter, scatterPlotter, MakeLimits } from "../lib/main";
+import { Plot, linePlotter, scatterPlotter } from "../lib/main";
 import { animationLoop } from "./helpers";
-
-const makeAutorangedLimits: MakeLimits = ({ drawContext, scaleId }) => {
-  let min = +Infinity;
-  let max = -Infinity;
-  for (const series of drawContext.drawConfig.series) {
-    if (isXScale(scaleId)) {
-      if (series.xScaleId !== scaleId) {
-        continue;
-      }
-      for (const x of series.x) {
-        if (x < min) {
-          min = x;
-        }
-        if (x > max) {
-          max = x;
-        }
-      }
-    } else {
-      if (series.yScaleId !== scaleId) {
-        continue;
-      }
-      for (const y of series.y) {
-        if (y < min) {
-          min = y;
-        }
-        if (y > max) {
-          max = y;
-        }
-      }
-    }
-  }
-  if (Number.isFinite(min) && Number.isFinite(max)) {
-    return { min, max };
-  } else {
-    return { min: 0, max: 1 };
-  }
-};
 
 const plot = new Plot(
   {
@@ -61,58 +23,33 @@ const plot = new Plot(
         size: 30,
       },
     ],
-    scales: [
-      {
-        id: "x-1",
-        makeLimits: makeAutorangedLimits,
-      },
-      {
-        id: "y-1",
-        makeLimits: makeAutorangedLimits,
-      },
-      {
-        id: "y-2",
-        makeLimits: makeAutorangedLimits,
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }, { id: "y-2" }],
     series: [
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: linePlotter,
-          style: { lineCap: "round", strokeStyle: "blue" },
-        },
+        plotter: linePlotter({ style: { strokeStyle: "blue" } }),
         x: new Array(1000).fill(0).map((_, i) => i / 10),
         y: new Array(1000).fill(0).map((_, i) => i % 10),
       },
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: scatterPlotter,
-          style: { strokeStyle: "brown" },
-        },
+        plotter: linePlotter({ style: { strokeStyle: "brown" } }),
         x: new Array(1000).fill(0).map((_, i) => i / 10),
         y: new Array(1000).fill(0).map((_, i) => (i % 10) - 5),
       },
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: scatterPlotter,
-          style: { strokeStyle: "red" },
-        },
+        plotter: scatterPlotter({ style: { strokeStyle: "red" } }),
         x: new Array(1000).fill(0).map((_, i) => i / 10),
         y: new Array(1000).fill(0).map((_, i) => (i % 10) - 5),
       },
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: scatterPlotter,
-          style: { strokeStyle: "black" },
-        },
+        plotter: scatterPlotter({ style: { strokeStyle: "black" } }),
         x: new Array(1000).fill(0).map((_, i) => i / 10),
         y: new Array(1000).fill(0).map((_, i) => (i % 10) - 5),
       },

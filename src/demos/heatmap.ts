@@ -1,7 +1,7 @@
-import { Plot, HeatmapExtras, heatmapPlotter } from "../lib/main";
+import { Plot, heatmapPlotter } from "../lib/main";
 import { animationLoop } from "./helpers";
 
-const plot = new Plot<HeatmapExtras>(
+const plot = new Plot(
   {
     canvas: document.querySelector<HTMLCanvasElement>("#canvas")!,
     dimensions: {
@@ -31,12 +31,11 @@ const plot = new Plot<HeatmapExtras>(
       {
         xScaleId: "x-1",
         yScaleId: "y-1",
-        plotterOptions: {
-          plotter: heatmapPlotter,
+        plotter: heatmapPlotter({
           tileX: 1,
           tileY: 1,
           z: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        },
+        }),
         x: [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4],
         y: [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
       },
@@ -45,11 +44,13 @@ const plot = new Plot<HeatmapExtras>(
 );
 animationLoop(() => {
   plot.update((plot) => {
-    plot.series[0].plotterOptions.z = new Array(
-      plot.series[0].plotterOptions.z.length
-    )
-      .fill(0)
-      .map((_, y) => 5 + Math.sin(y + performance.now() / 100));
+    plot.series[0].plotter = heatmapPlotter({
+      tileX: 1,
+      tileY: 1,
+      z: new Array(plot.series[0].x.length)
+        .fill(0)
+        .map((_, y) => 5 + Math.sin(y + performance.now() / 100)),
+    });
     return plot;
   });
 });

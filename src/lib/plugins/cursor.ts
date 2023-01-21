@@ -125,7 +125,7 @@ export const makeCursorPlugin = (
 
   const bindings: PlotPlugin = {
     hooks: {
-      onInit(_, plot) {
+      onInit({ plot }) {
         const canvas = plot.getCanvas();
 
         // mouse down
@@ -255,7 +255,7 @@ export const makeCursorPlugin = (
         canvas.addEventListener("dblclick", mouseDblClickListener);
       },
 
-      onDestroy(plot) {
+      onDestroy({ plot }) {
         const canvas = plot.getCanvas();
         if (mouseMoveListener) {
           canvas.removeEventListener("mousemove", mouseMoveListener);
