@@ -177,8 +177,6 @@ export class Plot<Extras = any> {
     );
     const drawingContext = this.#makeDrawingContext(drawConfig);
 
-    console.log(drawingContext.limits)
-
     if (this.#phase === "initializing") {
       // ON INIT HOOK
       for (const plugin of this.#staticConfig.plugins) {
