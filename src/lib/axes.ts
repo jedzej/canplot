@@ -4,7 +4,13 @@ import {
   DEFAULT_SPLIT_SPACE,
 } from "./defaults";
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
-import { DrawContext, PlotAxis, PlotAxisGenTicks, Scale } from "./types";
+import {
+  DrawContext,
+  PlotAxis,
+  PlotAxisGenTicks,
+  PlotAxisTickFormat,
+  Scale,
+} from "./types";
 
 const acceptable: number[] = [];
 for (let i = -12; i <= 12; i++) {
@@ -21,17 +27,15 @@ export const makeGenTicksDefault = ({
   space = DEFAULT_SPLIT_SPACE,
 }: MakeGenTicksDefaultOpts = {}): PlotAxisGenTicks => {
   return ({ drawContext, scale }) => {
-    if (scale.limits.autorange) {
-      return [];
-    }
+    const limits = drawContext.limits[scale.id];
     const ticks = [];
     const unnormalizedIncr = pxToValDistance(drawContext, space, scale);
     const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
     let curr =
-      scale.limits.fixed.min % incr < Number.EPSILON
-        ? scale.limits.fixed.min
-        : scale.limits.fixed.min + incr - (scale.limits.fixed.min % incr);
-    while (curr <= scale.limits.fixed.max) {
+      limits.min % incr < Number.EPSILON
+        ? limits.min
+        : limits.min + incr - (limits.min % incr);
+    while (curr <= limits.max) {
       ticks.push(curr);
       curr += incr;
     }
@@ -40,10 +44,7 @@ export const makeGenTicksDefault = ({
   };
 };
 
-const tickFormat: PlotAxis["tickFormat"] = ({ scale, ticks }) => {
-  if (scale.limits.autorange) {
-    return [""];
-  }
+const tickFormat: PlotAxisTickFormat = ({ ticks }) => {
   const span = Math.max(0, Math.ceil(-Math.log10(ticks[1] - ticks[0])));
   return ticks.map((tick) => tick.toFixed(span));
 };

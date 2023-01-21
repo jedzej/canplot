@@ -11,11 +11,8 @@ export const valToPxDistance = (
   val: number,
   scale: Scale
 ) => {
-  if (scale.limits.autorange) {
-    return 0;
-  }
   const chartArea = drawContext.chartArea;
-  const { min, max } = scale.limits.fixed;
+  const { min, max } = drawContext.limits[scale.id];
   const factor =
     (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
   return val * factor;
@@ -26,15 +23,9 @@ export const valToPos = (
   val: number,
   scale: Scale
 ) => {
-  if (scale.limits.autorange) {
-    return 0;
-  }
+  const { min } = drawContext.limits[scale.id];
   const chartArea = drawContext.chartArea;
-  const relativePosition = valToPxDistance(
-    drawContext,
-    val - scale.limits.fixed.min,
-    scale
-  );
+  const relativePosition = valToPxDistance(drawContext, val - min, scale);
   if (isXScale(scale)) {
     return clamp(
       chartArea.x + relativePosition,
@@ -55,11 +46,8 @@ export const pxToValDistance = (
   pxDistance: number,
   scale: Scale
 ) => {
-  if (scale.limits.autorange) {
-    return 0;
-  }
+  const { min, max } = drawContext.limits[scale.id];
   const chartArea = drawContext.chartArea;
-  const { min, max } = scale.limits.fixed;
   const factor =
     (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
   return pxDistance / factor;
@@ -70,13 +58,9 @@ export const posToVal = (
   pos: number,
   scale: Scale
 ) => {
-  if (scale.limits.autorange) {
-    return 0;
-  }
+  const { min, max } = drawContext.limits[scale.id];
   const relativePosition = pxToValDistance(drawContext, pos, scale);
-  return isXScale(scale)
-    ? scale.limits.fixed.min + relativePosition
-    : scale.limits.fixed.max - relativePosition;
+  return isXScale(scale) ? min + relativePosition : max - relativePosition;
 };
 
 export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {

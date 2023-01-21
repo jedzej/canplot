@@ -1,5 +1,43 @@
-import { Plot, linePlotter, scatterPlotter } from "../lib/main";
+import { isXScale } from "../lib/helpers";
+import { Plot, linePlotter, scatterPlotter, MakeLimits } from "../lib/main";
 import { animationLoop } from "./helpers";
+
+const makeAutorangedLimits: MakeLimits = ({ drawContext, scaleId }) => {
+  let min = +Infinity;
+  let max = -Infinity;
+  for (const series of drawContext.drawConfig.series) {
+    if (isXScale(scaleId)) {
+      if (series.xScaleId !== scaleId) {
+        continue;
+      }
+      for (const x of series.x) {
+        if (x < min) {
+          min = x;
+        }
+        if (x > max) {
+          max = x;
+        }
+      }
+    } else {
+      if (series.yScaleId !== scaleId) {
+        continue;
+      }
+      for (const y of series.y) {
+        if (y < min) {
+          min = y;
+        }
+        if (y > max) {
+          max = y;
+        }
+      }
+    }
+  }
+  if (Number.isFinite(min) && Number.isFinite(max)) {
+    return { min, max };
+  } else {
+    return { min: 0, max: 1 };
+  }
+};
 
 const plot = new Plot(
   {
@@ -11,7 +49,7 @@ const plot = new Plot(
     },
   },
   {
-    padding: 10,
+    padding: 20,
     axes: [
       {
         scaleId: "x-1",
@@ -27,11 +65,15 @@ const plot = new Plot(
     scales: [
       {
         id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 100 } },
+        makeLimits: makeAutorangedLimits,
       },
       {
         id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
+        makeLimits: makeAutorangedLimits,
+      },
+      {
+        id: "y-2",
+        makeLimits: makeAutorangedLimits,
       },
     ],
     series: [
@@ -42,8 +84,18 @@ const plot = new Plot(
           plotter: linePlotter,
           style: { lineCap: "round", strokeStyle: "blue" },
         },
-        x: new Array(10000).fill(0).map((_, i) => i / 10),
-        y: [],
+        x: new Array(1000).fill(0).map((_, i) => i / 10),
+        y: new Array(1000).fill(0).map((_, i) => i % 10),
+      },
+      {
+        xScaleId: "x-1",
+        yScaleId: "y-1",
+        plotterOptions: {
+          plotter: scatterPlotter,
+          style: { strokeStyle: "brown" },
+        },
+        x: new Array(1000).fill(0).map((_, i) => i / 10),
+        y: new Array(1000).fill(0).map((_, i) => (i % 10) - 5),
       },
       {
         xScaleId: "x-1",
@@ -52,8 +104,18 @@ const plot = new Plot(
           plotter: scatterPlotter,
           style: { strokeStyle: "red" },
         },
-        x: new Array(10000).fill(0).map((_, i) => i / 10),
-        y: [],
+        x: new Array(1000).fill(0).map((_, i) => i / 10),
+        y: new Array(1000).fill(0).map((_, i) => (i % 10) - 5),
+      },
+      {
+        xScaleId: "x-1",
+        yScaleId: "y-1",
+        plotterOptions: {
+          plotter: scatterPlotter,
+          style: { strokeStyle: "black" },
+        },
+        x: new Array(1000).fill(0).map((_, i) => i / 10),
+        y: new Array(1000).fill(0).map((_, i) => (i % 10) - 5),
       },
     ],
   }
@@ -69,12 +131,20 @@ animationLoop(() => {
     s1.length = draft.series[0].x.length;
     const s2: number[] = [];
     s2.length = draft.series[0].x.length;
+    const s3: number[] = [];
+    s3.length = draft.series[0].x.length;
+    const s4: number[] = [];
+    s4.length = draft.series[0].x.length;
 
     for (let i = 0; i < arr.length; i++) {
-      s1[i] = 5 + Math.sin(i / 10 + t);
+      s1[i] = 1 + Math.cos(i / 10 + t);
       s2[i] = 2 + Math.cos(i / 10 + t);
+      s3[i] = 3 + Math.cos(i / 10 + t);
+      s4[i] = 4 + Math.cos(i / 10 + t);
     }
     draft.series[0].y = s1;
     draft.series[1].y = s2;
+    draft.series[2].y = s3;
+    draft.series[3].y = s4;
   });
 });

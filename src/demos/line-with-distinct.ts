@@ -24,16 +24,7 @@ const plot = new Plot<LineExtras>(
         size: 30,
       },
     ],
-    scales: [
-      {
-        id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 100 } },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 4 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     series: [
       {
         xScaleId: "x-1",

@@ -1,4 +1,10 @@
-import { Plot, LineExtras, linePlotter, ScatterExtras, scatterPlotter } from "../lib/main";
+import {
+  Plot,
+  LineExtras,
+  linePlotter,
+  ScatterExtras,
+  scatterPlotter,
+} from "../lib/main";
 import { animationLoop } from "./helpers";
 
 const plot = new Plot<LineExtras | ScatterExtras>(
@@ -31,16 +37,7 @@ const plot = new Plot<LineExtras | ScatterExtras>(
       { scaleId: "y-1", position: "secondary" },
       { scaleId: "y-1", position: "secondary" },
     ],
-    scales: [
-      {
-        id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 100 } },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     series: [
       {
         xScaleId: "x-1",

@@ -35,8 +35,6 @@ const makeSeries = (
 const appNode = document.getElementById("app")!;
 
 // millisecondly
-const millisecondlyStart1 = Date.parse("2021-03-27T18:00:00Z");
-const millisecondlyEnd1 = Date.parse("2021-03-27T18:00:05Z");
 
 const canvasMillisecondly = document.createElement("canvas");
 
@@ -50,19 +48,7 @@ new Plot<ScatterExtras>(
   },
   {
     padding: { left: 20, right: 40, top: 0, bottom: 0 },
-    scales: [
-      {
-        id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: { min: millisecondlyStart1, max: millisecondlyEnd1 },
-        },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -90,13 +76,15 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(millisecondlyStart1, millisecondlyEnd1, 10),
+    series: makeSeries(
+      Date.parse("2021-03-27T18:00:00Z"),
+      Date.parse("2021-03-27T18:00:05Z"),
+      10
+    ),
   }
 );
 
 // secondly
-const secondlyStart1 = Date.parse("2021-03-27T18:00:00Z");
-const secondlyEnd1 = Date.parse("2021-03-27T18:02:00Z");
 
 const canvasSecondly = document.createElement("canvas");
 
@@ -109,19 +97,7 @@ new Plot<ScatterExtras>(
     dimensions: { width: "auto", height: 250 },
   },
   {
-    scales: [
-      {
-        id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: { min: secondlyStart1, max: secondlyEnd1 },
-        },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -149,13 +125,15 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(secondlyStart1, secondlyEnd1, 1000),
+    series: makeSeries(
+      Date.parse("2021-03-27T18:00:00Z"),
+      Date.parse("2021-03-27T18:02:00Z"),
+      1000
+    ),
   }
 );
 
 // minutely
-const minutelyStart1 = Date.parse("2021-03-27T18:00:00Z");
-const minutelyEnd1 = Date.parse("2021-03-27T19:00:00Z");
 
 const canvasMinutely = document.createElement("canvas");
 
@@ -168,19 +146,7 @@ new Plot<ScatterExtras>(
     dimensions: { width: "auto", height: 250 },
   },
   {
-    scales: [
-      {
-        id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: { min: minutelyStart1, max: minutelyEnd1 },
-        },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -208,13 +174,15 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(minutelyStart1, minutelyEnd1, 60 * 1000),
+    series: makeSeries(
+      Date.parse("2021-03-27T18:00:00Z"),
+      Date.parse("2021-03-27T19:00:00Z"),
+      60 * 1000
+    ),
   }
 );
 
 // hourly spring DST
-const hourlyStart1 = Date.parse("2021-03-27T18:00:00Z");
-const hourlyEnd1 = Date.parse("2021-03-29T00:00:00Z");
 
 const canvasHourly1 = document.createElement("canvas");
 
@@ -227,19 +195,7 @@ new Plot<ScatterExtras>(
     dimensions: { width: "auto", height: 250 },
   },
   {
-    scales: [
-      {
-        id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: { min: hourlyStart1, max: hourlyEnd1 },
-        },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -267,13 +223,15 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(hourlyStart1, hourlyEnd1, 15 * 60 * 1000),
+    series: makeSeries(
+      Date.parse("2021-03-27T18:00:00Z"),
+      Date.parse("2021-03-29T00:00:00Z"),
+      15 * 60 * 1000
+    ),
   }
 );
 
 // hourly autumn DST
-const hourlyStart2 = Date.parse("2021-10-30T18:00:00Z");
-const hourlyEnd2 = Date.parse("2021-11-01T00:00:00Z");
 
 const canvasHourly = document.createElement("canvas");
 
@@ -286,19 +244,7 @@ new Plot<ScatterExtras>(
     dimensions: { width: "auto", height: 250 },
   },
   {
-    scales: [
-      {
-        id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: { min: hourlyStart2, max: hourlyEnd2 },
-        },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -326,13 +272,15 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(hourlyStart2, hourlyEnd2, 15 * 60 * 1000),
+    series: makeSeries(
+      Date.parse("2021-10-30T18:00:00Z"),
+      Date.parse("2021-11-01T00:00:00Z"),
+      15 * 60 * 1000
+    ),
   }
 );
 
 // daily
-const dailyStart = Date.parse("2021-12-22T00:00:00Z");
-const dailyEnd = Date.parse("2022-01-18T00:00:00Z");
 
 const canvas1 = document.createElement("canvas");
 
@@ -341,16 +289,7 @@ appNode.appendChild(canvas1);
 new Plot<ScatterExtras>(
   { canvas: canvas1, plugins: [], dimensions: { width: "auto", height: 200 } },
   {
-    scales: [
-      {
-        id: "x-1",
-        limits: { autorange: false, fixed: { min: dailyStart, max: dailyEnd } },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -372,13 +311,15 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(dailyStart, dailyEnd, 6 * 60 * 60 * 1000),
+    series: makeSeries(
+      Date.parse("2021-12-22T00:00:00Z"),
+      Date.parse("2022-01-18T00:00:00Z"),
+      6 * 60 * 60 * 1000
+    ),
   }
 );
 
 // monthly
-const monthlyStart = Date.parse("2020-01-01T00:00:00Z");
-const monthlyEnd = Date.parse("2022-01-01T00:00:00Z");
 
 const canvasMonthly = document.createElement("canvas");
 
@@ -391,19 +332,7 @@ new Plot<ScatterExtras>(
     dimensions: { width: "auto", height: 200 },
   },
   {
-    scales: [
-      {
-        id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: { min: monthlyStart, max: monthlyEnd },
-        },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -425,13 +354,15 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(monthlyStart, monthlyEnd, 30 * 24 * 60 * 60 * 1000),
+    series: makeSeries(
+      Date.parse("2020-01-01T00:00:00Z"),
+      Date.parse("2022-01-01T00:00:00Z"),
+      30 * 24 * 60 * 60 * 1000
+    ),
   }
 );
 
 // yearly
-const yearlyStart = Date.parse("2002-01-01T00:00:00Z");
-const yearlyEnd = Date.parse("2022-01-01T00:00:00Z");
 
 const canvasYearly = document.createElement("canvas");
 
@@ -444,19 +375,7 @@ new Plot<ScatterExtras>(
     dimensions: { width: "auto", height: 200 },
   },
   {
-    scales: [
-      {
-        id: "x-1",
-        limits: {
-          autorange: false,
-          fixed: { min: yearlyStart, max: yearlyEnd },
-        },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     axes: [
       {
         scaleId: "x-1",
@@ -478,6 +397,10 @@ new Plot<ScatterExtras>(
       },
       { scaleId: "y-1" },
     ],
-    series: makeSeries(yearlyStart, yearlyEnd, 365 * 24 * 60 * 60 * 1000),
+    series: makeSeries(
+      Date.parse("2002-01-01T00:00:00Z"),
+      Date.parse("2022-01-01T00:00:00Z"),
+      365 * 24 * 60 * 60 * 1000
+    ),
   }
 );

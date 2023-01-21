@@ -25,14 +25,8 @@ const plot = new Plot<HeatmapExtras>(
       },
     ],
     scales: [
-      {
-        id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 5 } },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 4 } },
-      },
+      { id: "x-1", makeLimits: () => ({ min: 0, max: 5 }) },
+      { id: "y-1", makeLimits: () => ({ min: 0, max: 4 }) },
     ],
     series: [
       {

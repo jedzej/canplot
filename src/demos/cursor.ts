@@ -56,20 +56,7 @@ new Plot<LineExtras>(
   },
   {
     padding: 10,
-    scales: [
-      {
-        id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 100 } },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: 0, max: 10 } },
-      },
-      {
-        id: "y-2",
-        limits: { autorange: false, fixed: { min: -100, max: 100 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }, { id: "y-2" }],
     axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }, { scaleId: "y-2" }],
     series: [
       {

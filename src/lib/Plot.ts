@@ -2,6 +2,7 @@ import produce from "immer";
 import { drawAxes } from "./axes";
 import { drawFacets } from "./facets";
 import { isXScale } from "./helpers";
+import { makeAutoLimits } from "./limits";
 import { drawSeries } from "./series";
 import { PlotDrawConfig, DrawContext, Size, StaticConfig } from "./types";
 
@@ -10,9 +11,14 @@ const DEFAULT_PADDING = 10;
 const normalizePadding = (padding: PlotDrawConfig["padding"]) => {
   if (typeof padding === "number" || typeof padding === "undefined") {
     const paddingWithDefault = padding ?? DEFAULT_PADDING;
-    return { top: paddingWithDefault, right: paddingWithDefault, bottom: paddingWithDefault, left: paddingWithDefault };
+    return {
+      top: paddingWithDefault,
+      right: paddingWithDefault,
+      bottom: paddingWithDefault,
+      left: paddingWithDefault,
+    };
   }
-  
+
   return padding;
 };
 
@@ -94,7 +100,7 @@ export class Plot<Extras = any> {
       height: this.#staticConfig.canvas.height,
     };
 
-    return {
+    const drawContextWithoutLimits: Omit<DrawContext<Extras>, "limits"> = {
       ctx: this.#staticConfig.canvas.getContext("2d")!,
       chartArea: {
         x: leftAxesSize + padding.left,
@@ -115,6 +121,19 @@ export class Plot<Extras = any> {
       padding,
       canvasSize,
       drawConfig,
+    };
+
+    return {
+      ...drawContextWithoutLimits,
+      limits: Object.fromEntries(
+        drawConfig.scales.map((scale) => [
+          scale.id,
+          (scale.makeLimits ?? makeAutoLimits)({
+            drawContext: drawContextWithoutLimits,
+            scaleId: scale.id,
+          }),
+        ])
+      ),
     };
   }
 
@@ -157,6 +176,8 @@ export class Plot<Extras = any> {
       inputDrawConfig
     );
     const drawingContext = this.#makeDrawingContext(drawConfig);
+
+    console.log(drawingContext.limits)
 
     if (this.#phase === "initializing") {
       // ON INIT HOOK

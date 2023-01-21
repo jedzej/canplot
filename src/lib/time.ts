@@ -220,18 +220,16 @@ export const genTimeTicks = ({
   space = DEFAULT_SPLIT_SPACE,
 }: GenTimeTicksOpts): PlotAxis["genTicks"] => {
   return ({ drawContext, scale }) => {
-    if (scale.limits.autorange) {
-      return [];
-    }
+    const limits = drawContext.limits[scale.id];
     const splitsCount = Math.floor(drawContext.chartArea.width / space) + 1;
-    const range = scale.limits.fixed.max - scale.limits.fixed.min;
+    const range = limits.max - limits.min;
     const splitDistance = range / splitsCount;
     const [incrValue, incrUnit] = TIME_INCRS.find(
       (a) => durationToMilliseconds(a) >= splitDistance
     ) ?? [1, "milliseconds"];
 
     const firstTick = makeFirstTick(
-      scale.limits.fixed.min,
+      limits.min,
       [incrValue, incrUnit],
       timeZone
     );
@@ -275,7 +273,7 @@ export const genTimeTicks = ({
           break;
         }
       }
-      if (candidate > scale.limits.fixed.max) {
+      if (candidate > limits.max) {
         break;
       }
       splits.push(candidate);
@@ -326,7 +324,6 @@ export const makeTimeTickFormat = ({
         return formatter.formatToParts(new Date(tick));
       })
       .map((curr, index, arr) => {
-        console.log(curr.find((a) => a.type === "timeZoneName")?.value);
         const prev = arr[index - 1];
         const newYear =
           index === 0 || isTimeFormatPartDifferent(curr, prev, "year");

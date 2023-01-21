@@ -29,16 +29,7 @@ const outputPlot = new Plot<LineExtras>(
   {
     padding: 10,
     axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
-    scales: [
-      {
-        id: "x-1",
-        limits: { autorange: false, fixed: { min: 0, max: 100 } },
-      },
-      {
-        id: "y-1",
-        limits: { autorange: false, fixed: { min: -1, max: 1 } },
-      },
-    ],
+    scales: [{ id: "x-1" }, { id: "y-1" }],
     series: [
       {
         xScaleId: "x-1",
@@ -158,8 +149,8 @@ new Plot(
     padding: 10,
     axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
     scales: [
-      { id: "x-1", limits: { autorange: false, fixed: { min: 0, max: 100 } } },
-      { id: "y-1", limits: { autorange: false, fixed: { min: -1, max: 1 } } },
+      { id: "x-1" },
+      { id: "y-1", makeLimits: () => ({ min: -1, max: 1 }) },
     ],
     series: [
       {

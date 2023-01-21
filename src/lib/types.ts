@@ -40,9 +40,16 @@ export type Limits = {
 export type XScaleId = `x-${string}`;
 export type YScaleId = `y-${string}`;
 
+export type MakeLimitsOpts = {
+  drawContext: Omit<DrawContext, "limits">;
+  scaleId: XScaleId | YScaleId;
+};
+
+export type MakeLimits = (opts: MakeLimitsOpts) => Limits
+
 export type Scale = {
   id: XScaleId | YScaleId;
-  limits: { autorange: true } | { autorange: false; fixed: Limits };
+  makeLimits?: MakeLimits;
 };
 
 export type SeriesBase<Extras = { plotter: Plotter }> = {
@@ -162,6 +169,7 @@ export type DrawContext<Extras = any> = {
   drawConfig: PlotDrawConfig<Extras>;
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
+  limits: Record<Scale["id"], Limits>;
   chartArea: {
     x: number;
     y: number;

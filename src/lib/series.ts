@@ -18,9 +18,6 @@ export const drawSeries = (drawContext: DrawContext) => {
     if (!xScale || !yScale) {
       continue;
     }
-    if (xScale.limits.autorange || yScale.limits.autorange) {
-      continue;
-    }
     series.plotterOptions.plotter?.(drawContext, series, xScale, yScale);
   }
 
