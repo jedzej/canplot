@@ -15,8 +15,6 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "outDir": "dist",
     "declaration": true
-  },
-  "include": ["src/lib"]
+  }
 }

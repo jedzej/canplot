@@ -223,7 +223,7 @@ export const makeCursorPlugin = (
           if (e.detail > 1) {
             return;
           }
-          clickTimeout = setTimeout(() => {
+          clickTimeout = window.setTimeout(() => {
             clickTimeout = undefined;
             if (clickListeners.size === 0) return;
             const frame = plot.getDrawContext();

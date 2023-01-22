@@ -1,0 +1,22 @@
+{
+  "name": "@canplot/core",
+  "author": "jedzej",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/main.es.js",
+  "types": "./dist/main.d.ts",
+  "scripts": {
+    "build": "vite build",
+    "build:watch": "WATCH=true vite build"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.0.0",
+    "typescript": "^4.6.4",
+    "vite": "^3.2.3"
+  },
+  "dependencies": {}
+}

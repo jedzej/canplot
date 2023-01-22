@@ -1,5 +1,6 @@
 import {
   DEFAULT_AXIS_SIZE,
+  DEFAULT_LABEL_OFFSET,
   DEFAULT_POSITION,
   DEFAULT_SPLIT_SPACE,
 } from "./defaults";
@@ -164,7 +165,7 @@ const drawXLabel = (frame: PlotDrawFrame, axis: PlotAxis, y: number) => {
   }
   ctx.textBaseline = "top";
   applyStyles(ctx, { textBaseline: "top", textAlign, ...axis.labelStyle });
-  ctx.fillText(axis.label, x, y + (axis.labelOffset ?? 26));
+  ctx.fillText(axis.label, x, y + (axis.labelOffset ?? DEFAULT_LABEL_OFFSET));
   ctx.restore();
 };
 

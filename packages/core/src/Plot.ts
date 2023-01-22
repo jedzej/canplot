@@ -43,10 +43,6 @@ export class Plot {
         width: entry.contentRect.width,
         height: entry.contentRect.height,
       };
-      console.log("resize", {
-        width: entry.contentRect.width,
-        height: entry.contentRect.height,
-      });
       this.#draw(this.#lastDrawConfig_DO_NOT_USE);
     }
   });

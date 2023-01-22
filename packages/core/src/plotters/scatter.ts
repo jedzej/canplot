@@ -8,7 +8,7 @@ export type ScatterPlotterOpts = {
 
 export const scatterPlotter = ({
   style,
-  radius = 5,
+  radius = 3,
 }: ScatterPlotterOpts = {}): Plotter => {
   return (frame, singleSeries, xScale, yScale) => {
     const ctx = frame.ctx;
