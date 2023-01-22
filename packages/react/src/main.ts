@@ -1,1 +1,1 @@
-export { usePlot } from "./usePlot";
+export * from "./usePlot";

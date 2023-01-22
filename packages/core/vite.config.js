@@ -5,6 +5,7 @@ import typescript from "@rollup/plugin-typescript";
 export default defineConfig({
   build: {
     watch: !!process.env.WATCH,
+    sourcemap: !!process.env.WATCH,
     lib: {
       formats: ["es", "cjs", "umd"],
       entry: resolve(__dirname, `src/main.ts`),

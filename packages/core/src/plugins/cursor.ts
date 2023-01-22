@@ -43,14 +43,6 @@ type HoverListener = (event: HoverEvent) => void;
 
 type SpanSelectListener = (event: SpanSelectEvent) => void;
 
-type CursorPlugin = {
-  bindings: PlotPlugin;
-  addHoverListener: (listener: HoverListener) => () => void;
-  addClickListener: (listener: ClickListener) => () => void;
-  addDblClickListener: (listener: DblclickListener) => () => void;
-  addSpanSelectListener: (listener: SpanSelectListener) => () => void;
-};
-
 const getPosition = (
   e: MouseEvent,
   frame: PlotDrawFrame,
@@ -95,11 +87,10 @@ type CursorPluginOptions = {
   onHover?: HoverListener;
   onClick?: ClickListener;
   onDblClick?: DblclickListener;
+  pluginOpts?: PlotPlugin;
 };
 
-export const makeCursorPlugin = (
-  opts: CursorPluginOptions = {}
-): CursorPlugin => {
+export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
   let mouseMoveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseLeaveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseClickListener: ((e: MouseEvent) => void) | undefined = undefined;
@@ -124,8 +115,10 @@ export const makeCursorPlugin = (
   let clickTimeout: number | undefined = undefined;
 
   const bindings: PlotPlugin = {
+    ...opts.pluginOpts,
     hooks: {
-      onInit({ plot }) {
+      ...opts.pluginOpts?.hooks,
+      onInit({ plot, frame }) {
         const canvas = plot.getCanvas();
 
         // mouse down
@@ -253,6 +246,7 @@ export const makeCursorPlugin = (
           }
         };
         canvas.addEventListener("dblclick", mouseDblClickListener);
+        opts.pluginOpts?.hooks?.onInit?.({ plot, frame });
       },
 
       onDestroy({ plot }) {
@@ -281,27 +275,10 @@ export const makeCursorPlugin = (
           document.removeEventListener("mouseup", mouseUpListener);
           mouseUpListener = undefined;
         }
+        opts.pluginOpts?.hooks?.onDestroy?.({ plot });
       },
     },
   };
 
-  return {
-    bindings,
-    addHoverListener: (listener: HoverListener) => {
-      hoverListeners.add(listener);
-      return () => hoverListeners.delete(listener);
-    },
-    addClickListener: (listener: ClickListener) => {
-      clickListeners.add(listener);
-      return () => clickListeners.delete(listener);
-    },
-    addDblClickListener: (listener: DblclickListener) => {
-      dblclickListeners.add(listener);
-      return () => dblclickListeners.delete(listener);
-    },
-    addSpanSelectListener: (listener: SpanSelectListener) => {
-      spanSelectListeners.add(listener);
-      return () => spanSelectListeners.delete(listener);
-    },
-  };
+  return bindings;
 };

@@ -1,7 +1,7 @@
 import { Plot } from "./Plot";
 
 export type Hooks = {
-  onInit?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
+  onInit?: (opts: { frame: PlotDrawFrame; plot: Plot }) => (() => void) | void;
   beforeClear?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
   afterClear?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
   afterSeries?: (opts: { frame: PlotDrawFrame; plot: Plot }) => void;
@@ -26,8 +26,8 @@ export type Size = {
 };
 
 export type Dimensions = {
-  width: number | "auto";
-  height: number | "auto";
+  width?: number | "auto";
+  height?: number | "auto";
 };
 
 export type Limits = {
@@ -176,7 +176,7 @@ export type PlotDrawFrame = {
 };
 
 export type StaticConfig = {
-  canvas: HTMLCanvasElement;
+  canvas?: HTMLCanvasElement;
   plugins?: PlotPlugin[];
-  dimensions: Dimensions;
+  dimensions?: Dimensions;
 };

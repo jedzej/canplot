@@ -8,6 +8,8 @@ import {
   PlotDrawFrame,
   Size,
   StaticConfig,
+  Dimensions,
+  PlotPlugin,
 } from "./types";
 
 const DEFAULT_PADDING = 10;
@@ -31,11 +33,15 @@ const clearCanvas = ({ ctx, canvasSize: { width, height } }: PlotDrawFrame) => {
 };
 
 export class Plot {
-  #staticConfig: StaticConfig;
+  #dimensions: Required<Dimensions>;
+  #plugins: PlotPlugin[];
   #lastDrawConfig_DO_NOT_USE: PlotDrawInputParams;
   #parentSize: Size | undefined;
   #redrawing = false;
-  #phase: "initializing" | "initialized" | "destroyed" = "initializing";
+  #deinitCallbacks: (() => void)[] = [];
+  #canvas: HTMLCanvasElement | undefined = undefined;
+  #phase: "not-attached" | "initializing" | "initialized" | "destroyed" =
+    "not-attached";
 
   parentResizeObserver: ResizeObserver = new ResizeObserver((entries) => {
     for (const entry of entries) {
@@ -48,34 +54,51 @@ export class Plot {
   });
 
   constructor(staticConfig: StaticConfig, inputParams: PlotDrawInputParams) {
-    this.#staticConfig = staticConfig;
+    const { width = "auto", height = "auto" } = staticConfig.dimensions ?? {};
+    this.#dimensions = { width, height };
+    this.#plugins = staticConfig.plugins ?? [];
     this.#lastDrawConfig_DO_NOT_USE = inputParams;
-    const { width, height } = this.#staticConfig.dimensions;
-    if (typeof width === "number" && Number.isFinite(width)) {
-      this.#staticConfig.canvas.width = width;
-    }
-    if (typeof height === "number" && Number.isFinite(height)) {
-      this.#staticConfig.canvas.height = height;
-    }
-    if (width === "auto" || height === "auto") {
-      this.parentResizeObserver.observe(
-        this.#staticConfig.canvas.parentElement!
-      );
-    } else {
-      this.#draw(inputParams);
+    if (staticConfig.canvas) {
+      this.attach(staticConfig.canvas);
     }
   }
 
-  getCanvas() {
-    return this.#staticConfig.canvas;
+  getPhase() {
+    return this.#phase;
+  }
+
+  attach(canvas: HTMLCanvasElement) {
+    if (this.#phase !== "not-attached") {
+      throw new Error("Plot already attached");
+    }
+    this.#phase = "initializing";
+    this.#canvas = canvas;
+    const { width, height } = this.#dimensions;
+    if (typeof width === "number" && Number.isFinite(width)) {
+      canvas.width = width;
+    }
+    if (typeof height === "number" && Number.isFinite(height)) {
+      canvas.height = height;
+    }
+    if (width === "auto" || height === "auto") {
+      this.parentResizeObserver.observe(canvas.parentElement!);
+    } else {
+      this.#draw(this.#lastDrawConfig_DO_NOT_USE);
+    }
+  }
+
+  getCanvas(): HTMLCanvasElement {
+    if (!this.#canvas) {
+      throw new Error("Canvas not attached");
+    }
+    return this.#canvas;
   }
 
   #updateCanvasSize() {
-    const { width, height } = this.#staticConfig.dimensions;
-    this.#staticConfig.canvas.width =
-      width === "auto" ? this.#parentSize!.width : width;
-    this.#staticConfig.canvas.height =
-      height === "auto" ? this.#parentSize!.height : height;
+    const { width, height } = this.#dimensions;
+    const canvas = this.getCanvas();
+    canvas.width = width === "auto" ? this.#parentSize!.width : width;
+    canvas.height = height === "auto" ? this.#parentSize!.height : height;
   }
 
   #makeFrame(drawConfig: PlotDrawInputParams): PlotDrawFrame {
@@ -102,13 +125,15 @@ export class Plot {
       }
     }
 
+    const canvas = this.getCanvas();
+
     const canvasSize = {
-      width: this.#staticConfig.canvas.width,
-      height: this.#staticConfig.canvas.height,
+      width: canvas.width,
+      height: canvas.height,
     };
 
     const drawContextWithoutLimits: Omit<PlotDrawFrame, "limits"> = {
-      ctx: this.#staticConfig.canvas.getContext("2d")!,
+      ctx: canvas.getContext("2d")!,
       chartArea: {
         x: leftAxesSize + padding.left,
         y: topAxesSize + padding.top,
@@ -161,7 +186,9 @@ export class Plot {
           return;
         }
       } else {
-        console.error("Cannot update plot before it is initialized");
+        console.error(
+          "Cannot update plot before it is initialized: " + this.#phase
+        );
         return;
       }
     } else {
@@ -178,8 +205,11 @@ export class Plot {
   destroy() {
     this.parentResizeObserver.disconnect();
     this.#phase = "destroyed";
-    for (const plugin of this.#staticConfig.plugins ?? []) {
+    for (const plugin of this.#plugins) {
       plugin.hooks?.onDestroy?.({ plot: this });
+    }
+    for (const deinit of this.#deinitCallbacks) {
+      deinit();
     }
   }
 
@@ -194,17 +224,16 @@ export class Plot {
     this.#redrawing = true;
 
     this.#updateCanvasSize();
-    const plugins = this.#staticConfig.plugins ?? [];
 
     let inputParams = rawInputParams;
-    for (const plugin of plugins) {
+    for (const plugin of this.#plugins) {
       if (plugin.transformInputParams) {
         inputParams = plugin.transformInputParams(inputParams);
       }
     }
 
     let frame = this.#makeFrame(inputParams);
-    for (const plugin of plugins) {
+    for (const plugin of this.#plugins) {
       if (plugin.transformFrame) {
         frame = plugin.transformFrame(frame);
       }
@@ -212,20 +241,23 @@ export class Plot {
 
     if (this.#phase === "initializing") {
       // ON INIT HOOK
-      for (const plugin of plugins) {
-        plugin.hooks?.onInit?.({ frame, plot: this });
+      for (const plugin of this.#plugins) {
+        const deinitCallback = plugin.hooks?.onInit?.({ frame, plot: this });
+        if (deinitCallback) {
+          this.#deinitCallbacks.push(deinitCallback);
+        }
       }
       this.#phase = "initialized";
     }
 
     // CLEAR
-    for (const plugin of plugins) {
+    for (const plugin of this.#plugins) {
       plugin.hooks?.beforeClear?.({ frame, plot: this });
     }
 
     clearCanvas(frame);
 
-    for (const plugin of plugins) {
+    for (const plugin of this.#plugins) {
       plugin.hooks?.afterClear?.({ frame, plot: this });
     }
 
@@ -239,7 +271,7 @@ export class Plot {
     // DRAW SERIES
     drawSeries(frame);
 
-    for (const plugin of plugins) {
+    for (const plugin of this.#plugins) {
       plugin.hooks?.afterSeries?.({ frame, plot: this });
     }
 
@@ -249,7 +281,7 @@ export class Plot {
     // DRAW AXES
     drawAxes(frame);
 
-    for (const plugin of plugins) {
+    for (const plugin of this.#plugins) {
       plugin.hooks?.afterAxes?.({ frame, plot: this });
     }
 

@@ -1,5 +1,5 @@
 import { Plot, StaticConfig, PlotDrawInputParams } from "@canplot/core";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useState } from "react";
 
 type UsePlotStaticConfig = Omit<StaticConfig, "canvas"> & {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -9,34 +9,22 @@ export const usePlot = (
   staticConfig: UsePlotStaticConfig,
   makeParams: () => PlotDrawInputParams,
   deps: any[]
-) => {
-  const plotRef = useRef<Plot>();
+): Plot => {
+  const [plot] = useState(() => new Plot(staticConfig, makeParams()));
 
   useLayoutEffect(() => {
-    if (!plotRef.current) {
-      plotRef.current = new Plot(
-        {
-          canvas: staticConfig.canvasRef.current!,
-          dimensions: staticConfig.dimensions,
-          plugins: staticConfig.plugins,
-        },
-        makeParams()
-      );
+    if (plot.getPhase() === "not-attached") {
+      plot.attach(staticConfig.canvasRef.current!);
     } else {
-      plotRef.current.update(makeParams());
+      plot.update(makeParams());
     }
-    return () => {
-      plotRef.current?.destroy();
-      plotRef.current = undefined;
-    };
   }, deps);
 
   useLayoutEffect(() => {
     return () => {
-      plotRef.current?.destroy();
-      plotRef.current = undefined;
+      plot.destroy();
     };
   }, []);
 
-  return plotRef;
+  return plot;
 };
