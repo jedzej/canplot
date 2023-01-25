@@ -86,9 +86,11 @@ export type PlotAxis = {
   scaleId: Scale["id"];
   position?: "primary" | "secondary";
   size?: number;
-  tickStyle?: Style;
+  tickLabelStyle?: Style;
   tickSize?: number;
-  style?: Style;
+  axisStyle?: Style;
+  tickStyle?: Style;
+  multilineGap?: number;
   label?: string;
   labelStyle?: Style;
   labelOffset?: number;
@@ -175,7 +177,7 @@ export type PlotDrawFrame = {
   padding: NormalizedPadding;
 };
 
-export type StaticConfig = {
+export type PlotStaticConfig = {
   canvas?: HTMLCanvasElement;
   plugins?: PlotPlugin[];
   dimensions?: Dimensions;

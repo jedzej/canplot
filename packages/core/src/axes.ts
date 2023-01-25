@@ -1,8 +1,10 @@
 import {
   DEFAULT_AXIS_SIZE,
   DEFAULT_LABEL_OFFSET,
+  DEFAULT_MULTILINE_GAP,
   DEFAULT_POSITION,
   DEFAULT_SPLIT_SPACE,
+  DEFAULT_TICK_SIZE,
 } from "./defaults";
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
 import {
@@ -57,35 +59,50 @@ const drawYTicks = (
   x: number
 ) => {
   const { ctx } = frame;
-  ctx.save();
-  applyStyles(ctx, { ...axis.style, ...axis.tickStyle });
-  ctx.beginPath();
   const position = axis.position ?? DEFAULT_POSITION;
-  const tickSize = axis.tickSize ?? 5;
+  const tickSize = axis.tickSize ?? DEFAULT_TICK_SIZE;
+  const x0 = x;
+  const x1 = position === "primary" ? x - tickSize : x + tickSize;
+  const multilineGap = axis.multilineGap ?? DEFAULT_MULTILINE_GAP;
+
   const ticks =
     (axis.genTicks ?? makeGenTicksDefault())({ frame: frame, scale, axis }) ??
     [];
+
   const labels = (axis.tickFormat ?? tickFormat)({
     frame: frame,
     scale,
     ticks,
   });
 
-  const x0 = x;
-  const x1 = position === "primary" ? x - tickSize : x + tickSize;
+  // draw ticks
+  ctx.save();
+  applyStyles(ctx, { ...axis.axisStyle, ...axis.tickStyle });
+  ctx.beginPath();
+
   for (let i = 0; i < ticks.length; i++) {
     const y = valToPos(frame, ticks[i], scale);
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
-    ctx.textAlign = position === "primary" ? "right" : "left";
-    ctx.textBaseline = "middle";
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // draw tick labels
+  ctx.save();
+  applyStyles(ctx, {
+    textBaseline: "middle",
+    textAlign: position === "primary" ? "right" : "left",
+    ...axis.axisStyle,
+    ...axis.tickLabelStyle,
+  });
+  for (let i = 0; i < ticks.length; i++) {
+    const y = valToPos(frame, ticks[i], scale);
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
-      ctx.fillText(labelLines[j], x1, y + j * 10);
+      ctx.fillText(labelLines[j], x1, y + j * multilineGap);
     }
   }
-  ctx.closePath();
-  ctx.stroke();
   ctx.restore();
 };
 
@@ -97,7 +114,7 @@ const drawYAxis = (
   y1: number
 ) => {
   ctx.save();
-  applyStyles(ctx, axis.style);
+  applyStyles(ctx, axis.axisStyle);
   ctx.beginPath();
   ctx.moveTo(x, y0);
   ctx.lineTo(x, y1);
@@ -110,43 +127,59 @@ const drawXTicks = (
   frame: PlotDrawFrame,
   axis: PlotAxis,
   scale: Scale,
-  y0: number,
-  y1: number
+  y: number
 ) => {
   const { ctx } = frame;
-  ctx.save();
-  applyStyles(ctx, axis.style);
-  ctx.beginPath();
+  const position = axis.position ?? DEFAULT_POSITION;
+  const tickSize = axis.tickSize ?? DEFAULT_TICK_SIZE;
+  const y0 = y;
+  const y1 = position === "primary" ? y + tickSize : y - tickSize;
+  const multilineGap = axis.multilineGap ?? DEFAULT_MULTILINE_GAP;
+
   const ticks =
     (axis.genTicks ?? makeGenTicksDefault())({ frame: frame, scale, axis }) ??
     [];
+
   const labels = (axis.tickFormat ?? tickFormat)({
     frame: frame,
     scale,
     ticks,
   });
+
+  // draw ticks
+  ctx.save();
+  applyStyles(ctx, { ...axis.axisStyle, ...axis.tickStyle });
+  ctx.beginPath();
   for (let i = 0; i < ticks.length; i++) {
     const x = valToPos(frame, ticks[i], scale);
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
-    ctx.textAlign = "center";
-    ctx.textBaseline =
-      (axis.position ?? DEFAULT_POSITION) === "primary" ? "top" : "bottom";
-    const labelLines = labels[i].split("\n");
-    for (let j = 0; j < labelLines.length; j++) {
-      ctx.fillText(labelLines[j], x, y1 + j * 10);
-    }
   }
-
-  ctx.closePath();
   ctx.stroke();
   ctx.restore();
+
+  // draw tick labels
+  ctx.save();
+  applyStyles(ctx, {
+    textBaseline: position === "primary" ? "top" : "bottom",
+    textAlign: "center",
+    ...axis.axisStyle,
+    ...axis.tickLabelStyle,
+  });
+  for (let i = 0; i < ticks.length; i++) {
+    const x = valToPos(frame, ticks[i], scale);
+    const labelLines = labels[i].split("\n");
+    for (let j = 0; j < labelLines.length; j++) {
+      ctx.fillText(labelLines[j], x, y1 + j * multilineGap);
+    }
+  }
+  ctx.restore();
 };
+
 const drawXLabel = (frame: PlotDrawFrame, axis: PlotAxis, y: number) => {
   if (!axis.label) return;
   const { ctx } = frame;
   ctx.save();
-  ctx.textAlign = "center";
   let x: number;
   let textAlign: CanvasTextAlign;
   switch (axis.labelAlign ?? "center") {
@@ -163,7 +196,6 @@ const drawXLabel = (frame: PlotDrawFrame, axis: PlotAxis, y: number) => {
       x = frame.chartArea.x + frame.chartArea.width / 2;
       break;
   }
-  ctx.textBaseline = "top";
   applyStyles(ctx, { textBaseline: "top", textAlign, ...axis.labelStyle });
   ctx.fillText(axis.label, x, y + (axis.labelOffset ?? DEFAULT_LABEL_OFFSET));
   ctx.restore();
@@ -177,7 +209,7 @@ const drawXAxis = (
   x1: number
 ) => {
   ctx.save();
-  applyStyles(ctx, axis.style);
+  applyStyles(ctx, axis.axisStyle);
   ctx.beginPath();
   ctx.moveTo(x0, y);
   ctx.lineTo(x1, y);
@@ -221,18 +253,12 @@ export const drawAxes = (frame: PlotDrawFrame) => {
           chartAreaLeft,
           chartAreaRight
         );
-        drawXTicks(
-          frame,
-          axis,
-          scale,
-          currentBottomOffset,
-          currentBottomOffset + (axis.tickSize ?? 6)
-        );
+        drawXTicks(frame, axis, scale, currentBottomOffset);
         drawXLabel(frame, axis, currentBottomOffset);
       } else {
         currentTopOffset += size;
         drawXAxis(ctx, axis, currentTopOffset, chartAreaLeft, chartAreaRight);
-        drawXTicks(frame, axis, scale, currentTopOffset, currentTopOffset - 6);
+        drawXTicks(frame, axis, scale, currentTopOffset);
       }
     } else {
       if (position === "primary") {

@@ -7,7 +7,7 @@ import {
   PlotDrawInputParams,
   PlotDrawFrame,
   Size,
-  StaticConfig,
+  PlotStaticConfig,
   Dimensions,
   PlotPlugin,
 } from "./types";
@@ -53,7 +53,7 @@ export class Plot {
     }
   });
 
-  constructor(staticConfig: StaticConfig, inputParams: PlotDrawInputParams) {
+  constructor(staticConfig: PlotStaticConfig, inputParams: PlotDrawInputParams) {
     const { width = "auto", height = "auto" } = staticConfig.dimensions ?? {};
     this.#dimensions = { width, height };
     this.#plugins = staticConfig.plugins ?? [];
