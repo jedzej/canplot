@@ -94,7 +94,7 @@ export type PlotAxis = {
   label?: string;
   labelStyle?: Style;
   labelOffset?: number;
-  labelAlign?: "left" | "center" | "right";
+  labelAlign?: "start" | "center" | "end";
   genTicks?: PlotAxisGenTicks;
   tickFormat?: PlotAxisTickFormat;
 };

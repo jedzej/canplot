@@ -146,6 +146,82 @@ Styling.args = {
   ],
 };
 
+export const ManyScalesManyLabels = Template.bind({});
+ManyScalesManyLabels.args = {
+  ...ManyScalesManyLabels.args,
+  scales: [
+    { id: "x-1", makeLimits: () => ({ min: -200, max: 200 }) },
+    { id: "x-2", makeLimits: () => ({ min: 0, max: 100 }) },
+    { id: "x-3", makeLimits: () => ({ min: 0, max: 100 }) },
+    { id: "y-1", makeLimits: () => ({ min: 0, max: 10 }) },
+    { id: "y-2", makeLimits: () => ({ min: 0, max: 20 }) },
+    { id: "y-3", makeLimits: () => ({ min: -30, max: 30 }) },
+  ],
+  axes: [
+    {
+      scaleId: "x-1",
+      label: "X-1 label 1",
+      labelAlign: "start",
+    },
+    {
+      scaleId: "x-1",
+      label: "X-1 label 2",
+      labelAlign: "center",
+      size: 70,
+      labelStyle: {
+        fillStyle: "red",
+        font: "bold 10px Arial",
+      },
+    },
+    {
+      scaleId: "x-2",
+      label: "X-2 label with negative offset",
+      labelAlign: "end",
+      labelOffset: -20,
+      size: 30,
+      labelStyle: {
+        fillStyle: "red",
+        font: "blue 10px Arial",
+        strokeStyle: "blue",
+      },
+    },
+    {
+      scaleId: "x-2",
+      label: "X-2 secondary",
+      position: "secondary",
+      size: 30,
+    },
+    {
+      scaleId: "y-1",
+      label: "Y-1 label start",
+      labelAlign: "start",
+      labelOffset: 10,
+    },
+    {
+      scaleId: "y-2",
+      label: "Y-2 label center",
+      labelAlign: "center",
+      labelOffset: 20,
+      size: 100,
+    },
+    {
+      scaleId: "y-3",
+      label: "Y-3 label end",
+      labelAlign: "end",
+      labelOffset: -10,
+      labelStyle: {
+        textAlign: "left",
+      },
+    },
+    {
+      scaleId: "y-3",
+      label: "Y-3 secondary",
+      size: 80,
+      position: "secondary",
+    },
+  ],
+};
+
 export const TickFormat = Template.bind({});
 TickFormat.args = {
   ...TickFormat.args,

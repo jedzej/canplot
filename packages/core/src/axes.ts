@@ -1,5 +1,6 @@
 import {
   DEFAULT_AXIS_SIZE,
+  DEFAULT_LABEL_ALIGN,
   DEFAULT_LABEL_OFFSET,
   DEFAULT_MULTILINE_GAP,
   DEFAULT_POSITION,
@@ -21,6 +22,10 @@ for (let i = -12; i <= 12; i++) {
   acceptable.push(2 * 10 ** i);
   acceptable.push(5 * 10 ** i);
 }
+
+const isPrimary = (axis: PlotAxis) => {
+  return (axis.position ?? DEFAULT_POSITION) === "primary";
+};
 
 type MakeGenTicksDefaultOpts = {
   space?: number;
@@ -59,10 +64,9 @@ const drawYTicks = (
   x: number
 ) => {
   const { ctx } = frame;
-  const position = axis.position ?? DEFAULT_POSITION;
   const tickSize = axis.tickSize ?? DEFAULT_TICK_SIZE;
   const x0 = x;
-  const x1 = position === "primary" ? x - tickSize : x + tickSize;
+  const x1 = isPrimary(axis) ? x - tickSize : x + tickSize;
   const multilineGap = axis.multilineGap ?? DEFAULT_MULTILINE_GAP;
 
   const ticks =
@@ -92,7 +96,7 @@ const drawYTicks = (
   ctx.save();
   applyStyles(ctx, {
     textBaseline: "middle",
-    textAlign: position === "primary" ? "right" : "left",
+    textAlign: isPrimary(axis) ? "right" : "left",
     ...axis.axisStyle,
     ...axis.tickLabelStyle,
   });
@@ -180,24 +184,30 @@ const drawXLabel = (frame: PlotDrawFrame, axis: PlotAxis, y: number) => {
   if (!axis.label) return;
   const { ctx } = frame;
   ctx.save();
-  let x: number;
+  let xPos: number;
   let textAlign: CanvasTextAlign;
-  switch (axis.labelAlign ?? "center") {
-    case "left":
+  switch (axis.labelAlign ?? DEFAULT_LABEL_ALIGN) {
+    case "start":
       textAlign = "left";
-      x = frame.chartArea.x;
+      xPos = frame.chartArea.x;
       break;
-    case "right":
+    case "end":
       textAlign = "right";
-      x = frame.chartArea.x + frame.chartArea.width;
+      xPos = frame.chartArea.x + frame.chartArea.width;
       break;
     case "center":
       textAlign = "center";
-      x = frame.chartArea.x + frame.chartArea.width / 2;
+      xPos = frame.chartArea.x + frame.chartArea.width / 2;
       break;
   }
-  applyStyles(ctx, { textBaseline: "top", textAlign, ...axis.labelStyle });
-  ctx.fillText(axis.label, x, y + (axis.labelOffset ?? DEFAULT_LABEL_OFFSET));
+  applyStyles(ctx, {
+    textBaseline: isPrimary(axis) ? "top" : "bottom",
+    textAlign,
+    ...axis.labelStyle,
+  });
+  const labelOffset = axis.labelOffset ?? DEFAULT_LABEL_OFFSET;
+  const yPos = isPrimary(axis) ? y + labelOffset : y - labelOffset;
+  ctx.fillText(axis.label, xPos, yPos);
   ctx.restore();
 };
 
@@ -215,6 +225,37 @@ const drawXAxis = (
   ctx.lineTo(x1, y);
   ctx.closePath();
   ctx.stroke();
+  ctx.restore();
+};
+
+const drawYLabel = (frame: PlotDrawFrame, axis: PlotAxis, x: number) => {
+  if (!axis.label) return;
+  const { ctx } = frame;
+  ctx.save();
+  let yPos: number;
+  let textBaseline: CanvasTextBaseline;
+  switch (axis.labelAlign ?? DEFAULT_LABEL_ALIGN) {
+    case "start":
+      textBaseline = "bottom";
+      yPos = frame.chartArea.y + frame.chartArea.height;
+      break;
+    case "end":
+      textBaseline = "top";
+      yPos = frame.chartArea.y;
+      break;
+    case "center":
+      textBaseline = "middle";
+      yPos = frame.chartArea.y + frame.chartArea.height / 2;
+      break;
+  }
+  applyStyles(ctx, {
+    textBaseline,
+    textAlign: isPrimary(axis) ? "right" : "left",
+    ...axis.labelStyle,
+  });
+  const labelOffset = axis.labelOffset ?? DEFAULT_LABEL_OFFSET;
+  const xPos = isPrimary(axis) ? x - labelOffset : x + labelOffset;
+  ctx.fillText(axis.label, xPos, yPos);
   ctx.restore();
 };
 
@@ -241,7 +282,7 @@ export const drawAxes = (frame: PlotDrawFrame) => {
       continue;
     }
     const size = axis.size ?? DEFAULT_AXIS_SIZE;
-    const position = axis.position ?? "primary";
+    const position = axis.position ?? DEFAULT_POSITION;
 
     if (isXScale(scale)) {
       if (position === "primary") {
@@ -259,16 +300,19 @@ export const drawAxes = (frame: PlotDrawFrame) => {
         currentTopOffset += size;
         drawXAxis(ctx, axis, currentTopOffset, chartAreaLeft, chartAreaRight);
         drawXTicks(frame, axis, scale, currentTopOffset);
+        drawXLabel(frame, axis, currentTopOffset);
       }
     } else {
       if (position === "primary") {
         currentLeftOffset += size;
         drawYAxis(ctx, axis, currentLeftOffset, chartAreaTop, chartAreaBottom);
         drawYTicks(frame, axis, scale, currentLeftOffset);
+        drawYLabel(frame, axis, currentLeftOffset);
       } else {
         currentRightOffset -= size;
         drawYAxis(ctx, axis, currentRightOffset, chartAreaTop, chartAreaBottom);
         drawYTicks(frame, axis, scale, currentRightOffset);
+        drawYLabel(frame, axis, currentRightOffset);
       }
     }
   }
