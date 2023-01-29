@@ -8,7 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:demos": "concurrently --kill-others 'yarn workspace @canplot/core build:watch' 'sleep 3;yarn workspace @canplot/react build:watch' 'yarn workspace @canplot/demos storybook'"
+    "dev:demos": "concurrently --kill-others 'yarn workspace @canplot/core build:watch' 'sleep 3;yarn workspace @canplot/react build:watch' 'yarn workspace @canplot/demos storybook'",
+    "build:docs": "yarn workspace @canplot/demos build-storybook -o ../../docs"
   },
   "devDependencies": {
     "concurrently": "^7.6.0",
