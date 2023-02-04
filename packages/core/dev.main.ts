@@ -10,22 +10,15 @@ const colors = ["red", "blue", "brown", "orange", "purple"];
 
 const makeLegend = (
   legendData: { color: string; label: string }[]
-): PlotPluginConfig<{
-  originalBottomPadding: number;
-  legendHeight: number;
-}> => {
+): PlotPluginConfig => {
+  let originalBottomPadding = 0;
+  const legendHeight = 20 * legendData.length;
   return {
-    initState: () => ({
-      originalBottomPadding: 0,
-      legendHeight: 0,
-    }),
-    transformInputParams({ inputParams, self }) {
+    transformInputParams({ inputParams }) {
       const legendHeight = 20 * legendData.length;
       const normalizedPadding = helpers.normalizePadding(inputParams.padding);
-      self.store = {
-        legendHeight,
-        originalBottomPadding: normalizedPadding.bottom,
-      };
+
+      originalBottomPadding = normalizedPadding.bottom;
       return {
         ...inputParams,
         padding: {
@@ -34,8 +27,7 @@ const makeLegend = (
         },
       };
     },
-    transformFrame({ frame, self }) {
-      const legendHeight = 20 * frame.inputParams.series.length;
+    transformFrame({ frame }) {
       const legendFacet: Facet = {
         type: "custom",
         draw(frame) {
@@ -46,7 +38,8 @@ const makeLegend = (
             inputParams: { series },
           } = frame;
           ctx.fillStyle = "red";
-          const legendY = canvasSize.height - self.store.originalBottomPadding - legendHeight;
+          const legendY =
+            canvasSize.height - originalBottomPadding - legendHeight;
 
           const maxW = Math.max(
             ...series.map((_, i) => ctx.measureText(legendData[i].label).width)
