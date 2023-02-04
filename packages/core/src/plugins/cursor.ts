@@ -1,6 +1,6 @@
 import { posToVal } from "../helpers";
 import { Plot } from "../Plot";
-import { PlotDrawFrame, PlotPlugin, Scale } from "../types";
+import { PlotDrawFrame, PlotPluginConfig, Scale } from "../types";
 import { clamp } from "../utils";
 
 export type CursorPosition = {
@@ -87,7 +87,7 @@ type CursorPluginOptions = {
   onHover?: HoverListener;
   onClick?: ClickListener;
   onDblClick?: DblclickListener;
-  pluginOpts?: PlotPlugin;
+  pluginOpts?: PlotPluginConfig;
 };
 
 export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
@@ -114,11 +114,11 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
 
   let clickTimeout: number | undefined = undefined;
 
-  const bindings: PlotPlugin = {
+  const bindings: PlotPluginConfig = {
     ...opts.pluginOpts,
     hooks: {
       ...opts.pluginOpts?.hooks,
-      onInit({ plot, frame }) {
+      onInit({ plot, frame, self }) {
         const canvas = plot.getCanvas();
 
         // mouse down
@@ -246,10 +246,10 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
           }
         };
         canvas.addEventListener("dblclick", mouseDblClickListener);
-        opts.pluginOpts?.hooks?.onInit?.({ plot, frame });
+        opts.pluginOpts?.hooks?.onInit?.({ plot, frame, self });
       },
 
-      onDestroy({ plot }) {
+      onDestroy({ plot, self }) {
         const canvas = plot.getCanvas();
         if (mouseMoveListener) {
           canvas.removeEventListener("mousemove", mouseMoveListener);
@@ -275,7 +275,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
           document.removeEventListener("mouseup", mouseUpListener);
           mouseUpListener = undefined;
         }
-        opts.pluginOpts?.hooks?.onDestroy?.({ plot });
+        opts.pluginOpts?.hooks?.onDestroy?.({ plot, self });
       },
     },
   };

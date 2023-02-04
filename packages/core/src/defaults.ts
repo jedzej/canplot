@@ -7,3 +7,4 @@ export const DEFAULT_SPLIT_SPACE = 60;
 export const DEFAULT_TIMEZONE = "UTC";
 export const DEFAULT_LOCALE = "en-GB";
 export const DEFAULT_LABEL_OFFSET = 25;
+export const DEFAULT_PADDING = 10;

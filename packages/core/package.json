@@ -10,6 +10,7 @@
   "main": "./dist/main.es.js",
   "types": "./dist/main.d.ts",
   "scripts": {
+    "dev": "vite",
     "build": "vite build",
     "build:watch": "WATCH=true vite build"
   },

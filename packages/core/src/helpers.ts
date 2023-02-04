@@ -1,4 +1,5 @@
-import { PlotDrawFrame, Scale, Style } from "./types";
+import { DEFAULT_PADDING } from "./defaults";
+import { PlotDrawFrame, PlotDrawInputParams, Scale, Style } from "./types";
 import { clamp } from "./utils";
 
 export const isXScale = (scale: Scale | Scale["id"]) =>
@@ -18,11 +19,7 @@ export const valToPxDistance = (
   return val * factor;
 };
 
-export const valToPos = (
-  frame: PlotDrawFrame,
-  val: number,
-  scale: Scale
-) => {
+export const valToPos = (frame: PlotDrawFrame, val: number, scale: Scale) => {
   const { min } = frame.limits[scale.id];
   const chartArea = frame.chartArea;
   const relativePosition = valToPxDistance(frame, val - min, scale);
@@ -53,11 +50,7 @@ export const pxToValDistance = (
   return pxDistance / factor;
 };
 
-export const posToVal = (
-  frame: PlotDrawFrame,
-  pos: number,
-  scale: Scale
-) => {
+export const posToVal = (frame: PlotDrawFrame, pos: number, scale: Scale) => {
   const { min, max } = frame.limits[scale.id];
   const relativePosition = pxToValDistance(frame, pos, scale);
   return isXScale(scale) ? min + relativePosition : max - relativePosition;
@@ -76,4 +69,18 @@ export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
   ctx.direction = style?.direction ?? "inherit";
   ctx.textBaseline = style?.textBaseline ?? "alphabetic";
   ctx.fontKerning = style?.fontKerning ?? "auto";
+};
+
+export const normalizePadding = (padding: PlotDrawInputParams["padding"]) => {
+  if (typeof padding === "number" || typeof padding === "undefined") {
+    const paddingWithDefault = padding ?? DEFAULT_PADDING;
+    return {
+      top: paddingWithDefault,
+      right: paddingWithDefault,
+      bottom: paddingWithDefault,
+      left: paddingWithDefault,
+    };
+  }
+
+  return { ...padding };
 };
