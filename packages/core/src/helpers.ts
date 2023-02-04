@@ -1,6 +1,7 @@
 import { DEFAULT_PADDING } from "./defaults";
+import { CursorPosition } from "./main";
 import { PlotDrawFrame, PlotDrawInputParams, Scale, Style } from "./types";
-import { clamp } from "./utils";
+import { clamp, findClosestIndex } from "./utils";
 
 export const isXScale = (scale: Scale | Scale["id"]) =>
   typeof scale === "string"
@@ -83,4 +84,26 @@ export const normalizePadding = (padding: PlotDrawInputParams["padding"]) => {
   }
 
   return { ...padding };
+};
+
+type DataPoint = { x: number; y: number };
+
+export const findClosestDataPoint = (
+  position: CursorPosition | undefined,
+  frame: PlotDrawFrame
+): (DataPoint | undefined)[] => {
+  const { series } = frame.inputParams;
+  if (!position) {
+    return series.map(() => undefined);
+  }
+  return series.map((series) => {
+    if (series.x.length < 0) {
+      return undefined;
+    }
+    const idx = findClosestIndex(series.x, position.scaled[series.xScaleId]);
+    return {
+      x: series.x[idx],
+      y: series.y[idx],
+    };
+  });
 };

@@ -119,6 +119,16 @@ export type HLineFacet = {
   style?: Style;
 };
 
+export type CircleFacet = {
+  type: "circle";
+  x: number;
+  y: number;
+  radius: number;
+  xScaleId: XScaleId;
+  yScaleId: YScaleId;
+  style?: Style;
+};
+
 export type CustomFacet = {
   type: "custom";
   draw: (frame: PlotDrawFrame, facet: CustomFacet) => void;
@@ -143,7 +153,7 @@ export type SpanFacet = {
 
 export type FacetLayer = "top" | "middle" | "bottom";
 
-export type Facet = (VLineFacet | HLineFacet | SpanFacet | CustomFacet) & {
+export type Facet = (VLineFacet | HLineFacet | SpanFacet | CustomFacet | CircleFacet) & {
   id?: string;
   layer?: FacetLayer;
 };
@@ -164,7 +174,8 @@ export type PlotDrawInputParams = {
 };
 
 export type PlotPlugin<S> = {
-  store: S;
+  setState: (updater: (old: S) => S) => void;
+  state: S;
   config: PlotPluginConfig<S>;
 };
 

@@ -6,6 +6,7 @@ import {
   HLineFacet,
   SpanFacet,
   VLineFacet,
+  CircleFacet,
 } from "./types";
 
 const getScale = (frame: PlotDrawFrame, scaleId: string) => {
@@ -47,6 +48,24 @@ const drawHLineFacet = (frame: PlotDrawFrame, facet: HLineFacet) => {
   ctx.moveTo(chartArea.x, y);
   ctx.lineTo(chartArea.x + chartArea.width, y);
   ctx.stroke();
+  ctx.restore();
+};
+
+const drawCircleFacet = (frame: PlotDrawFrame, facet: CircleFacet) => {
+  const { ctx } = frame;
+  const xScale = getScale(frame, facet.xScaleId);
+  const yScale = getScale(frame, facet.yScaleId);
+  if (!xScale || !yScale) {
+    return;
+  }
+  const x = valToPos(frame, facet.x, xScale);
+  const y = valToPos(frame, facet.y, yScale);
+  ctx.save();
+  applyStyles(ctx, facet.style);
+  ctx.beginPath();
+  ctx.arc(x, y, facet.radius, 0, 2 * Math.PI);
+  ctx.stroke();
+  ctx.fill();
   ctx.restore();
 };
 
@@ -113,6 +132,9 @@ export const drawFacets = (frame: PlotDrawFrame, layer: FacetLayer) => {
         break;
       case "h-line":
         drawHLineFacet(frame, facet);
+        break;
+      case "circle":
+        drawCircleFacet(frame, facet);
         break;
       case "span":
         drawSpanFacet(frame, facet);

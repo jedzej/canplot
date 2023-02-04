@@ -1,6 +1,6 @@
 import { posToVal } from "../helpers";
 import { Plot } from "../Plot";
-import { PlotDrawFrame, PlotPluginConfig, Scale } from "../types";
+import { PlotDrawFrame, PlotPlugin, PlotPluginConfig, Scale } from "../types";
 import { clamp } from "../utils";
 
 export type CursorPosition = {
@@ -15,33 +15,36 @@ export type CursorPosition = {
   scaled: Record<Scale["id"], number>;
 };
 
-type HoverEvent = {
+type HoverEvent<S> = {
   plot: Plot;
+  self: PlotPlugin<S>;
   frame: PlotDrawFrame;
   position?: CursorPosition;
 };
 
-type ClickEvent = {
+type ClickEvent<S> = {
   plot: Plot;
+  self: PlotPlugin<S>;
   frame: PlotDrawFrame;
   position: CursorPosition;
 };
 
-type SpanSelectEvent = {
+type SpanSelectEvent<S> = {
   phase: "start" | "move" | "end";
   plot: Plot;
+  self: PlotPlugin<S>;
   frame: PlotDrawFrame;
   positionStart: CursorPosition;
   positionEnd: CursorPosition;
 };
 
-type ClickListener = (event: ClickEvent) => void;
+type ClickListener<S> = (event: ClickEvent<S>) => void;
 
-type DblclickListener = (event: ClickEvent) => void;
+type DblclickListener<S> = (event: ClickEvent<S>) => void;
 
-type HoverListener = (event: HoverEvent) => void;
+type HoverListener<S> = (event: HoverEvent<S>) => void;
 
-type SpanSelectListener = (event: SpanSelectEvent) => void;
+type SpanSelectListener<S> = (event: SpanSelectEvent<S>) => void;
 
 const getPosition = (
   e: MouseEvent,
@@ -82,31 +85,33 @@ const getPosition = (
   };
 };
 
-type CursorPluginOptions = {
-  onSpanSelect?: SpanSelectListener;
-  onHover?: HoverListener;
-  onClick?: ClickListener;
-  onDblClick?: DblclickListener;
-  pluginOpts?: PlotPluginConfig;
+type CursorPluginOptions<S> = {
+  onSpanSelect?: SpanSelectListener<S>;
+  onHover?: HoverListener<S>;
+  onClick?: ClickListener<S>;
+  onDblClick?: DblclickListener<S>;
+  pluginOpts?: PlotPluginConfig<S>;
 };
 
-export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
+export const makeCursorPlugin = <S>(
+  opts: CursorPluginOptions<S> = {}
+) => {
   let mouseMoveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseLeaveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseClickListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseDblClickListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseDownListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseUpListener: ((e: MouseEvent) => void) | undefined = undefined;
-  const hoverListeners = new Set<HoverListener>(
+  const hoverListeners = new Set<HoverListener<S>>(
     opts.onHover ? [opts.onHover] : []
   );
-  const clickListeners = new Set<ClickListener>(
+  const clickListeners = new Set<ClickListener<S>>(
     opts.onClick ? [opts.onClick] : []
   );
-  const dblclickListeners = new Set<DblclickListener>(
+  const dblclickListeners = new Set<DblclickListener<S>>(
     opts.onDblClick ? [opts.onDblClick] : []
   );
-  const spanSelectListeners = new Set<SpanSelectListener>(
+  const spanSelectListeners = new Set<SpanSelectListener<S>>(
     opts.onSpanSelect ? [opts.onSpanSelect] : []
   );
 
@@ -114,7 +119,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
 
   let clickTimeout: number | undefined = undefined;
 
-  const bindings: PlotPluginConfig = {
+  const bindings: PlotPluginConfig<S> = {
     ...opts.pluginOpts,
     hooks: {
       ...opts.pluginOpts?.hooks,
@@ -137,6 +142,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
               frame,
               positionStart,
               positionEnd: positionStart,
+              self,
             });
           }
         };
@@ -151,7 +157,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
           const position = getPosition(e, frame);
 
           for (const listener of hoverListeners) {
-            listener({ plot, frame, position });
+            listener({ plot, frame, position, self });
           }
 
           const positionEnd = getPosition(e, frame, true);
@@ -163,6 +169,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
               phase: "move",
               plot,
               frame,
+              self,
               positionStart,
               positionEnd,
             });
@@ -185,6 +192,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
             listener({
               phase: "end",
               plot,
+              self,
               frame,
               positionStart,
               positionEnd,
@@ -200,7 +208,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
           const frame = plot.getDrawContext();
 
           for (const listener of hoverListeners) {
-            listener({ plot, frame });
+            listener({ plot, frame, self });
           }
         };
         canvas.addEventListener("mouseleave", mouseLeaveListener);
@@ -226,7 +234,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
             if (!position) return;
 
             for (const listener of clickListeners) {
-              listener({ plot, frame, position });
+              listener({ plot, frame, position, self });
             }
           }, 200);
         };
@@ -242,7 +250,7 @@ export const makeCursorPlugin = (opts: CursorPluginOptions = {}) => {
           if (!position) return;
 
           for (const listener of dblclickListeners) {
-            listener({ plot, frame, position });
+            listener({ plot, frame, position, self });
           }
         };
         canvas.addEventListener("dblclick", mouseDblClickListener);

@@ -13,3 +13,14 @@ export type DeepPartial<T> = {
 export const sum = (input: (number | undefined)[]): number => {
   return input.reduce<number>((a, b) => a + (b ?? 0), 0);
 };
+
+export const findClosestIndex = (arr: number[], val: number) => {
+  let closestIndex = 0;
+
+  for (let i = 0; i < arr.length; i++) {
+    if (Math.abs(arr[i] - val) < Math.abs(arr[closestIndex] - val)) {
+      closestIndex = i;
+    }
+  }
+  return closestIndex;
+};

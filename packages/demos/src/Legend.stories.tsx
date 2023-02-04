@@ -1,12 +1,13 @@
+import React from "react";
+import { ComponentMeta, ComponentStory } from "@storybook/react";
 import {
-  Plot,
+  CursorPosition,
   PlotPluginConfig,
   helpers,
   linePlotter,
   makeCursorPlugin,
-} from "./src/main";
-
-const colors = ["red", "blue", "brown", "orange", "purple"];
+} from "@canplot/core";
+import { animationLoop, EmbeddedPlot } from "./helpers";
 
 const makeLegendPlugin = (
   legendData: { color: string; label: string }[]
@@ -15,11 +16,11 @@ const makeLegendPlugin = (
   const legendHeight = 20 * legendData.length;
 
   return makeCursorPlugin({
-    onHover: ({ position, frame, self }) => {
-      self.setState(() => helpers.findClosestDataPoint(position, frame));
+    onHover: ({ position, self }) => {
+      self.setState(() => position);
     },
     pluginOpts: {
-      initState: () => [] as ReturnType<typeof helpers.findClosestDataPoint>,
+      initState: () => undefined as CursorPosition | undefined,
       transformInputParams({ inputParams }) {
         const normalizedPadding = helpers.normalizePadding(inputParams.padding);
 
@@ -40,7 +41,7 @@ const makeLegendPlugin = (
           inputParams: { series },
         } = frame;
 
-        const dataPoints = self.state;
+        const dataPoints = helpers.findClosestDataPoint(self.state, frame);
 
         const facets = frame.inputParams.facets ?? [];
 
@@ -56,7 +57,7 @@ const makeLegendPlugin = (
                 (_, i) => ctx.measureText(legendData[i].label).width
               )
             );
-            const legendWidth = maxW + 50;
+            const legendWidth = maxW + 60;
             const legendX = chartArea.x + (chartArea.width - legendWidth) / 2;
 
             ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
@@ -66,7 +67,7 @@ const makeLegendPlugin = (
               ctx.fillRect(legendX, legendY + i * 20, 20, 20);
               ctx.fillStyle = "black";
               ctx.fillText(
-                `${legendData[i].label} ${dataPoints[i]?.y ?? ""}`,
+                `${legendData[i].label} ${dataPoints[i]?.y?.toFixed(2) ?? ""}`,
                 legendX + 22,
                 legendY + i * 20 + 15
               );
@@ -84,11 +85,11 @@ const makeLegendPlugin = (
             layer: "top",
             x: datapoint.x,
             y: datapoint.y,
-            radius: 10,
+            radius: 5,
             xScaleId: series[i].xScaleId,
             yScaleId: series[i].yScaleId,
             style: {
-              fillStyle: colors[i],
+              fillStyle: legendData[i].color,
             },
           });
         }
@@ -105,11 +106,34 @@ const makeLegendPlugin = (
   });
 };
 
-new Plot(
-  {
-    canvas: document.getElementById("canvas")! as HTMLCanvasElement,
-    dimensions: { width: "auto", height: 400 },
+
+const colors = ["red", "blue", "orange", "purple"];
+
+export default {
+  title: "Legend",
+  args: {
+    dimensions: { height: 400 },
     plugins: [
+      {
+        hooks: {
+          onInit: ({ plot }) =>
+            animationLoop(() => {
+              plot.update((plot) => {
+                plot.series[0].y = new Array(plot.series[0].x.length)
+                  .fill(0)
+                  .map(
+                    (_, y) => 5 + Math.sin(y / 10 + performance.now() / 100)
+                  );
+                plot.series[1].y = new Array(plot.series[1].x.length)
+                  .fill(0)
+                  .map(
+                    (_, y) => 2 + Math.cos(y / 10 + performance.now() / 100)
+                  );
+                return plot;
+              });
+            }),
+        },
+      },
       makeLegendPlugin([
         {
           color: colors[0],
@@ -125,8 +149,6 @@ new Plot(
         },
       ]),
     ],
-  },
-  {
     padding: 20,
     series: [
       {
@@ -161,5 +183,11 @@ new Plot(
         scaleId: "y-1",
       },
     ],
-  }
+  },
+} as ComponentMeta<typeof EmbeddedPlot>;
+
+const Template: ComponentStory<typeof EmbeddedPlot> = ({ ...args }) => (
+  <EmbeddedPlot {...args} />
 );
+
+export const Default = Template.bind({});
