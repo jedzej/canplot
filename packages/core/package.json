@@ -11,13 +11,18 @@
   "types": "./dist/main.d.ts",
   "scripts": {
     "dev": "vite",
+    "test": "vitest",
     "build": "vite build",
     "build:watch": "WATCH=true vite build"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.0.0",
+    "@types/jest-image-snapshot": "^6.1.0",
+    "canvas": "^2.11.0",
+    "jest-image-snapshot": "^6.1.0",
     "typescript": "^4.6.4",
-    "vite": "^3.2.3"
+    "vite": "^3.2.3",
+    "vitest": "^0.28.4"
   },
   "dependencies": {}
 }
