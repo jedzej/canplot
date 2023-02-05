@@ -1,4 +1,5 @@
 import {
+  DOMPlot,
   Plot,
   PlotPluginConfig,
   helpers,
@@ -105,7 +106,7 @@ const makeLegendPlugin = (
   });
 };
 
-new Plot(
+new DOMPlot(
   {
     canvas: document.getElementById("canvas")! as HTMLCanvasElement,
     dimensions: { width: "auto", height: 400 },

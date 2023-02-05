@@ -1,31 +1,69 @@
 import { it, expect } from "vitest";
-import { createCanvas } from "canvas";
 import fs from "fs";
 import "./utils";
+import { NodePlot } from "../NodePlot";
+import { linePlotter } from "../main";
 
 it("example", async () => {
-  const canvas = createCanvas(200, 200);
-  const ctx = canvas.getContext("2d");
+  const plot = new NodePlot(
+    {
+      dimensions: {
+        width: 600,
+        height: 200,
+      },
+    },
 
-  // Write "Awesome!"
-  ctx.font = "30px Arial";
-  ctx.rotate(0.1);
-  ctx.fillText("aaa!", 50, 100);
-
-  // Draw line under text
-  var text = ctx.measureText("Awesasdsaome!");
-  ctx.strokeStyle = "rgba(0,0,0,0.5)";
-  ctx.beginPath();
-  ctx.lineTo(50, 102);
-  ctx.lineTo(50 + text.width, 102);
-  ctx.stroke();
+    {
+      padding: 20,
+      series: [
+        {
+          x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          y: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          xScaleId: "x-1",
+          yScaleId: "y-1",
+          plotter: linePlotter({ style: { strokeStyle: "red" } }),
+        },
+        {
+          x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          y: [2, 3, 4, 5, 6, 7, 8, 9, 10, 1],
+          xScaleId: "x-1",
+          yScaleId: "y-1",
+          plotter: linePlotter({ style: { strokeStyle: "green" } }),
+        },
+        {
+          x: [1, 2, 3, 4, 8, 9, 10],
+          y: [3, 4, 5, 6, 10, 1, 2],
+          xScaleId: "x-1",
+          yScaleId: "y-1",
+          plotter: linePlotter({ style: { strokeStyle: "blue" } }),
+        },
+      ],
+      scales: [{ id: "x-1" }, { id: "y-1" }],
+      axes: [
+        {
+          scaleId: "x-1",
+          size: 20,
+        },
+        {
+          scaleId: "y-1",
+        },
+      ],
+    }
+  );
 
   const tmpPath = expect.getState().testPath! + ".png";
-  canvas.createPNGStream().pipe(fs.createWriteStream(tmpPath)).on("close", () => {
-    const fileContent = fs.readFileSync(tmpPath);
-    fs.unlinkSync(tmpPath);
-  
-    expect(fileContent).toMatchImageSnapshot();
+  await new Promise<boolean>((resolve) => {
+    const outStream = fs.createWriteStream(tmpPath);
+    plot
+      .getCanvas()
+      .createPNGStream()
+      .pipe(outStream)
+      .on("finish", () => {
+        resolve(true);
+        console.log("close");
+      });
   });
-  
+  const fileContent = fs.readFileSync(tmpPath);
+  fs.unlinkSync(tmpPath);
+  expect(fileContent).toMatchImageSnapshot();
 });

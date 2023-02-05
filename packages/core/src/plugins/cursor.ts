@@ -93,9 +93,7 @@ type CursorPluginOptions<S> = {
   pluginOpts?: PlotPluginConfig<S>;
 };
 
-export const makeCursorPlugin = <S>(
-  opts: CursorPluginOptions<S> = {}
-) => {
+export const makeCursorPlugin = <S>(opts: CursorPluginOptions<S> = {}) => {
   let mouseMoveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseLeaveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseClickListener: ((e: MouseEvent) => void) | undefined = undefined;
@@ -124,7 +122,7 @@ export const makeCursorPlugin = <S>(
     hooks: {
       ...opts.pluginOpts?.hooks,
       onInit({ plot, frame, self }) {
-        const canvas = plot.getCanvas();
+        const canvas = plot.getDrawContext().ctx.canvas;
 
         // mouse down
         mouseDownListener = (e: MouseEvent) => {
@@ -258,7 +256,7 @@ export const makeCursorPlugin = <S>(
       },
 
       onDestroy({ plot, self }) {
-        const canvas = plot.getCanvas();
+        const canvas = plot.getDrawContext().ctx.canvas;
         if (mouseMoveListener) {
           canvas.removeEventListener("mousemove", mouseMoveListener);
           mouseMoveListener = undefined;

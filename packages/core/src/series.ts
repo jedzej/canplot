@@ -4,9 +4,11 @@ export const drawSeries = (frame: PlotDrawFrame) => {
   const { ctx, chartArea, inputParams: drawConfig } = frame;
   ctx.save();
 
-  const clipPath = new Path2D();
-  clipPath.rect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
-  ctx.clip(clipPath);
+  if(typeof global.Path2D !== "undefined"){
+    const clipPath = new Path2D();
+    clipPath.rect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
+    ctx.clip(clipPath);
+  }
 
   for (const series of drawConfig.series) {
     const xScale = drawConfig.scales.find(

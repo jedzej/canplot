@@ -1,5 +1,6 @@
 export * from "./types";
 export * from "./Plot";
+export * from "./DOMPlot";
 export * as helpers from "./helpers";
 
 export * from "./plotters/line";
