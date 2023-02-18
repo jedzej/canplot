@@ -69,8 +69,8 @@ const makeSeries = (
       xScaleId: "x-1",
       yScaleId: "y-1",
       plotter: scatterPlotter({
-        radius: 5,
-        style: { lineCap: "round", strokeStyle: "red" },
+        radius: 3,
+        style: { lineCap: "round", strokeStyle: "red", fillStyle: "#ff000033" },
       }),
       x,
       y,

@@ -11,13 +11,13 @@ export type LinePlotterShowDistinctOpts = {
 
 export type LinePlotterOpts = {
   style?: Style;
-  showDistrinct?: (opts: LinePlotterShowDistinctOpts) => boolean;
+  showDistinct?: (opts: LinePlotterShowDistinctOpts) => boolean;
   radius?: number;
   distinctDistance?: number;
   gapDistance?: number;
 };
 
-const showDistrinctDefault: LinePlotterOpts["showDistrinct"] = ({
+const showDistinctDefault: LinePlotterOpts["showDistinct"] = ({
   frame,
   idx,
   series,
@@ -50,7 +50,7 @@ const showDistrinctDefault: LinePlotterOpts["showDistrinct"] = ({
 
 export const linePlotter = ({
   style,
-  showDistrinct = showDistrinctDefault,
+  showDistinct = showDistinctDefault,
   radius = 3,
   distinctDistance = 50,
   gapDistance = Infinity,
@@ -60,9 +60,19 @@ export const linePlotter = ({
     const length = Math.min(singleSeries.x.length, singleSeries.y.length);
     const x0 = valToPos(frame, singleSeries.x[0]!, xScale.id);
     const y0 = valToPos(frame, singleSeries.y[0]!, yScale.id);
+
+    // line
     ctx.save();
-    ctx.beginPath();
     applyStyles(ctx, style);
+    const clipPath = new Path2D();
+    clipPath.rect(
+      frame.chartArea.x,
+      frame.chartArea.y,
+      frame.chartArea.width,
+      frame.chartArea.height
+    );
+    ctx.clip(clipPath);
+    ctx.beginPath();
 
     ctx.moveTo(x0, y0);
     for (let i = 1; i < length; i++) {
@@ -79,11 +89,15 @@ export const linePlotter = ({
       }
     }
     ctx.stroke();
+    ctx.restore();
 
+    // distinct points
+    ctx.save();
+    applyStyles(ctx, style);
     ctx.beginPath();
     for (let idx = 0; idx < length; idx++) {
       if (
-        showDistrinct({
+        showDistinct({
           frame,
           idx,
           series: singleSeries,
@@ -100,7 +114,6 @@ export const linePlotter = ({
       }
     }
 
-    ctx.fillStyle = "white";
     ctx.fill();
     ctx.stroke();
     ctx.restore();

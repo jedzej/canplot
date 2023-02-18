@@ -269,6 +269,7 @@ export class Plot {
     }
 
     if (frame.chartArea.height < 0 || frame.chartArea.width < 0) {
+      this.#redrawing = false;
       return;
     }
 

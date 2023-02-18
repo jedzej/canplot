@@ -66,10 +66,10 @@ const Template: Story = () => {
             xScaleId: "x-1",
             yScaleId: "y-1",
             plotter: linePlotter({
-              showDistrinct: ({ idx, series }) => {
+              showDistinct: ({ idx, series }) => {
                 return (series.y[idx] ?? 0) < 2;
               },
-              style: { strokeStyle: "blue" },
+              style: { strokeStyle: "blue", fillStyle: "white" },
             }),
             x: Array(100)
               .fill(0)

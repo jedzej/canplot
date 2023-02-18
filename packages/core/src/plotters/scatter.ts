@@ -29,6 +29,7 @@ export const scatterPlotter = ({
     }
     ctx.closePath();
     ctx.stroke();
+    ctx.fill();
     ctx.restore();
   };
 };

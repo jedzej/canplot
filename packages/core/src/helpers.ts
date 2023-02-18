@@ -28,14 +28,14 @@ export const valToPos = (
   if (isXScale(scaleId)) {
     return clamp(
       chartArea.x + relativePosition,
-      -10 * chartArea.width,
-      10 * chartArea.width
+      chartArea.x - 10 * chartArea.width,
+      chartArea.x + 11 * chartArea.width
     );
   } else {
     return clamp(
       chartArea.y + chartArea.height - relativePosition,
-      -10 * chartArea.height,
-      10 * chartArea.height
+      chartArea.y - 10 * chartArea.height,
+      chartArea.y + 11 * chartArea.height
     );
   }
 };
@@ -69,7 +69,7 @@ export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
   ctx.lineWidth = style?.lineWidth ?? 1;
   ctx.miterLimit = style?.miterLimit ?? 10;
   ctx.strokeStyle = style?.strokeStyle ?? "black";
-  ctx.fillStyle = style?.fillStyle ?? "black";
+  ctx.fillStyle = style?.fillStyle ?? ctx.strokeStyle;
   ctx.font = style?.font ?? "10px sans-serif";
   ctx.textAlign = style?.textAlign ?? "start";
   ctx.direction = style?.direction ?? "inherit";

@@ -1,12 +1,8 @@
 import { PlotDrawFrame } from "./types";
 
 export const drawSeries = (frame: PlotDrawFrame) => {
-  const { ctx, chartArea, inputParams: drawConfig } = frame;
+  const { ctx, inputParams: drawConfig } = frame;
   ctx.save();
-
-  const clipPath = new Path2D();
-  clipPath.rect(chartArea.x, chartArea.y, chartArea.width, chartArea.height);
-  ctx.clip(clipPath);
 
   for (const series of drawConfig.series) {
     const xScale = drawConfig.scales.find(
