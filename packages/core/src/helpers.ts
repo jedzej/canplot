@@ -3,28 +3,29 @@ import { CursorPosition } from "./main";
 import { PlotDrawFrame, PlotDrawInputParams, Scale, Style } from "./types";
 import { clamp, findClosestIndex } from "./utils";
 
-export const isXScale = (scale: Scale | Scale["id"]) =>
-  typeof scale === "string"
-    ? scale.startsWith("x-")
-    : scale.id.startsWith("x-");
+export const isXScale = (scaleId: Scale["id"]) => scaleId.startsWith("x-");
 
 export const valToPxDistance = (
   frame: PlotDrawFrame,
   val: number,
-  scale: Scale
+  scaleId: Scale["id"]
 ) => {
   const chartArea = frame.chartArea;
-  const { min, max } = frame.limits[scale.id];
+  const { min, max } = frame.limits[scaleId];
   const factor =
-    (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
+    (isXScale(scaleId) ? chartArea.width : chartArea.height) / (max - min);
   return val * factor;
 };
 
-export const valToPos = (frame: PlotDrawFrame, val: number, scale: Scale) => {
-  const { min } = frame.limits[scale.id];
+export const valToPos = (
+  frame: PlotDrawFrame,
+  val: number,
+  scaleId: Scale["id"]
+) => {
+  const { min } = frame.limits[scaleId];
   const chartArea = frame.chartArea;
-  const relativePosition = valToPxDistance(frame, val - min, scale);
-  if (isXScale(scale)) {
+  const relativePosition = valToPxDistance(frame, val - min, scaleId);
+  if (isXScale(scaleId)) {
     return clamp(
       chartArea.x + relativePosition,
       -10 * chartArea.width,
@@ -42,19 +43,23 @@ export const valToPos = (frame: PlotDrawFrame, val: number, scale: Scale) => {
 export const pxToValDistance = (
   frame: PlotDrawFrame,
   pxDistance: number,
-  scale: Scale
+  scaleId: Scale["id"]
 ) => {
-  const { min, max } = frame.limits[scale.id];
+  const { min, max } = frame.limits[scaleId];
   const chartArea = frame.chartArea;
   const factor =
-    (isXScale(scale) ? chartArea.width : chartArea.height) / (max - min);
+    (isXScale(scaleId) ? chartArea.width : chartArea.height) / (max - min);
   return pxDistance / factor;
 };
 
-export const posToVal = (frame: PlotDrawFrame, pos: number, scale: Scale) => {
-  const { min, max } = frame.limits[scale.id];
-  const relativePosition = pxToValDistance(frame, pos, scale);
-  return isXScale(scale) ? min + relativePosition : max - relativePosition;
+export const posToVal = (
+  frame: PlotDrawFrame,
+  pos: number,
+  scaleId: Scale["id"]
+) => {
+  const { min, max } = frame.limits[scaleId];
+  const relativePosition = pxToValDistance(frame, pos, scaleId);
+  return isXScale(scaleId) ? min + relativePosition : max - relativePosition;
 };
 
 export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
@@ -90,7 +95,9 @@ type DataPoint = { x: number; y: number };
 
 export const findClosestDataPoint = (
   position: CursorPosition | undefined,
-  frame: PlotDrawFrame
+  frame: PlotDrawFrame,
+  toleranceXPx = 100,
+  toleranceYPx = Infinity
 ): (DataPoint | undefined)[] => {
   const { series } = frame.inputParams;
   if (!position) {
@@ -101,6 +108,18 @@ export const findClosestDataPoint = (
       return undefined;
     }
     const idx = findClosestIndex(series.x, position.scaled[series.xScaleId]);
+    if (Number.isFinite(toleranceXPx)) {
+      const xPos = valToPos(frame, series.x[idx], series.xScaleId);
+      if (Math.abs(position.canvas.x - xPos) > toleranceXPx) {
+        return undefined;
+      }
+    }
+    if (Number.isFinite(toleranceYPx)) {
+      const yPos = valToPos(frame, series.y[idx], series.yScaleId);
+      if (Math.abs(position.canvas.y - yPos) > toleranceYPx) {
+        return undefined;
+      }
+    }
     return {
       x: series.x[idx],
       y: series.y[idx],

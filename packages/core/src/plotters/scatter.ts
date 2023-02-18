@@ -22,8 +22,8 @@ export const scatterPlotter = ({
       if (x === undefined || y === undefined) {
         continue;
       }
-      const xPos = valToPos(frame, x, xScale);
-      const yPos = valToPos(frame, y, yScale);
+      const xPos = valToPos(frame, x, xScale.id);
+      const yPos = valToPos(frame, y, yScale.id);
       ctx.moveTo(xPos + radius, yPos);
       ctx.arc(xPos, yPos, radius, 0, 2 * Math.PI);
     }

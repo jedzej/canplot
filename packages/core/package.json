@@ -16,6 +16,7 @@
     "build:watch": "WATCH=true vite build"
   },
   "devDependencies": {
+    "prettier": "^2.8.4",
     "typescript": "^4.6.4",
     "vite": "^3.2.3",
     "vitest": "^0.28.4"

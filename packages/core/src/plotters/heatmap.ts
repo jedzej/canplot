@@ -36,8 +36,8 @@ export const heatmapPlotter = ({
     const maxZ = Math.max(...z);
     const minZ = Math.min(...z);
     const normalizedZ = z.map((v) => (v - minZ) / (maxZ - minZ));
-    const tileXPx = Math.floor(valToPxDistance(frame, tileX, xScale)) + 1;
-    const tileYPx = Math.floor(valToPxDistance(frame, tileY, yScale)) + 1;
+    const tileXPx = Math.floor(valToPxDistance(frame, tileX, xScale.id)) + 1;
+    const tileYPx = Math.floor(valToPxDistance(frame, tileY, yScale.id)) + 1;
     for (let i = 0; i < series.x.length; i++) {
       const x = series.x[i];
       const y = series.y[i];
@@ -57,8 +57,8 @@ export const heatmapPlotter = ({
       }
       frame.ctx.putImageData(
         imageData,
-        Math.round(valToPos(frame, x, xScale)),
-        Math.round(valToPos(frame, y, yScale) - tileYPx)
+        Math.round(valToPos(frame, x, xScale.id)),
+        Math.round(valToPos(frame, y, yScale.id) - tileYPx)
       );
     }
   };

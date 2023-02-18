@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import { heatmapPlotter } from "@canplot/core";
 import { animationLoop, EmbeddedPlot, range } from "./helpers";

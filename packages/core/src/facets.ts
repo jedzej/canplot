@@ -10,9 +10,7 @@ import {
 } from "./types";
 
 const getScale = (frame: PlotDrawFrame, scaleId: string) => {
-  const scale = frame.inputParams.scales.find(
-    (scale) => scale.id === scaleId
-  );
+  const scale = frame.inputParams.scales.find((scale) => scale.id === scaleId);
   if (!scale) {
     console.error("No scale found", scaleId);
   }
@@ -25,7 +23,7 @@ const drawVLineFacet = (frame: PlotDrawFrame, facet: VLineFacet) => {
   if (!scale) {
     return;
   }
-  const x = valToPos(frame, facet.x, scale);
+  const x = valToPos(frame, facet.x, scale.id);
   ctx.save();
   applyStyles(ctx, facet.style);
   ctx.beginPath();
@@ -41,7 +39,7 @@ const drawHLineFacet = (frame: PlotDrawFrame, facet: HLineFacet) => {
   if (!scale) {
     return;
   }
-  const y = valToPos(frame, facet.y, scale);
+  const y = valToPos(frame, facet.y, scale.id);
   ctx.save();
   applyStyles(ctx, facet.style);
   ctx.beginPath();
@@ -58,8 +56,8 @@ const drawCircleFacet = (frame: PlotDrawFrame, facet: CircleFacet) => {
   if (!xScale || !yScale) {
     return;
   }
-  const x = valToPos(frame, facet.x, xScale);
-  const y = valToPos(frame, facet.y, yScale);
+  const x = valToPos(frame, facet.x, xScale.id);
+  const y = valToPos(frame, facet.y, yScale.id);
   ctx.save();
   applyStyles(ctx, facet.style);
   ctx.beginPath();
@@ -82,10 +80,10 @@ const drawSpanFacet = (frame: PlotDrawFrame, facet: SpanFacet) => {
       return;
     }
     if (typeof facet.x.min === "number") {
-      x0 = Math.ceil(valToPos(frame, facet.x.min, scale));
+      x0 = Math.ceil(valToPos(frame, facet.x.min, scale.id));
     }
     if (typeof facet.x.max === "number") {
-      x1 = Math.ceil(valToPos(frame, facet.x.max, scale));
+      x1 = Math.ceil(valToPos(frame, facet.x.max, scale.id));
     }
   }
   if (facet.y) {
@@ -94,10 +92,10 @@ const drawSpanFacet = (frame: PlotDrawFrame, facet: SpanFacet) => {
       return;
     }
     if (typeof facet.y.min === "number") {
-      y0 = Math.ceil(valToPos(frame, facet.y.min, scale));
+      y0 = Math.ceil(valToPos(frame, facet.y.min, scale.id));
     }
     if (typeof facet.y.max === "number") {
-      y1 = Math.ceil(valToPos(frame, facet.y.max, scale));
+      y1 = Math.ceil(valToPos(frame, facet.y.max, scale.id));
     }
   }
   ctx.save();

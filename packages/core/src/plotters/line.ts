@@ -24,12 +24,12 @@ const showDistrinctDefault: LinePlotterOpts["showDistrinct"] = ({
   scale,
   distinctDistance,
 }) => {
-  const pointDistance = valToPxDistance(frame, series.x[idx], scale);
+  const pointDistance = valToPxDistance(frame, series.x[idx], scale.id);
   for (let i = 1; i < 100; i++) {
     const leftValCandidate = series.x[idx - i];
     if (leftValCandidate !== undefined) {
       const distance = Math.abs(
-        valToPxDistance(frame, leftValCandidate, scale) - pointDistance
+        valToPxDistance(frame, leftValCandidate, scale.id) - pointDistance
       );
       if (distance <= distinctDistance) {
         return false;
@@ -38,7 +38,7 @@ const showDistrinctDefault: LinePlotterOpts["showDistrinct"] = ({
     const rightValCandidate = series.x[idx + i];
     if (rightValCandidate !== undefined) {
       const distance = Math.abs(
-        valToPxDistance(frame, rightValCandidate, scale) - pointDistance
+        valToPxDistance(frame, rightValCandidate, scale.id) - pointDistance
       );
       if (distance <= distinctDistance) {
         return false;
@@ -58,8 +58,8 @@ export const linePlotter = ({
   return (frame, singleSeries, xScale, yScale) => {
     const ctx = frame.ctx;
     const length = Math.min(singleSeries.x.length, singleSeries.y.length);
-    const x0 = valToPos(frame, singleSeries.x[0]!, xScale);
-    const y0 = valToPos(frame, singleSeries.y[0]!, yScale);
+    const x0 = valToPos(frame, singleSeries.x[0]!, xScale.id);
+    const y0 = valToPos(frame, singleSeries.y[0]!, yScale.id);
     ctx.save();
     ctx.beginPath();
     applyStyles(ctx, style);
@@ -68,8 +68,8 @@ export const linePlotter = ({
     for (let i = 1; i < length; i++) {
       const x = singleSeries.x[i];
       const y = singleSeries.y[i];
-      const posX = valToPos(frame, x, xScale);
-      const posY = valToPos(frame, y, yScale);
+      const posX = valToPos(frame, x, xScale.id);
+      const posY = valToPos(frame, y, yScale.id);
 
       const distance = singleSeries.x[i] - singleSeries.x[i - 1];
       if (distance > gapDistance) {
@@ -93,8 +93,8 @@ export const linePlotter = ({
       ) {
         const x = singleSeries.x[idx];
         const y = singleSeries.y[idx];
-        const posX = valToPos(frame, x, xScale);
-        const posY = valToPos(frame, y, yScale);
+        const posX = valToPos(frame, x, xScale.id);
+        const posY = valToPos(frame, y, yScale.id);
         ctx.moveTo(posX + radius, posY);
         ctx.arc(posX, posY, radius, 0, 2 * Math.PI);
       }

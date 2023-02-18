@@ -153,7 +153,13 @@ export type SpanFacet = {
 
 export type FacetLayer = "top" | "middle" | "bottom";
 
-export type Facet = (VLineFacet | HLineFacet | SpanFacet | CustomFacet | CircleFacet) & {
+export type Facet = (
+  | VLineFacet
+  | HLineFacet
+  | SpanFacet
+  | CustomFacet
+  | CircleFacet
+) & {
   id?: string;
   layer?: FacetLayer;
 };

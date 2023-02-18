@@ -73,9 +73,9 @@ const getPosition = (
   const scaled: Record<Scale["id"], number> = {};
   for (const scale of frame.inputParams.scales) {
     if (scale.id.startsWith("x-")) {
-      scaled[scale.id] = posToVal(frame, clampedPosX, scale);
+      scaled[scale.id] = posToVal(frame, clampedPosX, scale.id);
     } else {
-      scaled[scale.id] = posToVal(frame, clampedPosY, scale);
+      scaled[scale.id] = posToVal(frame, clampedPosY, scale.id);
     }
   }
   return {
@@ -93,9 +93,7 @@ type CursorPluginOptions<S> = {
   pluginOpts?: PlotPluginConfig<S>;
 };
 
-export const makeCursorPlugin = <S>(
-  opts: CursorPluginOptions<S> = {}
-) => {
+export const makeCursorPlugin = <S>(opts: CursorPluginOptions<S> = {}) => {
   let mouseMoveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseLeaveListener: ((e: MouseEvent) => void) | undefined = undefined;
   let mouseClickListener: ((e: MouseEvent) => void) | undefined = undefined;

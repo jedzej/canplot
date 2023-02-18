@@ -2,7 +2,6 @@ import React, { useRef } from "react";
 import { Meta, Story } from "@storybook/react";
 import { linePlotter } from "@canplot/core";
 import { usePlot } from "@canplot/react";
-import { animationLoop } from "./helpers";
 
 export default {
   title: "Line with gaps",

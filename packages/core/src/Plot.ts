@@ -44,7 +44,7 @@ export class Plot {
     const { width = "auto", height = "auto" } = staticConfig.dimensions ?? {};
     this.#dimensions = { width, height };
     this.#plugins =
-      staticConfig.plugins?.map((config,i) => ({
+      staticConfig.plugins?.map((config, i) => ({
         setState: (updater) => {
           this.#plugins[i].state = updater(this.#plugins[i].state);
           this.#draw(this.#lastDrawConfig_DO_NOT_USE);

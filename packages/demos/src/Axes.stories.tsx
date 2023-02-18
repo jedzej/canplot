@@ -228,12 +228,12 @@ TickFormat.args = {
   axes: [
     {
       scaleId: "x-1",
-      tickFormat: ({ ticks }) => ticks.map((tick) => "ab\nbcc\ncdd\ndeee"),
+      tickFormat: ({ ticks }) => ticks.map(() => "ab\nbcc\ncdd\ndeee"),
       multilineGap: 8,
     },
     {
       scaleId: "y-1",
-      tickFormat: ({ ticks }) => ticks.map((tick) => "aaaa\nc\nddddd"),
+      tickFormat: ({ ticks }) => ticks.map(() => "aaaa\nc\nddddd"),
       multilineGap: 16,
     },
   ],

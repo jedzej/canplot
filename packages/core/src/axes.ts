@@ -37,7 +37,7 @@ export const makeGenTicksDefault = ({
   return ({ frame: frame, scale }) => {
     const limits = frame.limits[scale.id];
     const ticks = [];
-    const unnormalizedIncr = pxToValDistance(frame, space, scale);
+    const unnormalizedIncr = pxToValDistance(frame, space, scale.id);
     const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
     let curr =
       limits.min % incr < Number.EPSILON
@@ -85,7 +85,7 @@ const drawYTicks = (
   ctx.beginPath();
 
   for (let i = 0; i < ticks.length; i++) {
-    const y = valToPos(frame, ticks[i], scale);
+    const y = valToPos(frame, ticks[i], scale.id);
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
   }
@@ -101,7 +101,7 @@ const drawYTicks = (
     ...axis.tickLabelStyle,
   });
   for (let i = 0; i < ticks.length; i++) {
-    const y = valToPos(frame, ticks[i], scale);
+    const y = valToPos(frame, ticks[i], scale.id);
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
       ctx.fillText(labelLines[j], x1, y + j * multilineGap);
@@ -155,7 +155,7 @@ const drawXTicks = (
   applyStyles(ctx, { ...axis.axisStyle, ...axis.tickStyle });
   ctx.beginPath();
   for (let i = 0; i < ticks.length; i++) {
-    const x = valToPos(frame, ticks[i], scale);
+    const x = valToPos(frame, ticks[i], scale.id);
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
   }
@@ -171,7 +171,7 @@ const drawXTicks = (
     ...axis.tickLabelStyle,
   });
   for (let i = 0; i < ticks.length; i++) {
-    const x = valToPos(frame, ticks[i], scale);
+    const x = valToPos(frame, ticks[i], scale.id);
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
       ctx.fillText(labelLines[j], x, y1 + j * multilineGap);
@@ -284,7 +284,7 @@ export const drawAxes = (frame: PlotDrawFrame) => {
     const size = axis.size ?? DEFAULT_AXIS_SIZE;
     const position = axis.position ?? DEFAULT_POSITION;
 
-    if (isXScale(scale)) {
+    if (isXScale(scale.id)) {
       if (position === "primary") {
         currentBottomOffset -= size;
         drawXAxis(
