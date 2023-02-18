@@ -44,13 +44,13 @@ const Template: Story = () => {
             type: "span",
             layer: "top",
             x: { min: 10, max: 20, scaleId: "x-1" },
-            style: { fillStyle: "rgba(255,255,0,0.9)" },
+            style: { fillStyle: "rgba(100,100,100,0.9)" },
           },
           {
             type: "span",
             layer: "middle",
             x: { min: 20, max: 30, scaleId: "x-1" },
-            style: { fillStyle: "rgba(255,255,0,0.9)" },
+            style: { fillStyle: "rgba(100,100,100,0.9)" },
           },
           {
             type: "span",
@@ -61,7 +61,7 @@ const Template: Story = () => {
           {
             type: "span",
             x: { min: 70, scaleId: "x-1" },
-            style: { fillStyle: "rgba(255,0,255,0.7)" },
+            style: { fillStyle: "rgba(100,200,10,0.7)" },
           },
           {
             type: "custom",
