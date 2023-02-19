@@ -3,7 +3,7 @@ import { Plot } from "./Plot";
 type HookOpts<S> = {
   frame: PlotDrawFrame;
   plot: Plot;
-  self: PlotPlugin<S>;
+  thisPlugin: PlotPlugin<S>;
 };
 
 export type Hooks<S> = {
@@ -188,12 +188,12 @@ export type PlotPlugin<S> = {
 export type PlotPluginConfig<S = any> = {
   transformInputParams?: (opts: {
     inputParams: PlotDrawInputParams;
-    self: PlotPlugin<S>;
+    thisPlugin: PlotPlugin<S>;
     plot: Plot;
   }) => PlotDrawInputParams;
   transformFrame?: (opts: {
     frame: PlotDrawFrame;
-    self: PlotPlugin<S>;
+    thisPlugin: PlotPlugin<S>;
     plot: Plot;
   }) => PlotDrawFrame;
   hooks?: Hooks<S>;

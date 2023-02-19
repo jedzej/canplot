@@ -25,18 +25,18 @@ const Template: ComponentStory<typeof EmbeddedPlot> = () => {
           onSpanSelect(event) {
             if (event.phase === "move") {
               const normalizedStart = Math.min(
-                event.positionStart.scaled["x-1"],
-                event.positionEnd.scaled["x-1"]
+                event.spanStart.scaled["x-1"],
+                event.spanEnd.scaled["x-1"]
               );
               const normalizedEnd = Math.max(
-                event.positionEnd.scaled["x-1"],
-                event.positionStart.scaled["x-1"]
+                event.spanStart.scaled["x-1"],
+                event.spanEnd.scaled["x-1"]
               );
               setData((data) => ({
                 x: data.x,
                 y: data.y.map((y, i) => {
                   if (i >= normalizedStart && i <= normalizedEnd) {
-                    return event.positionEnd.scaled["y-1"];
+                    return event.spanEnd.scaled["y-1"];
                   }
                   return y;
                 }),

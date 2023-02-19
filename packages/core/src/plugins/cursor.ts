@@ -17,14 +17,14 @@ export type CursorPosition = {
 
 type HoverEvent<S> = {
   plot: Plot;
-  self: PlotPlugin<S>;
+  thisPlugin: PlotPlugin<S>;
   frame: PlotDrawFrame;
   position?: CursorPosition;
 };
 
 type ClickEvent<S> = {
   plot: Plot;
-  self: PlotPlugin<S>;
+  thisPlugin: PlotPlugin<S>;
   frame: PlotDrawFrame;
   position: CursorPosition;
 };
@@ -32,10 +32,10 @@ type ClickEvent<S> = {
 type SpanSelectEvent<S> = {
   phase: "start" | "move" | "end";
   plot: Plot;
-  self: PlotPlugin<S>;
+  thisPlugin: PlotPlugin<S>;
   frame: PlotDrawFrame;
-  positionStart: CursorPosition;
-  positionEnd: CursorPosition;
+  spanStart: CursorPosition;
+  spanEnd: CursorPosition;
 };
 
 type ClickListener<S> = (event: ClickEvent<S>) => void;
@@ -85,134 +85,185 @@ const getPosition = (
   };
 };
 
+const spanExceedsThreshold = (
+  threshold: number,
+  spanStart?: CursorPosition,
+  spanEnd?: CursorPosition
+) => {
+  if (!spanStart || !spanEnd) {
+    return false;
+  }
+  const dx = Math.abs(spanEnd.screen.x - spanStart.screen.x);
+  const dy = Math.abs(spanEnd.screen.y - spanStart.screen.y);
+
+  return dx > threshold || dy > threshold;
+};
+
 type CursorPluginOptions<S> = {
   onSpanSelect?: SpanSelectListener<S>;
   onHover?: HoverListener<S>;
   onClick?: ClickListener<S>;
   onDblClick?: DblclickListener<S>;
   pluginOpts?: PlotPluginConfig<S>;
+  spanSelectOptions?: { threshold: number; mode: "x" | "y" | "xy" };
 };
 
-export const makeCursorPlugin = <S>(opts: CursorPluginOptions<S> = {}) => {
-  let mouseMoveListener: ((e: MouseEvent) => void) | undefined = undefined;
-  let mouseLeaveListener: ((e: MouseEvent) => void) | undefined = undefined;
-  let mouseClickListener: ((e: MouseEvent) => void) | undefined = undefined;
-  let mouseDblClickListener: ((e: MouseEvent) => void) | undefined = undefined;
-  let mouseDownListener: ((e: MouseEvent) => void) | undefined = undefined;
-  let mouseUpListener: ((e: MouseEvent) => void) | undefined = undefined;
-  const hoverListeners = new Set<HoverListener<S>>(
-    opts.onHover ? [opts.onHover] : []
-  );
-  const clickListeners = new Set<ClickListener<S>>(
-    opts.onClick ? [opts.onClick] : []
-  );
-  const dblclickListeners = new Set<DblclickListener<S>>(
-    opts.onDblClick ? [opts.onDblClick] : []
-  );
-  const spanSelectListeners = new Set<SpanSelectListener<S>>(
-    opts.onSpanSelect ? [opts.onSpanSelect] : []
-  );
-
-  let positionStart: CursorPosition | undefined = undefined;
-
+export const makeCursorPlugin = <
+  S extends { spanStart?: CursorPosition; spanEnd?: CursorPosition }
+>(
+  opts: CursorPluginOptions<S> = {}
+) => {
   let clickTimeout: number | undefined = undefined;
 
   const bindings: PlotPluginConfig<S> = {
     ...opts.pluginOpts,
+    initState: () =>
+      ({
+        ...(opts.pluginOpts?.initState?.() ?? {}),
+      } as S),
+    transformFrame: (transformFrameOpts) => {
+      const { spanStart, spanEnd } = transformFrameOpts.thisPlugin.state;
+      const facets = transformFrameOpts.frame.inputParams.facets ?? [];
+      if (spanStart && spanEnd) {
+        facets.push({
+          type: "custom",
+          layer: "top",
+          draw: ({ ctx }) => {
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.fillRect(
+              spanStart.canvas.x,
+              spanStart.canvas.y,
+              spanEnd.canvas.x - spanStart.canvas.x,
+              spanEnd.canvas.y - spanStart.canvas.y
+            );
+          },
+        });
+      }
+      const newFrame: PlotDrawFrame = {
+        ...transformFrameOpts.frame,
+        inputParams: {
+          ...transformFrameOpts.frame.inputParams,
+          facets,
+        },
+      };
+      return (
+        opts.pluginOpts?.transformFrame?.({
+          ...transformFrameOpts,
+          frame: newFrame,
+        }) ?? newFrame
+      );
+    },
     hooks: {
       ...opts.pluginOpts?.hooks,
-      onInit({ plot, frame, self }) {
+      onInit(initOpts) {
+        const { plot, thisPlugin } = initOpts;
         const canvas = plot.getCanvas();
 
         // mouse down
-        mouseDownListener = (e: MouseEvent) => {
-          if (spanSelectListeners.size === 0) return;
-          const frame = plot.getDrawContext();
+        const mouseDownListener = (e: MouseEvent) => {
+          if (!opts.onSpanSelect) return;
 
-          positionStart = getPosition(e, frame);
+          const frame = plot.getFrame();
 
-          if (!positionStart) return;
+          const spanStart = getPosition(e, frame);
+          if (!spanStart) return;
 
-          for (const listener of spanSelectListeners) {
-            listener({
-              phase: "start",
-              plot,
-              frame,
-              positionStart,
-              positionEnd: positionStart,
-              self,
-            });
-          }
+          const spanEnd = spanStart;
+
+          thisPlugin.setState((old) => ({
+            ...old,
+            spanStart,
+            spanEnd,
+          }));
+
+          opts.onSpanSelect({
+            phase: "start",
+            plot,
+            frame,
+            spanStart,
+            spanEnd,
+            thisPlugin,
+          });
         };
         canvas.addEventListener("mousedown", mouseDownListener);
 
         // mouse move
-        mouseMoveListener = (e: MouseEvent) => {
-          if (hoverListeners.size === 0 && spanSelectListeners.size === 0)
-            return;
-          const frame = plot.getDrawContext();
+        const mouseMoveListener = (e: MouseEvent) => {
+          if (!opts.onHover && !opts.onSpanSelect) return;
+          const frame = plot.getFrame();
 
           const position = getPosition(e, frame);
 
-          for (const listener of hoverListeners) {
-            listener({ plot, frame, position, self });
+          opts.onHover?.({ plot, frame, position, thisPlugin });
+
+          const spanStart = thisPlugin.state.spanStart;
+          const spanEnd = getPosition(e, frame, true);
+
+          if (!spanStart || !spanEnd) return;
+
+          thisPlugin.setState((old) => ({
+            ...old,
+            spanEnd,
+          }));
+
+          const threshold = opts.spanSelectOptions?.threshold ?? 50;
+          if (!spanExceedsThreshold(threshold, spanStart, spanEnd)) {
+            return;
           }
-
-          const positionEnd = getPosition(e, frame, true);
-
-          if (!positionStart || !positionEnd) return;
-
-          for (const listener of spanSelectListeners) {
-            listener({
-              phase: "move",
-              plot,
-              frame,
-              self,
-              positionStart,
-              positionEnd,
-            });
-          }
+          opts.onSpanSelect?.({
+            phase: "move",
+            plot,
+            frame,
+            thisPlugin,
+            spanStart,
+            spanEnd,
+          });
         };
         canvas.addEventListener("mousemove", mouseMoveListener);
 
         // mouse up
-        mouseUpListener = (e: MouseEvent) => {
-          if (spanSelectListeners.size === 0) return;
+        const mouseUpListener = (e: MouseEvent) => {
+          if (!opts.onSpanSelect) return;
 
-          if (!positionStart) return;
-          const frame = plot.getDrawContext();
+          const frame = plot.getFrame();
 
-          const positionEnd = getPosition(e, frame, true);
+          const { spanStart } = thisPlugin.state;
+          if (!spanStart) return;
 
-          if (!positionEnd) return;
+          const spanEnd = getPosition(e, frame, true);
+          if (!spanEnd) return;
 
-          for (const listener of spanSelectListeners) {
-            listener({
-              phase: "end",
-              plot,
-              self,
-              frame,
-              positionStart,
-              positionEnd,
-            });
-          }
-          positionStart = undefined;
+          thisPlugin.setState((old) => ({
+            ...old,
+            spanStart: undefined,
+            spanEnd: undefined,
+          }));
+
+          const threshold = opts.spanSelectOptions?.threshold ?? 50;
+          if (!spanExceedsThreshold(threshold, spanStart, spanEnd)) return;
+
+          opts.onSpanSelect({
+            phase: "end",
+            plot,
+            thisPlugin,
+            frame,
+            spanStart,
+            spanEnd,
+          });
         };
         document.addEventListener("mouseup", mouseUpListener);
 
         // mouse leave
-        mouseLeaveListener = () => {
-          if (hoverListeners.size === 0) return;
-          const frame = plot.getDrawContext();
+        const mouseLeaveListener = () => {
+          if (!opts.onHover) return;
+          const frame = plot.getFrame();
 
-          for (const listener of hoverListeners) {
-            listener({ plot, frame, self });
-          }
+          opts.onHover({ plot, frame, thisPlugin });
         };
         canvas.addEventListener("mouseleave", mouseLeaveListener);
 
         // click
-        mouseClickListener = (e) => {
+        const mouseClickListener = (e: MouseEvent) => {
           if (clickTimeout) {
             clearTimeout(clickTimeout);
             clickTimeout = undefined;
@@ -224,64 +275,42 @@ export const makeCursorPlugin = <S>(opts: CursorPluginOptions<S> = {}) => {
           }
           clickTimeout = window.setTimeout(() => {
             clickTimeout = undefined;
-            if (clickListeners.size === 0) return;
-            const frame = plot.getDrawContext();
+            if (!opts.onClick) return;
+            const frame = plot.getFrame();
 
             const position = getPosition(e, frame);
 
             if (!position) return;
 
-            for (const listener of clickListeners) {
-              listener({ plot, frame, position, self });
-            }
+            opts.onClick({ plot, frame, position, thisPlugin });
           }, 200);
         };
         canvas.addEventListener("click", mouseClickListener);
 
         // dblclick
-        mouseDblClickListener = (e) => {
-          if (dblclickListeners.size === 0) return;
-          const frame = plot.getDrawContext();
+        const mouseDblClickListener = (e: MouseEvent) => {
+          if (!opts.onDblClick) return;
+          const frame = plot.getFrame();
 
           const position = getPosition(e, frame);
 
           if (!position) return;
 
-          for (const listener of dblclickListeners) {
-            listener({ plot, frame, position, self });
-          }
+          opts.onDblClick({ plot, frame, position, thisPlugin });
         };
         canvas.addEventListener("dblclick", mouseDblClickListener);
-        opts.pluginOpts?.hooks?.onInit?.({ plot, frame, self });
-      },
+        const deinit = opts.pluginOpts?.hooks?.onInit?.(initOpts);
 
-      onDestroy({ plot, self }) {
-        const canvas = plot.getCanvas();
-        if (mouseMoveListener) {
+        return () => {
+          const canvas = plot.getCanvas();
           canvas.removeEventListener("mousemove", mouseMoveListener);
-          mouseMoveListener = undefined;
-        }
-        if (mouseLeaveListener) {
           canvas.removeEventListener("mouseleave", mouseLeaveListener);
-          mouseLeaveListener = undefined;
-        }
-        if (mouseClickListener) {
           canvas.removeEventListener("click", mouseClickListener);
-          mouseClickListener = undefined;
-        }
-        if (mouseDblClickListener) {
           canvas.removeEventListener("dblclick", mouseDblClickListener);
-          mouseDblClickListener = undefined;
-        }
-        if (mouseDownListener) {
           canvas.removeEventListener("mousedown", mouseDownListener);
-          mouseDownListener = undefined;
-        }
-        if (mouseUpListener) {
           document.removeEventListener("mouseup", mouseUpListener);
-          mouseUpListener = undefined;
-        }
-        opts.pluginOpts?.hooks?.onDestroy?.({ plot, self });
+          deinit?.();
+        };
       },
     },
   };

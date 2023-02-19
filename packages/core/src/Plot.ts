@@ -193,15 +193,36 @@ export class Plot {
     this.#draw(effectiveNewInputParams);
   }
 
-  getDrawContext() {
-    return this.#makeFrame(this.#lastDrawConfig_DO_NOT_USE);
+  getFrame(rawInputParams = this.#lastDrawConfig_DO_NOT_USE) {
+    let inputParams = rawInputParams;
+    for (const plugin of this.#plugins) {
+      if (plugin.config.transformInputParams) {
+        inputParams = plugin.config.transformInputParams({
+          inputParams,
+          plot: this,
+          thisPlugin: plugin,
+        });
+      }
+    }
+
+    let frame = this.#makeFrame(inputParams);
+    for (const plugin of this.#plugins) {
+      if (plugin.config.transformFrame) {
+        frame = plugin.config.transformFrame({
+          frame,
+          plot: this,
+          thisPlugin: plugin,
+        });
+      }
+    }
+    return frame;
   }
 
   destroy() {
     this.parentResizeObserver.disconnect();
     this.#phase = "destroyed";
     for (const plugin of this.#plugins) {
-      plugin.config.hooks?.onDestroy?.({ plot: this, self: plugin });
+      plugin.config.hooks?.onDestroy?.({ plot: this, thisPlugin: plugin });
     }
     for (const deinit of this.#deinitCallbacks) {
       deinit();
@@ -220,27 +241,7 @@ export class Plot {
 
     this.#updateCanvasSize();
 
-    let inputParams = rawInputParams;
-    for (const plugin of this.#plugins) {
-      if (plugin.config.transformInputParams) {
-        inputParams = plugin.config.transformInputParams({
-          inputParams,
-          plot: this,
-          self: plugin,
-        });
-      }
-    }
-
-    let frame = this.#makeFrame(inputParams);
-    for (const plugin of this.#plugins) {
-      if (plugin.config.transformFrame) {
-        frame = plugin.config.transformFrame({
-          frame,
-          plot: this,
-          self: plugin,
-        });
-      }
-    }
+    const frame = this.getFrame(rawInputParams);
 
     if (this.#phase === "initializing") {
       // ON INIT HOOK
@@ -248,7 +249,7 @@ export class Plot {
         const deinitCallback = plugin.config.hooks?.onInit?.({
           frame,
           plot: this,
-          self: plugin,
+          thisPlugin: plugin,
         });
         if (deinitCallback) {
           this.#deinitCallbacks.push(deinitCallback);
@@ -259,13 +260,21 @@ export class Plot {
 
     // CLEAR
     for (const plugin of this.#plugins) {
-      plugin.config.hooks?.beforeClear?.({ frame, plot: this, self: plugin });
+      plugin.config.hooks?.beforeClear?.({
+        frame,
+        plot: this,
+        thisPlugin: plugin,
+      });
     }
 
     clearCanvas(frame);
 
     for (const plugin of this.#plugins) {
-      plugin.config.hooks?.afterClear?.({ frame, plot: this, self: plugin });
+      plugin.config.hooks?.afterClear?.({
+        frame,
+        plot: this,
+        thisPlugin: plugin,
+      });
     }
 
     if (frame.chartArea.height < 0 || frame.chartArea.width < 0) {
@@ -280,7 +289,11 @@ export class Plot {
     drawSeries(frame);
 
     for (const plugin of this.#plugins) {
-      plugin.config.hooks?.afterSeries?.({ frame, plot: this, self: plugin });
+      plugin.config.hooks?.afterSeries?.({
+        frame,
+        plot: this,
+        thisPlugin: plugin,
+      });
     }
 
     // DRAW MIDDLE FACETS
@@ -290,7 +303,11 @@ export class Plot {
     drawAxes(frame);
 
     for (const plugin of this.#plugins) {
-      plugin.config.hooks?.afterAxes?.({ frame, plot: this, self: plugin });
+      plugin.config.hooks?.afterAxes?.({
+        frame,
+        plot: this,
+        thisPlugin: plugin,
+      });
     }
 
     // DRAW TOP FACETS

@@ -97,7 +97,7 @@ export const linePlotter = ({
     ctx.beginPath();
     for (let idx = 0; idx < length; idx++) {
       if (
-        showDistinct({
+        !showDistinct({
           frame,
           idx,
           series: singleSeries,
@@ -105,13 +105,26 @@ export const linePlotter = ({
           distinctDistance,
         })
       ) {
-        const x = singleSeries.x[idx];
-        const y = singleSeries.y[idx];
-        const posX = valToPos(frame, x, xScale.id);
-        const posY = valToPos(frame, y, yScale.id);
-        ctx.moveTo(posX + radius, posY);
-        ctx.arc(posX, posY, radius, 0, 2 * Math.PI);
+        continue;
       }
+      const x = singleSeries.x[idx];
+      const y = singleSeries.y[idx];
+      if (x < frame.limits[singleSeries.xScaleId].min) {
+        continue;
+      }
+      if (x > frame.limits[singleSeries.xScaleId].max) {
+        continue;
+      }
+      if (y < frame.limits[singleSeries.yScaleId].min) {
+        continue;
+      }
+      if (y > frame.limits[singleSeries.yScaleId].max) {
+        continue;
+      }
+      const posX = valToPos(frame, x, xScale.id);
+      const posY = valToPos(frame, y, yScale.id);
+      ctx.moveTo(posX + radius, posY);
+      ctx.arc(posX, posY, radius, 0, 2 * Math.PI);
     }
 
     ctx.fill();

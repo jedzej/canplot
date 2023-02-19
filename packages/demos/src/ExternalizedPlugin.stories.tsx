@@ -82,13 +82,13 @@ const useHoverPlugin = () => {
     onSpanSelect: (e) => {
       switch (e.phase) {
         case "move":
-          setSelection({ start: e.positionStart, end: e.positionEnd });
+          setSelection({ start: e.spanStart, end: e.spanEnd });
           break;
         case "end":
           setSelection(undefined);
           setRects((oldRects) => [
             ...oldRects,
-            { start: e.positionStart, end: e.positionEnd },
+            { start: e.spanStart, end: e.spanEnd },
           ]);
           break;
       }

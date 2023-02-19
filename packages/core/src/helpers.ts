@@ -1,9 +1,20 @@
 import { DEFAULT_PADDING } from "./defaults";
 import { CursorPosition } from "./main";
-import { PlotDrawFrame, PlotDrawInputParams, Scale, Style } from "./types";
+import {
+  PlotDrawFrame,
+  PlotDrawInputParams,
+  Scale,
+  Style,
+  XScaleId,
+  YScaleId,
+} from "./types";
 import { clamp, findClosestIndex } from "./utils";
 
-export const isXScale = (scaleId: Scale["id"]) => scaleId.startsWith("x-");
+export const isXScale = (scaleId: string): scaleId is XScaleId =>
+  scaleId.startsWith("x-");
+
+export const isYScale = (scaleId: string): scaleId is YScaleId =>
+  scaleId.startsWith("y-");
 
 export const valToPxDistance = (
   frame: PlotDrawFrame,
