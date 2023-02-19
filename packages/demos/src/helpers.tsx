@@ -7,11 +7,10 @@ export type PlotStoryProps = Omit<PlotStaticConfig, "canvas"> &
 
 export const EmbeddedPlot: React.FC<PlotStoryProps> = ({
   dimensions,
-  plugins,
   ...plotDrawInputParams
 }) => {
   const [ref] = usePlot(
-    { dimensions, plugins },
+    { dimensions },
     () => {
       return plotDrawInputParams;
     },

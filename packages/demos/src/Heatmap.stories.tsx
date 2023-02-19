@@ -10,21 +10,19 @@ export default {
     dimensions: { height: 400 },
     plugins: [
       {
-        hooks: {
-          onInit: ({ plot }) =>
-            animationLoop(() => {
-              plot.update((plot) => {
-                plot.series[0].plotter = heatmapPlotter({
-                  tileX: 1,
-                  tileY: 1,
-                  z: new Array(plot.series[0].x.length)
-                    .fill(0)
-                    .map((_, y) => 5 + Math.sin(y + performance.now() / 100)),
-                });
-                return plot;
+        onInit: ({ plot }) =>
+          animationLoop(() => {
+            plot.update((plot) => {
+              plot.series[0].plotter = heatmapPlotter({
+                tileX: 1,
+                tileY: 1,
+                z: new Array(plot.series[0].x.length)
+                  .fill(0)
+                  .map((_, y) => 5 + Math.sin(y + performance.now() / 100)),
               });
-            }),
-        },
+              return plot;
+            });
+          }),
       },
     ],
     padding: 10,
@@ -80,7 +78,7 @@ Colorspace.args = {
         tileX: 1,
         tileY: 1,
         z: range(0, 20, 1).map((a) => a / 20),
-        colorSpace: (z) => [(1-z)*256,80,z*255,255],
+        colorSpace: (z) => [(1 - z) * 256, 80, z * 255, 255],
       }),
       x: range(0, 20, 1)
         .map((a) => a % 5)

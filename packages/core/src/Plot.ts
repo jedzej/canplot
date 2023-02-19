@@ -10,15 +10,25 @@ import {
   PlotStaticConfig,
   Dimensions,
   PlotPlugin,
+  HookOpts,
 } from "./types";
 
 const clearCanvas = ({ ctx, canvasSize: { width, height } }: PlotDrawFrame) => {
   ctx.clearRect(0, 0, width, height);
 };
 
+const iteratePlugins = (
+  plugins: PlotPlugin<unknown>[] | undefined,
+  fn: (plugin: PlotPlugin<unknown>, pluginId: string) => void
+) => {
+  plugins?.forEach((plugin, i) => {
+    fn(plugin, plugin.id ?? i.toString());
+  });
+};
+
 export class Plot {
   #dimensions: Required<Dimensions>;
-  #plugins: PlotPlugin<any>[];
+  #cache = new Map<string, unknown>();
   #lastDrawConfig_DO_NOT_USE: PlotDrawInputParams;
   #parentSize: Size | undefined;
   #redrawing = false;
@@ -43,15 +53,6 @@ export class Plot {
   ) {
     const { width = "auto", height = "auto" } = staticConfig.dimensions ?? {};
     this.#dimensions = { width, height };
-    this.#plugins =
-      staticConfig.plugins?.map((config, i) => ({
-        setState: (updater) => {
-          this.#plugins[i].state = updater(this.#plugins[i].state);
-          this.#draw(this.#lastDrawConfig_DO_NOT_USE);
-        },
-        state: config.initState?.(),
-        config,
-      })) ?? [];
     this.#lastDrawConfig_DO_NOT_USE = inputParams;
     if (staticConfig.canvas) {
       this.attach(staticConfig.canvas);
@@ -164,7 +165,7 @@ export class Plot {
     };
   }
 
-  redraw(){
+  redraw() {
     this.#draw(this.#lastDrawConfig_DO_NOT_USE);
   }
 
@@ -199,35 +200,57 @@ export class Plot {
 
   getFrame(rawInputParams = this.#lastDrawConfig_DO_NOT_USE) {
     let inputParams = rawInputParams;
-    for (const plugin of this.#plugins) {
-      if (plugin.config.transformInputParams) {
-        inputParams = plugin.config.transformInputParams({
+    iteratePlugins(rawInputParams.plugins, (plugin, pluginId) => {
+      if (plugin.transformInputParams) {
+        inputParams = plugin.transformInputParams({
           inputParams,
           plot: this,
-          thisPlugin: plugin,
+          pluginId,
+          state: this.#cache.get(pluginId),
+          setState: (newState) => {
+            this.#cache.set(pluginId, newState);
+          },
         });
       }
-    }
+    });
 
     let frame = this.#makeFrame(inputParams);
-    for (const plugin of this.#plugins) {
-      if (plugin.config.transformFrame) {
-        frame = plugin.config.transformFrame({
+    iteratePlugins(inputParams.plugins, (plugin, pluginId) => {
+      if (plugin.transformFrame) {
+        frame = plugin.transformFrame({
           frame,
           plot: this,
-          thisPlugin: plugin,
+          pluginId,
+          state: this.#cache.get(pluginId),
+          setState: (newState) => {
+            this.#cache.set(pluginId, newState);
+          },
         });
       }
-    }
+    });
     return frame;
+  }
+
+  #makePluginHookOpts(pluginId: string): Omit<HookOpts<any>, "frame"> {
+    return {
+      plot: this,
+      pluginId,
+      state: this.#cache.get(pluginId),
+      setState: (newState) => {
+        this.#cache.set(pluginId, newState);
+      },
+    };
   }
 
   destroy() {
     this.parentResizeObserver.disconnect();
     this.#phase = "destroyed";
-    for (const plugin of this.#plugins) {
-      plugin.config.hooks?.onDestroy?.({ plot: this, thisPlugin: plugin });
-    }
+    iteratePlugins(
+      this.#lastDrawConfig_DO_NOT_USE.plugins,
+      (plugin, pluginId) => {
+        plugin.onDestroy?.(this.#makePluginHookOpts(pluginId));
+      }
+    );
     for (const deinit of this.#deinitCallbacks) {
       deinit();
     }
@@ -247,39 +270,39 @@ export class Plot {
 
     const frame = this.getFrame(rawInputParams);
 
+    const plugins = frame.inputParams.plugins;
+
     if (this.#phase === "initializing") {
       // ON INIT HOOK
-      for (const plugin of this.#plugins) {
-        const deinitCallback = plugin.config.hooks?.onInit?.({
+      iteratePlugins(plugins, (plugin, pluginId) => {
+        this.#cache.set(pluginId, plugin.initState?.());
+        const deinitCallback = plugin.onInit?.({
+          ...this.#makePluginHookOpts(pluginId),
           frame,
-          plot: this,
-          thisPlugin: plugin,
         });
         if (deinitCallback) {
           this.#deinitCallbacks.push(deinitCallback);
         }
-      }
+      });
       this.#phase = "initialized";
     }
 
     // CLEAR
-    for (const plugin of this.#plugins) {
-      plugin.config.hooks?.beforeClear?.({
+    iteratePlugins(plugins, (plugin, pluginId) =>
+      plugin.beforeClear?.({
+        ...this.#makePluginHookOpts(pluginId),
         frame,
-        plot: this,
-        thisPlugin: plugin,
-      });
-    }
+      })
+    );
 
     clearCanvas(frame);
 
-    for (const plugin of this.#plugins) {
-      plugin.config.hooks?.afterClear?.({
+    iteratePlugins(plugins, (plugin, pluginId) =>
+      plugin.afterClear?.({
+        ...this.#makePluginHookOpts(pluginId),
         frame,
-        plot: this,
-        thisPlugin: plugin,
-      });
-    }
+      })
+    );
 
     if (frame.chartArea.height < 0 || frame.chartArea.width < 0) {
       this.#redrawing = false;
@@ -292,13 +315,12 @@ export class Plot {
     // DRAW SERIES
     drawSeries(frame);
 
-    for (const plugin of this.#plugins) {
-      plugin.config.hooks?.afterSeries?.({
+    iteratePlugins(plugins, (plugin, pluginId) =>
+      plugin.afterSeries?.({
+        ...this.#makePluginHookOpts(pluginId),
         frame,
-        plot: this,
-        thisPlugin: plugin,
-      });
-    }
+      })
+    );
 
     // DRAW MIDDLE FACETS
     drawFacets(frame, "middle");
@@ -306,13 +328,12 @@ export class Plot {
     // DRAW AXES
     drawAxes(frame);
 
-    for (const plugin of this.#plugins) {
-      plugin.config.hooks?.afterAxes?.({
+    iteratePlugins(plugins, (plugin, pluginId) =>
+      plugin.afterAxes?.({
+        ...this.#makePluginHookOpts(pluginId),
         frame,
-        plot: this,
-        thisPlugin: plugin,
-      });
-    }
+      })
+    );
 
     // DRAW TOP FACETS
     drawFacets(frame, "top");

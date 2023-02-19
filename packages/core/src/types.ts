@@ -1,19 +1,6 @@
 import { Plot } from "./Plot";
 
-type HookOpts<S> = {
-  frame: PlotDrawFrame;
-  plot: Plot;
-  thisPlugin: PlotPlugin<S>;
-};
-
-export type Hooks<S> = {
-  onInit?: (opts: HookOpts<S>) => (() => void) | void;
-  beforeClear?: (opts: HookOpts<S>) => void;
-  afterClear?: (opts: HookOpts<S>) => void;
-  afterSeries?: (opts: HookOpts<S>) => void;
-  afterAxes?: (opts: HookOpts<S>) => void;
-  onDestroy?: (opts: Omit<HookOpts<S>, "frame">) => void;
-};
+type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
 
 export type Style = {
   fillStyle?: CanvasFillStrokeStyles["fillStyle"];
@@ -170,6 +157,7 @@ type NormalizedPadding = {
 };
 
 export type PlotDrawInputParams = {
+  plugins?: PlotPlugin<unknown>[];
   padding?: number | NormalizedPadding;
   axes: PlotAxis[];
   scales: Scale[];
@@ -177,26 +165,41 @@ export type PlotDrawInputParams = {
   series: SeriesBase[];
 };
 
-export type PlotPlugin<S> = {
-  setState: (updater: (old: S) => S) => void;
+export type HookOpts<S> = {
+  frame: PlotDrawFrame;
+  plot: Plot;
+  pluginId: string;
   state: S;
-  config: PlotPluginConfig<S>;
+  setState: (newState: S) => void;
 };
 
-export type PlotPluginConfig<S = any> = {
-  transformInputParams?: (opts: {
-    inputParams: PlotDrawInputParams;
-    thisPlugin: PlotPlugin<S>;
-    plot: Plot;
-  }) => PlotDrawInputParams;
-  transformFrame?: (opts: {
-    frame: PlotDrawFrame;
-    thisPlugin: PlotPlugin<S>;
-    plot: Plot;
-  }) => PlotDrawFrame;
-  hooks?: Hooks<S>;
-  initState?: () => S;
+export type Hooks<S> = {
+  onInit?: (opts: HookOpts<S>) => (() => void) | void;
+  beforeClear?: (opts: HookOpts<S>) => void;
+  afterClear?: (opts: HookOpts<S>) => void;
+  afterSeries?: (opts: HookOpts<S>) => void;
+  afterAxes?: (opts: HookOpts<S>) => void;
+  onDestroy?: (opts: Omit<HookOpts<S>, "frame">) => void;
 };
+
+export type PlotPlugin<S = never> = {
+  id?: string;
+  transformInputParams?: (opts: {
+    pluginId: string;
+    inputParams: Omit<PlotDrawInputParams, "plugins">;
+    plot: Plot;
+    state: S;
+    setState: (newState: S) => void;
+  }) => Omit<PlotDrawInputParams, "plugins">;
+  transformFrame?: (opts: {
+    pluginId: string;
+    frame: PlotDrawFrame;
+    plot: Plot;
+    state: S;
+    setState: (newState: S) => void;
+  }) => PlotDrawFrame;
+  initState?: () => S;
+} & Hooks<S>;
 
 export type PlotDrawFrame = {
   inputParams: PlotDrawInputParams;
@@ -214,6 +217,5 @@ export type PlotDrawFrame = {
 
 export type PlotStaticConfig = {
   canvas?: HTMLCanvasElement;
-  plugins?: PlotPluginConfig<any>[];
   dimensions?: Dimensions;
 };

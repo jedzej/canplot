@@ -1,6 +1,6 @@
 import React from "react";
 import { ComponentMeta, ComponentStory } from "@storybook/react";
-import { linePlotter } from "@canplot/core";
+import { PlotPlugin, linePlotter } from "@canplot/core";
 import { animationLoop, EmbeddedPlot } from "./helpers";
 
 export default {
@@ -9,25 +9,20 @@ export default {
     dimensions: { height: 400 },
     plugins: [
       {
-        hooks: {
-          onInit: ({ plot }) =>
-            animationLoop(() => {
-              plot.update((plot) => {
-                plot.series[0].y = new Array(plot.series[0].x.length)
-                  .fill(0)
-                  .map(
-                    (_, y) => 5 + Math.sin(y / 10 + performance.now() / 100)
-                  );
-                plot.series[1].y = new Array(plot.series[1].x.length)
-                  .fill(0)
-                  .map(
-                    (_, y) => 2 + Math.cos(y / 10 + performance.now() / 100)
-                  );
-                return plot;
-              });
-            }),
-        },
-      },
+        initState: () => "asdas",
+        onInit: ({ plot }) =>
+          animationLoop(() => {
+            plot.update((plot) => {
+              plot.series[0].y = new Array(plot.series[0].x.length)
+                .fill(0)
+                .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100));
+              plot.series[1].y = new Array(plot.series[1].x.length)
+                .fill(0)
+                .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100));
+              return plot;
+            });
+          }),
+      } as PlotPlugin<string>,
     ],
     padding: 10,
     axes: [
