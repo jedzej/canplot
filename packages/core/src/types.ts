@@ -131,9 +131,7 @@ export type CircleFacet = {
 
 export type CustomFacet = {
   type: "custom";
-  draw: (frame: PlotDrawFrame, facet: CustomFacet) => void;
-  payload?: unknown;
-  style?: Style;
+  plotter: (frame: PlotDrawFrame) => void;
 };
 
 export type SpanFacet = {

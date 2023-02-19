@@ -1,17 +1,71 @@
 import React, { useRef } from "react";
 import { Meta, Story } from "@storybook/react";
 import {
-  Limits,
-  Scale,
   linePlotter,
   makeCursorPlugin,
-  helpers,
+  absoluteSpanFacet,
+  crosshairFacet,
 } from "@canplot/core";
 import { usePlot } from "@canplot/react";
 
 export default {
   title: "Zoom",
 } as Meta;
+
+const zoomPlugin = () => {
+  const store = {};
+
+  return makeCursorPlugin({
+    pluginOpts: {
+      initState: () => ({}),
+      transformFrame: ({ frame, thisPlugin }) => {
+        const facets = frame.inputParams.facets ?? [];
+        console.log(thisPlugin.state);
+        if (thisPlugin.state.hoverPosition) {
+          facets.push({
+            type: "custom",
+            plotter: crosshairFacet({
+              x: thisPlugin.state.hoverPosition.canvas.x,
+              y: thisPlugin.state.hoverPosition.canvas.y,
+              style: { strokeStyle: "rgba(0,0,0,0.5)" },
+            }),
+          });
+        }
+        return {
+          ...frame,
+          limits: { ...frame.limits },
+          facets,
+        };
+      },
+    },
+    spanSelectOptions: {
+      mode: "x",
+      facetPlotter: (opts) => absoluteSpanFacet(opts),
+      threshold: 50,
+    },
+    onHover: () => {},
+    // onSpanSelect: (event) => {
+    //   if (event.phase === "end") {
+    //     store.limits = {};
+    //     for (const scaleId in event.spanStart.scaled) {
+    //       if (!helpers.isXScale(scaleId)) {
+    //         continue;
+    //       }
+    //       const start = event.spanStart.scaled[scaleId];
+    //       const end = event.spanEnd.scaled[scaleId];
+    //       const min = Math.min(start, end);
+    //       const max = Math.max(start, end);
+    //       store.limits[scaleId] = { min, max };
+    //     }
+    //     event.plot.redraw();
+    //   }
+    // },
+    // onDblClick: (event) => {
+    //   store.limits = {};
+    //   event.plot.redraw();
+    // },
+  });
+};
 
 const Template: Story = () => {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -20,38 +74,7 @@ const Template: Story = () => {
     {
       dimensions: { height: 400 },
       canvasRef: ref,
-      plugins: [
-        makeCursorPlugin({
-          pluginOpts: {
-            initState: () => ({} as Record<Scale["id"], Limits>),
-            transformFrame: ({ thisPlugin, frame }) => {
-              return {
-                ...frame,
-                limits: { ...frame.limits, ...thisPlugin.state },
-              };
-            },
-          },
-          onSpanSelect: (event) => {
-            if (event.phase === "end") {
-              const newState = {} as typeof event.thisPlugin.state;
-              for (const scaleId in event.spanStart.scaled) {
-                if (!helpers.isXScale(scaleId)) {
-                  continue;
-                }
-                const start = event.spanStart.scaled[scaleId];
-                const end = event.spanEnd.scaled[scaleId];
-                const min = Math.min(start, end);
-                const max = Math.max(start, end);
-                newState[scaleId] = { min, max };
-              }
-              event.thisPlugin.setState((old) => ({ ...old, ...newState }));
-            }
-          },
-          onDblClick: (event) => {
-            event.thisPlugin.setState(() => ({}));
-          },
-        }),
-      ],
+      plugins: [zoomPlugin()],
     },
     () => {
       return {

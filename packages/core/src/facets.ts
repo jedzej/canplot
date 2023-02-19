@@ -107,8 +107,7 @@ const drawSpanFacet = (frame: PlotDrawFrame, facet: SpanFacet) => {
 
 const drawCustomFacet = (frame: PlotDrawFrame, facet: CustomFacet) => {
   frame.ctx.save();
-  applyStyles(frame.ctx, facet.style);
-  facet.draw(frame, facet);
+  facet.plotter(frame);
   frame.ctx.restore();
 };
 

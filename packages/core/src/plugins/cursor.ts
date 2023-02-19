@@ -1,6 +1,12 @@
 import { posToVal } from "../helpers";
 import { Plot } from "../Plot";
-import { PlotDrawFrame, PlotPlugin, PlotPluginConfig, Scale } from "../types";
+import {
+  CustomFacet,
+  PlotDrawFrame,
+  PlotPlugin,
+  PlotPluginConfig,
+  Scale,
+} from "../types";
 import { clamp } from "../utils";
 
 export type CursorPosition = {
@@ -105,38 +111,43 @@ type CursorPluginOptions<S> = {
   onClick?: ClickListener<S>;
   onDblClick?: DblclickListener<S>;
   pluginOpts?: PlotPluginConfig<S>;
-  spanSelectOptions?: { threshold: number; mode: "x" | "y" | "xy" };
+  spanSelectOptions?: {
+    threshold: number;
+    mode: "x" | "y" | "xy";
+    facetPlotter?: (opts: {
+      x: { min: number; max: number };
+      y: { min: number; max: number };
+    }) => CustomFacet["plotter"];
+  };
 };
 
-export const makeCursorPlugin = <
-  S extends { spanStart?: CursorPosition; spanEnd?: CursorPosition }
->(
-  opts: CursorPluginOptions<S> = {}
+type CursorPluginState = {
+  spanStart?: CursorPosition;
+  spanEnd?: CursorPosition;
+  hoverPosition?: CursorPosition;
+};
+
+export const makeCursorPlugin = (
+  opts: CursorPluginOptions<CursorPluginState> = {}
 ) => {
   let clickTimeout: number | undefined = undefined;
 
-  const bindings: PlotPluginConfig<S> = {
+  const bindings: PlotPluginConfig<CursorPluginState> = {
     ...opts.pluginOpts,
-    initState: () =>
-      ({
-        ...(opts.pluginOpts?.initState?.() ?? {}),
-      } as S),
+    initState: () => ({
+      ...(opts.pluginOpts?.initState?.()),
+    }),
     transformFrame: (transformFrameOpts) => {
       const { spanStart, spanEnd } = transformFrameOpts.thisPlugin.state;
       const facets = transformFrameOpts.frame.inputParams.facets ?? [];
-      if (spanStart && spanEnd) {
+      if (spanStart && spanEnd && opts.spanSelectOptions?.facetPlotter) {
         facets.push({
           type: "custom",
           layer: "top",
-          draw: ({ ctx }) => {
-            ctx.fillStyle = "rgba(0,0,0,0.1)";
-            ctx.fillRect(
-              spanStart.canvas.x,
-              spanStart.canvas.y,
-              spanEnd.canvas.x - spanStart.canvas.x,
-              spanEnd.canvas.y - spanStart.canvas.y
-            );
-          },
+          plotter: opts.spanSelectOptions.facetPlotter({
+            x: { min: spanStart.canvas.x, max: spanEnd.canvas.x },
+            y: { min: spanStart.canvas.y, max: spanEnd.canvas.y },
+          }),
         });
       }
       const newFrame: PlotDrawFrame = {
@@ -199,12 +210,14 @@ export const makeCursorPlugin = <
           const spanStart = thisPlugin.state.spanStart;
           const spanEnd = getPosition(e, frame, true);
 
-          if (!spanStart || !spanEnd) return;
-
+          
           thisPlugin.setState((old) => ({
             ...old,
             spanEnd,
+            hoverPosition: position,
           }));
+
+          if (!spanStart || !spanEnd) return;
 
           const threshold = opts.spanSelectOptions?.threshold ?? 50;
           if (!spanExceedsThreshold(threshold, spanStart, spanEnd)) {

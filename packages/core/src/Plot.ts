@@ -164,6 +164,10 @@ export class Plot {
     };
   }
 
+  redraw(){
+    this.#draw(this.#lastDrawConfig_DO_NOT_USE);
+  }
+
   update(
     newInputParams:
       | PlotDrawInputParams
