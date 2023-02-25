@@ -35,7 +35,7 @@ export const makeGenTicksDefault = ({
   space = DEFAULT_SPLIT_SPACE,
 }: MakeGenTicksDefaultOpts = {}): PlotAxisGenTicks => {
   return ({ frame: frame, scale }) => {
-    const limits = frame.limits[scale.id];
+    const limits = frame.scalesLimits[scale.id];
     const ticks = [];
     const unnormalizedIncr = pxToValDistance(frame, space, scale.id);
     const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;

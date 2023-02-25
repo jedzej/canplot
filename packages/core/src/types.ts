@@ -1,7 +1,5 @@
 import { Plot } from "./Plot";
 
-type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
-
 export type Style = {
   fillStyle?: CanvasFillStrokeStyles["fillStyle"];
   strokeStyle?: CanvasFillStrokeStyles["strokeStyle"];
@@ -32,7 +30,7 @@ export type XScaleId = `x-${string}`;
 export type YScaleId = `y-${string}`;
 
 export type MakeLimitsOpts = {
-  frame: Omit<PlotDrawFrame, "limits">;
+  frame: Omit<PlotDrawFrame, "scalesLimits">;
   scaleId: XScaleId | YScaleId;
 };
 
@@ -157,7 +155,7 @@ type NormalizedPadding = {
 };
 
 export type PlotDrawInputParams = {
-  plugins?: PlotPlugin<unknown>[];
+  plugins?: PlotPlugin<any>[];
   padding?: number | NormalizedPadding;
   axes: PlotAxis[];
   scales: Scale[];
@@ -205,7 +203,7 @@ export type PlotDrawFrame = {
   inputParams: PlotDrawInputParams;
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
-  limits: Record<Scale["id"], Limits>;
+  scalesLimits: Record<Scale["id"], Limits>;
   chartArea: {
     x: number;
     y: number;

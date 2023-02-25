@@ -158,8 +158,6 @@ export const makeCursorPlugin = (
         }) ?? newFrame
       );
     },
-
-    ...opts.pluginOpts,
     onInit(initOpts) {
       const { plot, state, setState, pluginId } = initOpts;
       const canvas = plot.getCanvas();

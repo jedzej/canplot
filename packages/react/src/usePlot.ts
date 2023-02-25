@@ -7,10 +7,10 @@ export type UsePlotStaticConfig = Omit<PlotStaticConfig, "canvas"> & {
 
 export const usePlot = (
   staticConfig: UsePlotStaticConfig,
-  makeParams: () => PlotDrawInputParams,
+  makeInputParams: () => PlotDrawInputParams,
   deps: any[]
 ): [RefObject<HTMLCanvasElement>, Plot] => {
-  const [plot] = useState(() => new Plot(staticConfig, makeParams()));
+  const [plot] = useState(() => new Plot(staticConfig, makeInputParams()));
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const effectiveCanvasRef = staticConfig.canvasRef || internalCanvasRef;
 
@@ -22,7 +22,7 @@ export const usePlot = (
         console.error("No canvas element provided");
       }
     } else {
-      plot.update(makeParams());
+      plot.update(makeInputParams());
     }
   }, deps);
 

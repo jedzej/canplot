@@ -109,16 +109,16 @@ export const linePlotter = ({
       }
       const x = singleSeries.x[idx];
       const y = singleSeries.y[idx];
-      if (x < frame.limits[singleSeries.xScaleId].min) {
+      if (x < frame.scalesLimits[singleSeries.xScaleId].min) {
         continue;
       }
-      if (x > frame.limits[singleSeries.xScaleId].max) {
+      if (x > frame.scalesLimits[singleSeries.xScaleId].max) {
         continue;
       }
-      if (y < frame.limits[singleSeries.yScaleId].min) {
+      if (y < frame.scalesLimits[singleSeries.yScaleId].min) {
         continue;
       }
-      if (y > frame.limits[singleSeries.yScaleId].max) {
+      if (y > frame.scalesLimits[singleSeries.yScaleId].max) {
         continue;
       }
       const posX = valToPos(frame, x, xScale.id);

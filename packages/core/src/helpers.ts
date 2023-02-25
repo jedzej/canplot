@@ -22,7 +22,7 @@ export const valToPxDistance = (
   scaleId: Scale["id"]
 ) => {
   const chartArea = frame.chartArea;
-  const { min, max } = frame.limits[scaleId];
+  const { min, max } = frame.scalesLimits[scaleId];
   const factor =
     (isXScale(scaleId) ? chartArea.width : chartArea.height) / (max - min);
   return val * factor;
@@ -33,7 +33,7 @@ export const valToPos = (
   val: number,
   scaleId: Scale["id"]
 ) => {
-  const { min } = frame.limits[scaleId];
+  const { min } = frame.scalesLimits[scaleId];
   const chartArea = frame.chartArea;
   const relativePosition = valToPxDistance(frame, val - min, scaleId);
   if (isXScale(scaleId)) {
@@ -56,7 +56,7 @@ export const pxToValDistance = (
   pxDistance: number,
   scaleId: Scale["id"]
 ) => {
-  const { min, max } = frame.limits[scaleId];
+  const { min, max } = frame.scalesLimits[scaleId];
   const chartArea = frame.chartArea;
   const factor =
     (isXScale(scaleId) ? chartArea.width : chartArea.height) / (max - min);
@@ -68,7 +68,7 @@ export const posToVal = (
   pos: number,
   scaleId: Scale["id"]
 ) => {
-  const { min, max } = frame.limits[scaleId];
+  const { min, max } = frame.scalesLimits[scaleId];
   const relativePosition = pxToValDistance(frame, pos, scaleId);
   return isXScale(scaleId) ? min + relativePosition : max - relativePosition;
 };

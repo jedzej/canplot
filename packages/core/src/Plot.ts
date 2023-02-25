@@ -28,7 +28,7 @@ const iteratePlugins = (
 
 export class Plot {
   #dimensions: Required<Dimensions>;
-  #cache = new Map<string, unknown>();
+  #pluginStore = new Map<string, unknown>();
   #lastDrawConfig_DO_NOT_USE: PlotDrawInputParams;
   #parentSize: Size | undefined;
   #redrawing = false;
@@ -128,7 +128,7 @@ export class Plot {
       height: canvas.height,
     };
 
-    const drawContextWithoutLimits: Omit<PlotDrawFrame, "limits"> = {
+    const frameWithoutLimits: Omit<PlotDrawFrame, "scalesLimits"> = {
       ctx: canvas.getContext("2d")!,
       chartArea: {
         x: leftAxesSize + padding.left,
@@ -152,12 +152,12 @@ export class Plot {
     };
 
     return {
-      ...drawContextWithoutLimits,
-      limits: Object.fromEntries(
+      ...frameWithoutLimits,
+      scalesLimits: Object.fromEntries(
         drawConfig.scales.map((scale) => [
           scale.id,
           (scale.makeLimits ?? makeAutoLimits)({
-            frame: drawContextWithoutLimits,
+            frame: frameWithoutLimits,
             scaleId: scale.id,
           }),
         ])
@@ -206,9 +206,9 @@ export class Plot {
           inputParams,
           plot: this,
           pluginId,
-          state: this.#cache.get(pluginId),
+          state: this.#pluginStore.get(pluginId),
           setState: (newState) => {
-            this.#cache.set(pluginId, newState);
+            this.#pluginStore.set(pluginId, newState);
           },
         });
       }
@@ -221,9 +221,9 @@ export class Plot {
           frame,
           plot: this,
           pluginId,
-          state: this.#cache.get(pluginId),
+          state: this.#pluginStore.get(pluginId),
           setState: (newState) => {
-            this.#cache.set(pluginId, newState);
+            this.#pluginStore.set(pluginId, newState);
           },
         });
       }
@@ -235,9 +235,9 @@ export class Plot {
     return {
       plot: this,
       pluginId,
-      state: this.#cache.get(pluginId),
+      state: this.#pluginStore.get(pluginId),
       setState: (newState) => {
-        this.#cache.set(pluginId, newState);
+        this.#pluginStore.set(pluginId, newState);
       },
     };
   }
@@ -267,6 +267,13 @@ export class Plot {
     this.#redrawing = true;
 
     this.#updateCanvasSize();
+    
+    if (this.#phase === "initializing") {
+      // ON INIT HOOK
+      iteratePlugins(rawInputParams.plugins, (plugin, pluginId) => {
+        this.#pluginStore.set(pluginId, plugin.initState?.());
+      })
+    }
 
     const frame = this.getFrame(rawInputParams);
 
@@ -275,7 +282,6 @@ export class Plot {
     if (this.#phase === "initializing") {
       // ON INIT HOOK
       iteratePlugins(plugins, (plugin, pluginId) => {
-        this.#cache.set(pluginId, plugin.initState?.());
         const deinitCallback = plugin.onInit?.({
           ...this.#makePluginHookOpts(pluginId),
           frame,
