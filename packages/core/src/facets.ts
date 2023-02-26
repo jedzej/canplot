@@ -1,7 +1,7 @@
 import { applyStyles, valToPos } from "./helpers";
 import {
   CustomFacet,
-  PlotDrawFrame,
+  Frame,
   FacetLayer,
   HLineFacet,
   SpanFacet,
@@ -9,15 +9,15 @@ import {
   CircleFacet,
 } from "./types";
 
-const getScale = (frame: PlotDrawFrame, scaleId: string) => {
-  const scale = frame.inputParams.scales.find((scale) => scale.id === scaleId);
+const getScale = (frame: Frame, scaleId: string) => {
+  const scale = frame.scene.scales.find((scale) => scale.id === scaleId);
   if (!scale) {
     console.error("No scale found", scaleId);
   }
   return scale;
 };
 
-const drawVLineFacet = (frame: PlotDrawFrame, facet: VLineFacet) => {
+const drawVLineFacet = (frame: Frame, facet: VLineFacet) => {
   const { ctx, chartArea } = frame;
   const scale = getScale(frame, facet.scaleId);
   if (!scale) {
@@ -33,7 +33,7 @@ const drawVLineFacet = (frame: PlotDrawFrame, facet: VLineFacet) => {
   ctx.restore();
 };
 
-const drawHLineFacet = (frame: PlotDrawFrame, facet: HLineFacet) => {
+const drawHLineFacet = (frame: Frame, facet: HLineFacet) => {
   const { ctx, chartArea } = frame;
   const scale = getScale(frame, facet.scaleId);
   if (!scale) {
@@ -49,7 +49,7 @@ const drawHLineFacet = (frame: PlotDrawFrame, facet: HLineFacet) => {
   ctx.restore();
 };
 
-const drawCircleFacet = (frame: PlotDrawFrame, facet: CircleFacet) => {
+const drawCircleFacet = (frame: Frame, facet: CircleFacet) => {
   const { ctx } = frame;
   const xScale = getScale(frame, facet.xScaleId);
   const yScale = getScale(frame, facet.yScaleId);
@@ -67,7 +67,7 @@ const drawCircleFacet = (frame: PlotDrawFrame, facet: CircleFacet) => {
   ctx.restore();
 };
 
-const drawSpanFacet = (frame: PlotDrawFrame, facet: SpanFacet) => {
+const drawSpanFacet = (frame: Frame, facet: SpanFacet) => {
   const { ctx, chartArea } = frame;
   let x0 = chartArea.x;
   let x1 = chartArea.x + chartArea.width;
@@ -105,14 +105,14 @@ const drawSpanFacet = (frame: PlotDrawFrame, facet: SpanFacet) => {
   ctx.restore();
 };
 
-const drawCustomFacet = (frame: PlotDrawFrame, facet: CustomFacet) => {
+const drawCustomFacet = (frame: Frame, facet: CustomFacet) => {
   frame.ctx.save();
   facet.plotter(frame);
   frame.ctx.restore();
 };
 
-export const drawFacets = (frame: PlotDrawFrame, layer: FacetLayer) => {
-  const { inputParams: drawConfig } = frame;
+export const drawFacets = (frame: Frame, layer: FacetLayer) => {
+  const { scene: drawConfig } = frame;
   const facets =
     drawConfig.facets?.filter((facet) => {
       const currentLayer = facet.layer ?? "bottom";

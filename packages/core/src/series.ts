@@ -1,7 +1,7 @@
-import { PlotDrawFrame } from "./types";
+import { Frame } from "./types";
 
-export const drawSeries = (frame: PlotDrawFrame) => {
-  const { ctx, inputParams: drawConfig } = frame;
+export const drawSeries = (frame: Frame) => {
+  const { ctx, scene: drawConfig } = frame;
   ctx.save();
 
   for (const series of drawConfig.series) {

@@ -1,4 +1,4 @@
-import { Plot, PlotStaticConfig, PlotDrawInputParams } from "@canplot/core";
+import { Plot, PlotStaticConfig, Scene } from "@canplot/core";
 import { RefObject, useLayoutEffect, useRef, useState } from "react";
 
 export type UsePlotStaticConfig = Omit<PlotStaticConfig, "canvas"> & {
@@ -7,10 +7,10 @@ export type UsePlotStaticConfig = Omit<PlotStaticConfig, "canvas"> & {
 
 export const usePlot = (
   staticConfig: UsePlotStaticConfig,
-  makeInputParams: () => PlotDrawInputParams,
+  makeScene: () => Scene,
   deps: any[]
 ): [RefObject<HTMLCanvasElement>, Plot] => {
-  const [plot] = useState(() => new Plot(staticConfig, makeInputParams()));
+  const [plot] = useState(() => new Plot(staticConfig, makeScene()));
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const effectiveCanvasRef = staticConfig.canvasRef || internalCanvasRef;
 
@@ -22,7 +22,7 @@ export const usePlot = (
         console.error("No canvas element provided");
       }
     } else {
-      plot.update(makeInputParams());
+      plot.update(makeScene());
     }
   }, deps);
 

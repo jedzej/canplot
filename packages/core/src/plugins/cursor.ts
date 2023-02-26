@@ -1,6 +1,6 @@
 import { posToVal } from "../helpers";
 import { Plot } from "../Plot";
-import { CustomFacet, PlotDrawFrame, PlotPlugin, Scale } from "../types";
+import { CustomFacet, Frame, PlotPlugin, Scale } from "../types";
 import { clamp } from "../utils";
 
 export type CursorPosition = {
@@ -18,14 +18,14 @@ export type CursorPosition = {
 type HoverEvent<S> = {
   plot: Plot;
   pluginId: string;
-  frame: PlotDrawFrame;
+  frame: Frame;
   position?: CursorPosition;
 };
 
 type ClickEvent<S> = {
   plot: Plot;
   pluginId: string;
-  frame: PlotDrawFrame;
+  frame: Frame;
   position: CursorPosition;
 };
 
@@ -33,7 +33,7 @@ type SpanSelectEvent<S> = {
   phase: "start" | "move" | "end";
   plot: Plot;
   pluginId: string;
-  frame: PlotDrawFrame;
+  frame: Frame;
   spanStart: CursorPosition;
   spanEnd: CursorPosition;
 };
@@ -48,7 +48,7 @@ type SpanSelectListener<S> = (event: SpanSelectEvent<S>) => void;
 
 const getPosition = (
   e: MouseEvent,
-  frame: PlotDrawFrame,
+  frame: Frame,
   fallbackToBoundaries = false
 ): CursorPosition | undefined => {
   const rect = frame.ctx.canvas.getBoundingClientRect();
@@ -71,7 +71,7 @@ const getPosition = (
   }
 
   const scaled: Record<Scale["id"], number> = {};
-  for (const scale of frame.inputParams.scales) {
+  for (const scale of frame.scene.scales) {
     if (scale.id.startsWith("x-")) {
       scaled[scale.id] = posToVal(frame, clampedPosX, scale.id);
     } else {
@@ -133,7 +133,7 @@ export const makeCursorPlugin = (
     }),
     transformFrame: (transformFrameOpts) => {
       const { spanStart, spanEnd } = transformFrameOpts.state;
-      const facets = transformFrameOpts.frame.inputParams.facets ?? [];
+      const facets = transformFrameOpts.frame.scene.facets ?? [];
       if (spanStart && spanEnd && opts.spanSelectOptions?.facetPlotter) {
         facets.push({
           type: "custom",
@@ -144,10 +144,10 @@ export const makeCursorPlugin = (
           }),
         });
       }
-      const newFrame: PlotDrawFrame = {
+      const newFrame: Frame = {
         ...transformFrameOpts.frame,
-        inputParams: {
-          ...transformFrameOpts.frame.inputParams,
+        scene: {
+          ...transformFrameOpts.frame.scene,
           facets,
         },
       };

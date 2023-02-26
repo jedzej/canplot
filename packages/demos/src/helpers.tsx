@@ -1,20 +1,19 @@
-import { PlotDrawInputParams, PlotStaticConfig } from "@canplot/core";
+import { Scene, PlotStaticConfig } from "@canplot/core";
 import { usePlot } from "@canplot/react";
 import React from "react";
 
-export type PlotStoryProps = Omit<PlotStaticConfig, "canvas"> &
-  PlotDrawInputParams;
+export type PlotStoryProps = Omit<PlotStaticConfig, "canvas"> & Scene;
 
 export const EmbeddedPlot: React.FC<PlotStoryProps> = ({
   dimensions,
-  ...plotDrawInputParams
+  ...scene
 }) => {
   const [ref] = usePlot(
     { dimensions },
     () => {
-      return plotDrawInputParams;
+      return scene;
     },
-    [plotDrawInputParams]
+    [scene]
   );
 
   return <canvas ref={ref} />;
@@ -49,4 +48,4 @@ export const range = (start: number, end: number, step = 1) => {
     result.push(i);
   }
   return result;
-}
+};

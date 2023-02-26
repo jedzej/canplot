@@ -2,21 +2,18 @@ import React from "react";
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import {
   CursorPosition,
-  PlotPluginConfig,
   helpers,
   linePlotter,
   makeCursorPlugin,
 } from "@canplot/core";
 import { animationLoop, EmbeddedPlot } from "./helpers";
 
-const makeLegendPlugin = (
-  legendData: { color: string; label: string }[]
-): PlotPluginConfig => {
+const makeLegendPlugin = (legendData: { color: string; label: string }[]) => {
   let originalBottomPadding = 0;
   const legendHeight = 20 * legendData.length;
 
   return makeCursorPlugin({
-    onHover: ({ position, self }) => {
+    onHover: ({ position }) => {
       self.setState(() => position);
     },
     pluginOpts: {
@@ -38,16 +35,16 @@ const makeLegendPlugin = (
           ctx,
           canvasSize,
           chartArea,
-          inputParams: { series },
+          scene: { series },
         } = frame;
 
         const dataPoints = helpers.findClosestDataPoint(self.state, frame);
 
-        const facets = frame.inputParams.facets ?? [];
+        const facets = frame.scene.facets ?? [];
 
         facets.push({
           type: "custom",
-          draw() {
+          plotter() {
             ctx.fillStyle = "red";
             const legendY =
               canvasSize.height - originalBottomPadding - legendHeight;
@@ -96,8 +93,8 @@ const makeLegendPlugin = (
 
         return {
           ...frame,
-          inputParams: {
-            ...(frame.inputParams ?? {}),
+          scene: {
+            ...(frame.scene ?? {}),
             facets,
           },
         };
@@ -105,7 +102,6 @@ const makeLegendPlugin = (
     },
   });
 };
-
 
 const colors = ["red", "blue", "orange", "purple"];
 

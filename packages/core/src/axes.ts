@@ -9,7 +9,7 @@ import {
 } from "./defaults";
 import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
 import {
-  PlotDrawFrame,
+  Frame,
   PlotAxis,
   PlotAxisGenTicks,
   PlotAxisTickFormat,
@@ -58,7 +58,7 @@ const tickFormat: PlotAxisTickFormat = ({ ticks }) => {
 };
 
 const drawYTicks = (
-  frame: PlotDrawFrame,
+  frame: Frame,
   axis: PlotAxis,
   scale: Scale,
   x: number
@@ -128,7 +128,7 @@ const drawYAxis = (
 };
 
 const drawXTicks = (
-  frame: PlotDrawFrame,
+  frame: Frame,
   axis: PlotAxis,
   scale: Scale,
   y: number
@@ -180,7 +180,7 @@ const drawXTicks = (
   ctx.restore();
 };
 
-const drawXLabel = (frame: PlotDrawFrame, axis: PlotAxis, y: number) => {
+const drawXLabel = (frame: Frame, axis: PlotAxis, y: number) => {
   if (!axis.label) return;
   const { ctx } = frame;
   ctx.save();
@@ -228,7 +228,7 @@ const drawXAxis = (
   ctx.restore();
 };
 
-const drawYLabel = (frame: PlotDrawFrame, axis: PlotAxis, x: number) => {
+const drawYLabel = (frame: Frame, axis: PlotAxis, x: number) => {
   if (!axis.label) return;
   const { ctx } = frame;
   ctx.save();
@@ -259,11 +259,11 @@ const drawYLabel = (frame: PlotDrawFrame, axis: PlotAxis, x: number) => {
   ctx.restore();
 };
 
-export const drawAxes = (frame: PlotDrawFrame) => {
+export const drawAxes = (frame: Frame) => {
   const {
     ctx,
     chartArea,
-    inputParams: drawConfig,
+    scene: drawConfig,
     canvasSize,
     padding,
   } = frame;

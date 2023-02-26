@@ -1,8 +1,8 @@
 import { applyStyles, valToPos, valToPxDistance } from "../helpers";
-import { PlotDrawFrame, Plotter, Scale, SeriesBase, Style } from "../types";
+import { Frame, Plotter, Scale, SeriesBase, Style } from "../types";
 
 export type LinePlotterShowDistinctOpts = {
-  frame: PlotDrawFrame;
+  frame: Frame;
   idx: number;
   series: SeriesBase;
   scale: Scale;

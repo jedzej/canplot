@@ -2,7 +2,7 @@ import { applyStyles, valToPos } from "../helpers";
 import { Style } from "../types";
 import { YScaleId } from "../types";
 import { XScaleId } from "../types";
-import { PlotDrawFrame } from "../types";
+import { Frame } from "../types";
 
 type XSpan = {
   scaleId: XScaleId;
@@ -17,7 +17,7 @@ type YSpan = {
 };
 
 type SpanFacetParams = {
-  frame: PlotDrawFrame;
+  frame: Frame;
   x?: XSpan;
   y?: YSpan;
   style?: Style;
@@ -25,7 +25,7 @@ type SpanFacetParams = {
 
 export const scaledSpanFacet =
   ({ x, y, style }: SpanFacetParams) =>
-  (frame: PlotDrawFrame) => {
+  (frame: Frame) => {
     const { ctx, chartArea } = frame;
     let x0 = chartArea.x;
     let x1 = chartArea.x + chartArea.width;

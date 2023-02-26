@@ -1,5 +1,5 @@
 import { applyStyles } from "../helpers";
-import { PlotDrawFrame, Style } from "../types";
+import { Frame, Style } from "../types";
 
 type SpanFacetParams = {
   x?: number;
@@ -9,7 +9,7 @@ type SpanFacetParams = {
 
 export const crosshairFacet =
   ({ x, y, style }: SpanFacetParams) =>
-  (frame: PlotDrawFrame) => {
+  (frame: Frame) => {
     if (!x && !y) return;
 
     const { ctx, chartArea } = frame;

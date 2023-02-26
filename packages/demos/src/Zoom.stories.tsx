@@ -13,27 +13,24 @@ export default {
 } as Meta;
 
 const zoomPlugin = () => {
-  const store = {};
-
   return makeCursorPlugin({
     pluginOpts: {
       initState: () => ({}),
-      transformFrame: ({ frame, thisPlugin }) => {
-        const facets = frame.inputParams.facets ?? [];
-        console.log(thisPlugin.state);
-        if (thisPlugin.state.hoverPosition) {
+      transformFrame: ({ frame, state }) => {
+        const facets = frame.scene.facets ?? [];
+        if (state.hoverPosition) {
           facets.push({
             type: "custom",
             plotter: crosshairFacet({
-              x: thisPlugin.state.hoverPosition.canvas.x,
-              y: thisPlugin.state.hoverPosition.canvas.y,
+              x: state.hoverPosition.canvas.x,
+              y: state.hoverPosition.canvas.y,
               style: { strokeStyle: "rgba(0,0,0,0.5)" },
             }),
           });
         }
         return {
           ...frame,
-          limits: { ...frame.limits },
+          scalesLimits: { ...frame.scalesLimits },
           facets,
         };
       },

@@ -1,6 +1,6 @@
 import { applyStyles } from "../helpers";
 import { Style } from "../types";
-import { PlotDrawFrame } from "../types";
+import { Frame } from "../types";
 
 type SpanFacetParams = {
   x: { min: number; max: number };
@@ -10,7 +10,7 @@ type SpanFacetParams = {
 
 export const absoluteSpanFacet =
   ({ x, y, style }: SpanFacetParams) =>
-  ({ ctx }: PlotDrawFrame) => {
+  ({ ctx }: Frame) => {
     ctx.save();
     applyStyles(ctx, {
       fillStyle: "rgba(0, 0, 0, 0.1)",

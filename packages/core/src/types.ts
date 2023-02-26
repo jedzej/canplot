@@ -30,7 +30,7 @@ export type XScaleId = `x-${string}`;
 export type YScaleId = `y-${string}`;
 
 export type MakeLimitsOpts = {
-  frame: Omit<PlotDrawFrame, "scalesLimits">;
+  frame: Omit<Frame, "scalesLimits">;
   scaleId: XScaleId | YScaleId;
 };
 
@@ -51,20 +51,20 @@ export type SeriesBase = {
 };
 
 export type Plotter = (
-  frame: PlotDrawFrame,
+  frame: Frame,
   series: SeriesBase,
   xScale: Scale,
   yScale: Scale
 ) => void;
 
 export type PlotAxisGenTicksOpts = {
-  frame: PlotDrawFrame;
+  frame: Frame;
   scale: Scale;
   axis: PlotAxis;
 };
 
 export type PlotAxisTickFormatOpts = {
-  frame: PlotDrawFrame;
+  frame: Frame;
   scale: Scale;
   ticks: number[];
 };
@@ -116,7 +116,7 @@ export type CircleFacet = {
 
 export type CustomFacet = {
   type: "custom";
-  plotter: (frame: PlotDrawFrame) => void;
+  plotter: (frame: Frame) => void;
 };
 
 export type SpanFacet = {
@@ -154,7 +154,7 @@ type NormalizedPadding = {
   left: number;
 };
 
-export type PlotDrawInputParams = {
+export type Scene = {
   plugins?: PlotPlugin<any>[];
   padding?: number | NormalizedPadding;
   axes: PlotAxis[];
@@ -164,7 +164,7 @@ export type PlotDrawInputParams = {
 };
 
 export type HookOpts<S> = {
-  frame: PlotDrawFrame;
+  frame: Frame;
   plot: Plot;
   pluginId: string;
   state: S;
@@ -184,23 +184,23 @@ export type PlotPlugin<S = never> = {
   id?: string;
   transformInputParams?: (opts: {
     pluginId: string;
-    inputParams: Omit<PlotDrawInputParams, "plugins">;
+    inputParams: Omit<Scene, "plugins">;
     plot: Plot;
     state: S;
     setState: (newState: S) => void;
-  }) => Omit<PlotDrawInputParams, "plugins">;
+  }) => Omit<Scene, "plugins">;
   transformFrame?: (opts: {
     pluginId: string;
-    frame: PlotDrawFrame;
+    frame: Frame;
     plot: Plot;
     state: S;
     setState: (newState: S) => void;
-  }) => PlotDrawFrame;
+  }) => Frame;
   initState?: () => S;
 } & Hooks<S>;
 
-export type PlotDrawFrame = {
-  inputParams: PlotDrawInputParams;
+export type Frame = {
+  scene: Scene;
   ctx: CanvasRenderingContext2D;
   canvasSize: Size;
   scalesLimits: Record<Scale["id"], Limits>;

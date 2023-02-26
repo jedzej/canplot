@@ -1,8 +1,8 @@
 import { DEFAULT_PADDING } from "./defaults";
 import { CursorPosition } from "./main";
 import {
-  PlotDrawFrame,
-  PlotDrawInputParams,
+  Frame,
+  Scene,
   Scale,
   Style,
   XScaleId,
@@ -17,7 +17,7 @@ export const isYScale = (scaleId: string): scaleId is YScaleId =>
   scaleId.startsWith("y-");
 
 export const valToPxDistance = (
-  frame: PlotDrawFrame,
+  frame: Frame,
   val: number,
   scaleId: Scale["id"]
 ) => {
@@ -29,7 +29,7 @@ export const valToPxDistance = (
 };
 
 export const valToPos = (
-  frame: PlotDrawFrame,
+  frame: Frame,
   val: number,
   scaleId: Scale["id"]
 ) => {
@@ -52,7 +52,7 @@ export const valToPos = (
 };
 
 export const pxToValDistance = (
-  frame: PlotDrawFrame,
+  frame: Frame,
   pxDistance: number,
   scaleId: Scale["id"]
 ) => {
@@ -64,7 +64,7 @@ export const pxToValDistance = (
 };
 
 export const posToVal = (
-  frame: PlotDrawFrame,
+  frame: Frame,
   pos: number,
   scaleId: Scale["id"]
 ) => {
@@ -88,7 +88,7 @@ export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
   ctx.fontKerning = style?.fontKerning ?? "auto";
 };
 
-export const normalizePadding = (padding: PlotDrawInputParams["padding"]) => {
+export const normalizePadding = (padding: Scene["padding"]) => {
   if (typeof padding === "number" || typeof padding === "undefined") {
     const paddingWithDefault = padding ?? DEFAULT_PADDING;
     return {
@@ -106,11 +106,11 @@ type DataPoint = { x: number; y: number };
 
 export const findClosestDataPoint = (
   position: CursorPosition | undefined,
-  frame: PlotDrawFrame,
+  frame: Frame,
   toleranceXPx = 100,
   toleranceYPx = Infinity
 ): (DataPoint | undefined)[] => {
-  const { series } = frame.inputParams;
+  const { series } = frame.scene;
   if (!position) {
     return series.map(() => undefined);
   }

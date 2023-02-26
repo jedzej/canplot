@@ -11,7 +11,7 @@ const useHoverPlugin = () => {
   const plugin = makeCursorPlugin({
     onHover: (e) => {
       const facetsMap: Record<string, Facet> = Object.fromEntries(
-        e.frame.inputParams.facets?.map((facet) => [facet.id, facet]) ?? []
+        e.frame.scene.facets?.map((facet) => [facet.id, facet]) ?? []
       );
       if (!e.position) {
         delete facetsMap["hover-x"];

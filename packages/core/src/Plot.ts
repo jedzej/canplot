@@ -4,8 +4,8 @@ import { isXScale, normalizePadding } from "./helpers";
 import { makeAutoLimits } from "./limits";
 import { drawSeries } from "./series";
 import {
-  PlotDrawInputParams,
-  PlotDrawFrame,
+  Scene,
+  Frame,
   Size,
   PlotStaticConfig,
   Dimensions,
@@ -13,7 +13,7 @@ import {
   HookOpts,
 } from "./types";
 
-const clearCanvas = ({ ctx, canvasSize: { width, height } }: PlotDrawFrame) => {
+const clearCanvas = ({ ctx, canvasSize: { width, height } }: Frame) => {
   ctx.clearRect(0, 0, width, height);
 };
 
@@ -29,7 +29,7 @@ const iteratePlugins = (
 export class Plot {
   #dimensions: Required<Dimensions>;
   #pluginStore = new Map<string, unknown>();
-  #lastDrawConfig_DO_NOT_USE: PlotDrawInputParams;
+  #lastScene: Scene;
   #parentSize: Size | undefined;
   #redrawing = false;
   #deinitCallbacks: (() => void)[] = [];
@@ -43,17 +43,14 @@ export class Plot {
         width: entry.contentRect.width,
         height: entry.contentRect.height,
       };
-      this.#draw(this.#lastDrawConfig_DO_NOT_USE);
+      this.#draw(this.#lastScene);
     }
   });
 
-  constructor(
-    staticConfig: PlotStaticConfig,
-    inputParams: PlotDrawInputParams
-  ) {
+  constructor(staticConfig: PlotStaticConfig, scene: Scene) {
     const { width = "auto", height = "auto" } = staticConfig.dimensions ?? {};
     this.#dimensions = { width, height };
-    this.#lastDrawConfig_DO_NOT_USE = inputParams;
+    this.#lastScene = scene;
     if (staticConfig.canvas) {
       this.attach(staticConfig.canvas);
     }
@@ -79,7 +76,7 @@ export class Plot {
     if (width === "auto" || height === "auto") {
       this.parentResizeObserver.observe(canvas.parentElement!);
     } else {
-      this.#draw(this.#lastDrawConfig_DO_NOT_USE);
+      this.#draw(this.#lastScene);
     }
   }
 
@@ -97,7 +94,7 @@ export class Plot {
     canvas.height = height === "auto" ? this.#parentSize!.height : height;
   }
 
-  #makeFrame(drawConfig: PlotDrawInputParams): PlotDrawFrame {
+  #makeFrame(drawConfig: Scene): Frame {
     const padding = normalizePadding(drawConfig.padding);
     let leftAxesSize = 0;
     let rightAxesSize = 0;
@@ -128,7 +125,7 @@ export class Plot {
       height: canvas.height,
     };
 
-    const frameWithoutLimits: Omit<PlotDrawFrame, "scalesLimits"> = {
+    const frameWithoutLimits: Omit<Frame, "scalesLimits"> = {
       ctx: canvas.getContext("2d")!,
       chartArea: {
         x: leftAxesSize + padding.left,
@@ -148,7 +145,7 @@ export class Plot {
       },
       padding,
       canvasSize,
-      inputParams: drawConfig,
+      scene: drawConfig,
     };
 
     return {
@@ -166,21 +163,19 @@ export class Plot {
   }
 
   redraw() {
-    this.#draw(this.#lastDrawConfig_DO_NOT_USE);
+    this.#draw(this.#lastScene);
   }
 
   update(
     newInputParams:
-      | PlotDrawInputParams
-      | ((oldInputParams: PlotDrawInputParams) => PlotDrawInputParams)
+      | Scene
+      | ((oldInputParams: Scene) => Scene)
   ) {
-    let effectiveNewInputParams: PlotDrawInputParams;
+    let effectiveNewInputParams: Scene;
     if (newInputParams instanceof Function) {
       if (this.#phase === "initialized") {
         try {
-          effectiveNewInputParams = newInputParams(
-            this.#lastDrawConfig_DO_NOT_USE
-          );
+          effectiveNewInputParams = newInputParams(this.#lastScene);
         } catch (e) {
           console.error(e);
           return;
@@ -194,11 +189,11 @@ export class Plot {
     } else {
       effectiveNewInputParams = newInputParams;
     }
-    this.#lastDrawConfig_DO_NOT_USE = effectiveNewInputParams;
+    this.#lastScene = effectiveNewInputParams;
     this.#draw(effectiveNewInputParams);
   }
 
-  getFrame(rawInputParams = this.#lastDrawConfig_DO_NOT_USE) {
+  getFrame(rawInputParams = this.#lastScene) {
     let inputParams = rawInputParams;
     iteratePlugins(rawInputParams.plugins, (plugin, pluginId) => {
       if (plugin.transformInputParams) {
@@ -245,18 +240,15 @@ export class Plot {
   destroy() {
     this.parentResizeObserver.disconnect();
     this.#phase = "destroyed";
-    iteratePlugins(
-      this.#lastDrawConfig_DO_NOT_USE.plugins,
-      (plugin, pluginId) => {
-        plugin.onDestroy?.(this.#makePluginHookOpts(pluginId));
-      }
-    );
+    iteratePlugins(this.#lastScene.plugins, (plugin, pluginId) => {
+      plugin.onDestroy?.(this.#makePluginHookOpts(pluginId));
+    });
     for (const deinit of this.#deinitCallbacks) {
       deinit();
     }
   }
 
-  #draw(rawInputParams: PlotDrawInputParams) {
+  #draw(rawInputParams: Scene) {
     if (this.#phase === "destroyed") {
       return;
     }
@@ -267,17 +259,17 @@ export class Plot {
     this.#redrawing = true;
 
     this.#updateCanvasSize();
-    
+
     if (this.#phase === "initializing") {
       // ON INIT HOOK
       iteratePlugins(rawInputParams.plugins, (plugin, pluginId) => {
         this.#pluginStore.set(pluginId, plugin.initState?.());
-      })
+      });
     }
 
     const frame = this.getFrame(rawInputParams);
 
-    const plugins = frame.inputParams.plugins;
+    const plugins = frame.scene.plugins;
 
     if (this.#phase === "initializing") {
       // ON INIT HOOK

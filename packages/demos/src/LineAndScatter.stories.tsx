@@ -16,42 +16,6 @@ const Template: Story = () => {
       dimensions: {
         height: 400,
       },
-      plugins: [
-        {
-          hooks: {
-            onInit: ({ plot }) => {
-              return animationLoop(() => {
-                plot.update((inputParams) => {
-                  const t = performance.now() / 100;
-                  const arr: number[] = [];
-                  arr.length = inputParams.series[0].x.length;
-                  arr.fill(0);
-                  const s1: number[] = [];
-                  s1.length = inputParams.series[0].x.length;
-                  const s2: number[] = [];
-                  s2.length = inputParams.series[0].x.length;
-                  const s3: number[] = [];
-                  s3.length = inputParams.series[0].x.length;
-                  const s4: number[] = [];
-                  s4.length = inputParams.series[0].x.length;
-
-                  for (let i = 0; i < arr.length; i++) {
-                    s1[i] = 1 + Math.cos(i / 10 + t);
-                    s2[i] = 2 + Math.cos(i / 10 + t);
-                    s3[i] = 3 + Math.cos(i / 10 + t);
-                    s4[i] = 4 + Math.cos(i / 10 + t);
-                  }
-                  inputParams.series[0].y = s1;
-                  inputParams.series[1].y = s2;
-                  inputParams.series[2].y = s3;
-                  inputParams.series[3].y = s4;
-                  return inputParams;
-                });
-              });
-            },
-          },
-        },
-      ],
       canvasRef: ref,
     },
     () => {
@@ -98,6 +62,42 @@ const Template: Story = () => {
             plotter: scatterPlotter({ style: { strokeStyle: "black" } }),
             x: new Array(1000).fill(0).map((_, i) => i / 10),
             y: new Array(1000).fill(0).map((_, i) => (i % 10) - 5),
+          },
+        ],
+        plugins: [
+          {
+            hooks: {
+              onInit: ({ plot }) => {
+                return animationLoop(() => {
+                  plot.update((scene) => {
+                    const t = performance.now() / 100;
+                    const arr: number[] = [];
+                    arr.length = scene.series[0].x.length;
+                    arr.fill(0);
+                    const s1: number[] = [];
+                    s1.length = scene.series[0].x.length;
+                    const s2: number[] = [];
+                    s2.length = scene.series[0].x.length;
+                    const s3: number[] = [];
+                    s3.length = scene.series[0].x.length;
+                    const s4: number[] = [];
+                    s4.length = scene.series[0].x.length;
+
+                    for (let i = 0; i < arr.length; i++) {
+                      s1[i] = 1 + Math.cos(i / 10 + t);
+                      s2[i] = 2 + Math.cos(i / 10 + t);
+                      s3[i] = 3 + Math.cos(i / 10 + t);
+                      s4[i] = 4 + Math.cos(i / 10 + t);
+                    }
+                    scene.series[0].y = s1;
+                    scene.series[1].y = s2;
+                    scene.series[2].y = s3;
+                    scene.series[3].y = s4;
+                    return scene;
+                  });
+                });
+              },
+            },
           },
         ],
       };

@@ -4,7 +4,7 @@ import { MakeLimits } from "./types";
 export const makeAutoLimits: MakeLimits = ({ frame, scaleId }) => {
   let min = +Infinity;
   let max = -Infinity;
-  for (const series of frame.inputParams.series) {
+  for (const series of frame.scene.series) {
     if (isXScale(scaleId)) {
       if (series.xScaleId !== scaleId) {
         continue;
