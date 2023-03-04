@@ -1,165 +1,95 @@
-import {
-  Plot,
-  PlotPluginConfig,
-  helpers,
-  linePlotter,
-  makeCursorPlugin,
-} from "./src/main";
+import { CanPlot } from "./src/makePlot";
 
-const colors = ["red", "blue", "brown", "orange", "purple"];
-
-const makeLegendPlugin = (
-  legendData: { color: string; label: string }[]
-): PlotPluginConfig => {
-  let originalBottomPadding = 0;
-  const legendHeight = 20 * legendData.length;
-
-  return makeCursorPlugin({
-    onHover: ({ position, frame, self }) => {
-      self.setState(() => helpers.findClosestDataPoint(position, frame));
-    },
-    pluginOpts: {
-      initState: () => [] as ReturnType<typeof helpers.findClosestDataPoint>,
-      transformInputParams({ inputParams }) {
-        const normalizedPadding = helpers.normalizePadding(inputParams.padding);
-
-        originalBottomPadding = normalizedPadding.bottom;
-        return {
-          ...inputParams,
-          padding: {
-            ...normalizedPadding,
-            bottom: normalizedPadding.bottom + legendHeight,
-          },
-        };
+const plot = new CanPlot({
+  canvas: document.getElementById("canvas")! as HTMLCanvasElement,
+  dimensions: { width: "auto", height: 200 },
+})
+  .use<"sizer", { width: number; height: number }>(({ ctx }) => {
+    return {
+      id: "sizer",
+      initialState: { width: ctx.canvas.width, height: ctx.canvas.height },
+      onDraw({ setPluginState }) {
+        setPluginState({
+          width: ctx.canvas.width,
+          height: ctx.canvas.height,
+        });
       },
-      transformFrame({ frame, self }) {
-        const {
-          ctx,
-          canvasSize,
-          chartArea,
-          inputParams: { series },
-        } = frame;
-
-        const dataPoints = self.state;
-
-        const facets = frame.inputParams.facets ?? [];
-
-        facets.push({
-          type: "custom",
-          draw() {
-            ctx.fillStyle = "red";
-            const legendY =
-              canvasSize.height - originalBottomPadding - legendHeight;
-
-            const maxW = Math.max(
-              ...series.map(
-                (_, i) => ctx.measureText(legendData[i].label).width
-              )
+    };
+  })
+  .use(() => {
+    return {
+      id: "pluginA",
+      initialState: undefined,
+      transformScene: (opts) => {
+        opts.scene.facets.push({
+          layer: "top",
+          plotter: (frame) => {
+            frame.ctx.fillStyle = "red";
+            frame.ctx.fillRect(
+              opts.getGlobalState().sizer.width / 3,
+              0,
+              10,
+              10
             );
-            const legendWidth = maxW + 50;
-            const legendX = chartArea.x + (chartArea.width - legendWidth) / 2;
-
-            ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
-
-            for (let i = 0; i < series.length; i++) {
-              ctx.fillStyle = legendData[i].color;
-              ctx.fillRect(legendX, legendY + i * 20, 20, 20);
-              ctx.fillStyle = "black";
-              ctx.fillText(
-                `${legendData[i].label} ${dataPoints[i]?.y ?? ""}`,
-                legendX + 22,
-                legendY + i * 20 + 15
-              );
-            }
           },
         });
-
-        for (let i = 0; i < series.length; i++) {
-          const datapoint = dataPoints[i];
-          if (!datapoint) {
-            break;
-          }
-          facets.push({
-            type: "circle",
-            layer: "top",
-            x: datapoint.x,
-            y: datapoint.y,
-            radius: 10,
-            xScaleId: series[i].xScaleId,
-            yScaleId: series[i].yScaleId,
-            style: {
-              fillStyle: colors[i],
-            },
-          });
-        }
-
-        return {
-          ...frame,
-          inputParams: {
-            ...(frame.inputParams ?? {}),
-            facets,
+      },
+    };
+  })
+  .use(() => {
+    return {
+      id: "pluginB",
+      initialState: undefined,
+      transformScene: (opts) => {
+        opts.scene.facets.push({
+          layer: "top",
+          plotter: (frame) => {
+            frame.ctx.fillStyle = "red";
+            frame.ctx.fillRect(
+              opts.getGlobalState().sizer.width / 3.5,
+              20,
+              10,
+              10
+            );
           },
-        };
+        });
       },
-    },
+    };
   });
-};
-
-new Plot(
-  {
-    canvas: document.getElementById("canvas")! as HTMLCanvasElement,
-    dimensions: { width: "auto", height: 400 },
-    plugins: [
-      makeLegendPlugin([
-        {
-          color: colors[0],
-          label: "a",
-        },
-        {
-          color: colors[1],
-          label: "a",
-        },
-        {
-          color: colors[2],
-          label: "a",
-        },
-      ]),
-    ],
-  },
-  {
-    padding: 20,
-    series: [
+//   ({
+//   initialState: { a: 1 },
+//   id: "pluginB",
+//   onInit: ({ setPluginState }) => {
+//     setPluginState({ a: 2 });
+//   },
+// }))
+// .use({
+//   // initOwnState: (s) => ({ c: s.pluginB.b }),
+//   id: "pluginC",
+// });
+// setTimeout(() => {
+plot.draw((state, { width }) => {
+  return {
+    padding: 0,
+    axes: [],
+    scales: [],
+    series: [],
+    facets: [
       {
-        x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        y: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        xScaleId: "x-1",
-        yScaleId: "y-1",
-        plotter: linePlotter({ style: { strokeStyle: colors[0] } }),
+        layer: "top",
+        plotter: (frame) => {
+          frame.ctx.fillStyle = "red";
+          frame.ctx.fillRect(0, 0, 100, 100);
+        },
       },
       {
-        x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        y: [2, 3, 4, 5, 6, 7, 8, 9, 10, 1],
-        xScaleId: "x-1",
-        yScaleId: "y-1",
-        plotter: linePlotter({ style: { strokeStyle: colors[1] } }),
-      },
-      {
-        x: [1, 2, 3, 4, 8, 9, 10],
-        y: [3, 4, 5, 6, 10, 1, 2],
-        xScaleId: "x-1",
-        yScaleId: "y-1",
-        plotter: linePlotter({ style: { strokeStyle: colors[2] } }),
+        layer: "top",
+        plotter: (frame) => {
+          frame.ctx.fillStyle = "red";
+          frame.ctx.fillRect(width / 2, 0, 100, 100);
+        },
       },
     ],
-    scales: [{ id: "x-1" }, { id: "y-1" }],
-    axes: [
-      {
-        scaleId: "x-1",
-        size: 20,
-      },
-      {
-        scaleId: "y-1",
-      },
-    ],
-  }
-);
+  };
+});
+// }, 100);
