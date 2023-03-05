@@ -34,11 +34,11 @@ const plot = new CanPlot({
     })
   )
   .use(spanSelectPlugin({ id: "spanSelect" }))
-  .use(({ getGlobalState }) => ({
+  .use(({ getStore }) => ({
     id: "line",
     initialState: { x: 0 },
     transformFrame: ({ frame }) => {
-      const { spanSelect } = getGlobalState();
+      const { spanSelect } = getStore();
       if (spanSelect.phase === "active") {
         frame.facets.push({
           layer: "top",

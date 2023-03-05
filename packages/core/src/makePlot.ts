@@ -98,8 +98,8 @@ const sceneToFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
 
 export class CanPlot<S extends Record<string, unknown>> {
   #store: S = {} as S;
-  #plugins: PlotBuilderPlugin<string, any, any>[] = [];
-  #pluginsInitializers: MakePlugin<string, any, any>[] = [];
+  #plugins: PlotBuilderPlugin<string, unknown, unknown>[] = [];
+  #pluginsInitializers: MakePlugin<string, unknown, unknown>[] = [];
   #dimensions: Required<Dimensions>;
   #lastMakeScene?: MakeScene<S>;
   #scheduledDraw = false;
@@ -138,6 +138,27 @@ export class CanPlot<S extends Record<string, unknown>> {
 
     if (staticConfig.canvas) {
       this.attach(staticConfig.canvas);
+    }
+  }
+
+  destroy() {
+    if (this.#phase === "destroyed") {
+      return;
+    }
+    this.#phase = "destroyed";
+    this.parentResizeObserver.disconnect();
+
+    for (const plugin of this.#plugins) {
+      plugin.deinit?.({
+        ctx: this.getCanvas().getContext("2d")!,
+        getStore: () => {
+          return this.#store;
+        },
+        getPluginState: () => {
+          return this.#store[plugin.id];
+        },
+        id: plugin.id,
+      });
     }
   }
 
@@ -209,7 +230,7 @@ export class CanPlot<S extends Record<string, unknown>> {
     const idMap = new Map<any, keyof S>();
     for (const pluginInitializer of this.#pluginsInitializers) {
       const plugin = pluginInitializer({
-        getGlobalState: () => this.#store,
+        getStore: () => this.#store,
         getPluginState: () => this.#store[idMap.get(pluginInitializer)!],
         setPluginState: (state) => {
           this.#setPluginState(idMap.get(pluginInitializer)!, state);
@@ -217,7 +238,7 @@ export class CanPlot<S extends Record<string, unknown>> {
         ctx: this.getCanvas().getContext("2d")!,
       });
       idMap.set(pluginInitializer, plugin.id);
-      this.#store[plugin.id as keyof S] = plugin.initialState;
+      this.#store[plugin.id as keyof S] = plugin.initialState as any;
       this.#plugins.push(plugin);
     }
   }
@@ -268,7 +289,7 @@ export class CanPlot<S extends Record<string, unknown>> {
       plugin.beforeDraw?.({
         id: plugin.id,
         ctx,
-        getGlobalState: () => this.#store,
+        getStore: () => this.#store,
         getPluginState: () => this.#store[plugin.id as keyof S],
         setPluginState: (newPluginState) => {
           this.#setPluginState(plugin.id as keyof S, newPluginState, false);
@@ -285,7 +306,7 @@ export class CanPlot<S extends Record<string, unknown>> {
           id: plugin.id,
           scene,
           ctx: this.getCanvas().getContext("2d")!,
-          getGlobalState: () => this.#store,
+          getStore: () => this.#store,
           getPluginState: () => this.#store[plugin.id as keyof S],
         }) ?? scene,
       initialScene
@@ -304,7 +325,7 @@ export class CanPlot<S extends Record<string, unknown>> {
             frame,
             scene,
             ctx: this.getCanvas().getContext("2d")!,
-            getGlobalState: () => this.#store,
+            getStore: () => this.#store,
             getPluginState: () => this.#store[plugin.id as keyof S],
           }) ?? frame
         );
@@ -343,7 +364,7 @@ export class CanPlot<S extends Record<string, unknown>> {
         ctx,
         frame,
         scene,
-        getGlobalState: () => this.#store,
+        getStore: () => this.#store,
         getPluginState: () => this.#store[plugin.id as keyof S],
         setPluginState: (newPluginState) => {
           this.#setPluginState(plugin.id as keyof S, newPluginState, false);

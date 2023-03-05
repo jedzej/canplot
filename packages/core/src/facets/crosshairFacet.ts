@@ -7,9 +7,8 @@ type SpanFacetParams = {
   style?: Style;
 };
 
-export const crosshairFacet =
-  ({ x, y, style }: SpanFacetParams) =>
-  (frame: Frame) => {
+export const crosshairFacet = ({ x, y, style }: SpanFacetParams) =>
+  function crosshairFacetImpl(frame: Frame) {
     if (!x && !y) return;
 
     const { ctx, chartArea } = frame;

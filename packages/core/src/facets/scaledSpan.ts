@@ -23,9 +23,8 @@ type SpanFacetParams = {
   style?: Style;
 };
 
-export const scaledSpanFacet =
-  ({ x, y, style }: SpanFacetParams) =>
-  (frame: Frame) => {
+export const scaledSpanFacet = ({ x, y, style }: SpanFacetParams) =>
+  function scaledSpanFacetImpl(frame: Frame) {
     const { ctx, chartArea } = frame;
     let x0 = chartArea.x;
     let x1 = chartArea.x + chartArea.width;

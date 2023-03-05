@@ -184,7 +184,7 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     id: ID;
     ctx: CanvasRenderingContext2D;
     scene: Scene;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
   }) => void;
   transformFrame?: (opts: {
@@ -192,13 +192,13 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     ctx: CanvasRenderingContext2D;
     frame: Frame;
     scene: Scene;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
   }) => void;
   beforeDraw?: (opts: {
     id: ID;
     ctx: CanvasRenderingContext2D;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
     setPluginState: (newState: PS) => void;
   }) => void;
@@ -207,20 +207,20 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     ctx: CanvasRenderingContext2D;
     frame: Frame;
     scene: Scene;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
     setPluginState: (newState: PS) => void;
   }) => void;
   deinit?: (opts: {
     id: ID;
     ctx: CanvasRenderingContext2D;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
   }) => void;
 };
 
 export type MakePlugin<ID extends string, PS, S = unknown> = (opts: {
-  getGlobalState: () => S;
+  getStore: () => S;
   setPluginState: (newState: PS) => void;
   getPluginState: () => PS;
   ctx: CanvasRenderingContext2D;

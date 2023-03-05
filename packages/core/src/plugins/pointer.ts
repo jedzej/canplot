@@ -30,12 +30,6 @@ const eventToPositions = (
   const effectivePosY = fallbackToBoundaries
     ? clamp(posY, 0, frame.chartArea.height)
     : posY;
-  console.log(
-    posY,
-    effectivePosY,
-    fallbackToBoundaries,
-    frame.chartArea.height
-  );
 
   const scaled: Record<ScaleId, number> = {};
   for (const scale of frame.scales) {
@@ -235,7 +229,6 @@ export const spanSelectPlugin =
       if (!store.startPosition) return;
       if (!store.lastFrame) return;
       const position = eventToPositions(e, store.lastFrame, true);
-      console.log({ position });
       if (!position) return;
       store.endPosition = position;
       const dimension = positionsToDimension(store.startPosition, position);
