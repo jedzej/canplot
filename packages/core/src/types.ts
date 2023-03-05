@@ -186,7 +186,6 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     scene: Scene;
     getGlobalState: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
-    setPluginState: (newState: PS) => void;
   }) => void;
   onDraw?: (opts: {
     id: ID;
@@ -204,12 +203,13 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     scene: Scene;
     getGlobalState: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
-    setPluginState: (newPluginState: PS) => void;
   }) => void;
 };
 
 export type MakePlugin<ID extends string, PS, S = unknown> = (opts: {
   getGlobalState: () => S;
+  setPluginState: (newState: PS) => void;
+  getPluginState: () => PS;
   ctx: CanvasRenderingContext2D;
 }) => PlotBuilderPlugin<ID, PS, S>;
 

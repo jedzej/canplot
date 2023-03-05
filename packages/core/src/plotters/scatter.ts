@@ -10,7 +10,7 @@ export const scatterPlotter = ({
   style,
   radius = 3,
 }: ScatterPlotterOpts = {}): Plotter => {
-  return (frame, singleSeries, xScale, yScale) => {
+  return function scatterPlotterImpl(frame, singleSeries, xScale, yScale) {
     const ctx = frame.ctx;
     ctx.save();
     ctx.beginPath();

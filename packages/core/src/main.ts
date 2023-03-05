@@ -10,4 +10,4 @@ export * from "./facets/absoluteSpan";
 export * from "./facets/scaledSpan";
 export * from "./facets/crosshairFacet";
 
-export * from "./plugins/cursor";
+export * from "./plugins/pointer";

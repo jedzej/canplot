@@ -32,7 +32,7 @@ export const heatmapPlotter = ({
   tileY,
   colorSpace,
 }: HeatmapPlotterOpts): Plotter => {
-  return (frame, series, xScale, yScale) => {
+  return function heatmapPlotterImpl(frame, series, xScale, yScale) {
     const maxZ = Math.max(...z);
     const minZ = Math.min(...z);
     const normalizedZ = z.map((v) => (v - minZ) / (maxZ - minZ));

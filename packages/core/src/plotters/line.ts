@@ -60,7 +60,7 @@ export const linePlotter = ({
   distinctDistance = 50,
   gapDistance = Infinity,
 }: LinePlotterOpts = {}): Plotter => {
-  return (frame, series, xScale, yScale) => {
+  return function linePlotterImpl(frame, series, xScale, yScale) {
     const ctx = frame.ctx;
     const length = Math.min(series.x.length, series.y.length);
     const x0 = valToPos(frame, series.x[0]!, xScale.id);

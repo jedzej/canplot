@@ -203,14 +203,27 @@ export class CanPlot<S extends Record<string, unknown>> {
     return this as CanPlot<Flatten<S & Record<ID, PS>>>;
   }
 
+  #setPluginState(id: keyof S, state: any, redraw = true) {
+    this.#state[id] = state;
+    if (redraw) {
+      this.#redraw();
+    }
+  }
+
   #initializePlugins() {
+    const idMap = new Map<any, keyof S>();
     for (const pluginInitializer of this.#pluginsInitializers) {
-      this.#plugins.push(
-        pluginInitializer({
-          getGlobalState: () => this.#state,
-          ctx: this.getCanvas().getContext("2d")!,
-        })
-      );
+      const plugin = pluginInitializer({
+        getGlobalState: () => this.#state,
+        getPluginState: () => this.#state[idMap.get(pluginInitializer)!],
+        setPluginState: (state) => {
+          this.#setPluginState(idMap.get(pluginInitializer)!, state);
+        },
+        ctx: this.getCanvas().getContext("2d")!,
+      });
+      idMap.set(pluginInitializer, plugin.id);
+      this.#state[plugin.id as keyof S] = plugin.initialState;
+      this.#plugins.push(plugin);
     }
   }
 
@@ -249,11 +262,14 @@ export class CanPlot<S extends Record<string, unknown>> {
     const canvas = this.getCanvas();
     const size = this.getSize();
 
-    canvas.width = size.width;
-    canvas.height = size.height;
+    if (canvas.width !== size.width || canvas.height !== size.height) {
+      canvas.width = size.width;
+      canvas.height = size.height;
+    }
 
     const initialScene = makeScene(this.#state, size);
 
+    // TRANSFORM SCENE
     const scene = this.#plugins.reduce(
       (scene, plugin) =>
         plugin.transformScene?.({
@@ -262,17 +278,28 @@ export class CanPlot<S extends Record<string, unknown>> {
           ctx: this.getCanvas().getContext("2d")!,
           getGlobalState: () => this.#state,
           getPluginState: () => this.#state[plugin.id as keyof S],
-          setPluginState: (newPluginState) => {
-            this.#state[plugin.id as keyof S] = newPluginState;
-          },
         }) ?? scene,
       initialScene
     );
 
-    const frame = makeFrame(scene, this.getCanvas().getContext("2d")!);
+    // TRANSFORM FRAME
+    const initialFrame = makeFrame(scene, this.getCanvas().getContext("2d")!);
+    const frame = this.#plugins.reduce(
+      (frame, plugin) =>
+        plugin.transformFrame?.({
+          id: plugin.id,
+          frame,
+          scene,
+          ctx: this.getCanvas().getContext("2d")!,
+          getGlobalState: () => this.#state,
+          getPluginState: () => this.#state[plugin.id as keyof S],
+        }) ?? initialFrame,
+      initialFrame
+    );
 
     clearCanvas(frame);
 
+    // ON DRAW
     for (const plugin of this.#plugins) {
       plugin.onDraw?.({
         id: plugin.id,
@@ -282,7 +309,7 @@ export class CanPlot<S extends Record<string, unknown>> {
         getGlobalState: () => this.#state,
         getPluginState: () => this.#state[plugin.id as keyof S],
         setPluginState: (newPluginState) => {
-          this.#state[plugin.id as keyof S] = newPluginState;
+          this.#setPluginState(plugin.id as keyof S, newPluginState, false);
         },
       });
     }
