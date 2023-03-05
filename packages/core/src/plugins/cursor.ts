@@ -1,81 +1,42 @@
 import { posToVal } from "../helpers";
-import { Plot } from "../Plot";
-import { CustomFacet, Frame, PlotPlugin, Scale } from "../types";
+import { Frame, MakePlugin, ScaleId } from "../types";
 import { clamp } from "../utils";
 
+type XY = {
+  x: number;
+  y: number;
+};
+
 export type CursorPosition = {
-  screen: {
-    x: number;
-    y: number;
-  };
-  canvas: {
-    x: number;
-    y: number;
-  };
-  scaled: Record<Scale["id"], number>;
+  screen: XY;
+  canvas: XY;
+  scaled: Record<ScaleId, number>;
 };
 
-type HoverEvent<S> = {
-  plot: Plot;
-  pluginId: string;
-  frame: Frame;
-  position?: CursorPosition;
-};
-
-type ClickEvent<S> = {
-  plot: Plot;
-  pluginId: string;
-  frame: Frame;
-  position: CursorPosition;
-};
-
-type SpanSelectEvent<S> = {
-  phase: "start" | "move" | "end";
-  plot: Plot;
-  pluginId: string;
-  frame: Frame;
-  spanStart: CursorPosition;
-  spanEnd: CursorPosition;
-};
-
-type ClickListener<S> = (event: ClickEvent<S>) => void;
-
-type DblclickListener<S> = (event: ClickEvent<S>) => void;
-
-type HoverListener<S> = (event: HoverEvent<S>) => void;
-
-type SpanSelectListener<S> = (event: SpanSelectEvent<S>) => void;
-
-const getPosition = (
+const eventToPositions = (
   e: MouseEvent,
   frame: Frame,
   fallbackToBoundaries = false
 ): CursorPosition | undefined => {
   const rect = frame.ctx.canvas.getBoundingClientRect();
-  const screen = {
-    x: e.clientX,
-    y: e.clientY,
-  };
-  const canvas = {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
-  };
+  const screen = { x: e.clientX, y: e.clientY };
+  const canvas = { x: e.clientX - rect.left, y: e.clientY - rect.top };
   const posX = e.clientX - rect.left - frame.chartArea.x;
   const posY = e.clientY - rect.top - frame.chartArea.y;
 
-  const clampedPosX = clamp(posX, 0, frame.chartArea.width);
-  const clampedPosY = clamp(posY, 0, frame.chartArea.height);
+  const effectivePosX = fallbackToBoundaries
+    ? clamp(posX, 0, frame.chartArea.width)
+    : posX;
+  const effectivePosY = fallbackToBoundaries
+    ? clamp(posY, 0, frame.chartArea.height)
+    : posY;
 
-  if (!fallbackToBoundaries && (clampedPosX !== posX || clampedPosY !== posY)) {
-    return undefined;
-  }
-
-  const scaled: Record<Scale["id"], number> = {};
-  for (const scale of frame.scene.scales) {
+  const scaled: Record<ScaleId, number> = {};
+  for (const scale of frame.scales) {
     if (scale.id.startsWith("x-")) {
-      scaled[scale.id] = posToVal(frame, clampedPosX, scale.id);
+      scaled[scale.id] = posToVal(frame, effectivePosX, scale.id);
     } else {
-      scaled[scale.id] = posToVal(frame, clampedPosY, scale.id);
+      scaled[scale.id] = posToVal(frame, effectivePosY, scale.id);
     }
   }
   return {
@@ -85,238 +46,236 @@ const getPosition = (
   };
 };
 
-const spanExceedsThreshold = (
-  threshold: number,
-  spanStart?: CursorPosition,
-  spanEnd?: CursorPosition
-) => {
-  if (!spanStart || !spanEnd) {
-    return false;
-  }
-  const dx = Math.abs(spanEnd.screen.x - spanStart.screen.x);
-  const dy = Math.abs(spanEnd.screen.y - spanStart.screen.y);
-
-  return dx > threshold || dy > threshold;
+type HoverPluginState = {
+  position?: CursorPosition;
 };
 
-type CursorPluginOptions<S> = {
-  onSpanSelect?: SpanSelectListener<S>;
-  onHover?: HoverListener<S>;
-  onClick?: ClickListener<S>;
-  onDblClick?: DblclickListener<S>;
-  pluginOpts?: PlotPlugin<S>;
-  spanSelectOptions?: {
-    threshold: number;
-    mode: "x" | "y" | "xy";
-    facetPlotter?: (opts: {
-      x: { min: number; max: number };
-      y: { min: number; max: number };
-    }) => CustomFacet["plotter"];
+type HoverData = {
+  position?: CursorPosition;
+  frame: Frame;
+};
+
+export const hoverPlugin =
+  <ID extends string = "hover">({
+    id = "hover" as ID,
+    stateless = false,
+    onHover,
+  }: {
+    id: ID;
+    stateless?: boolean;
+    onHover?: (data: HoverData) => void;
+  }): MakePlugin<ID, HoverPluginState> =>
+  ({ ctx, setPluginState, getPluginState }) => {
+    const canvas = ctx.canvas;
+    const store = {
+      lastFrame: undefined as Frame | undefined,
+    };
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (!store.lastFrame) return;
+      const position = eventToPositions(e, store.lastFrame);
+      onHover?.({
+        position,
+        frame: store.lastFrame,
+      });
+      if (!stateless) {
+        setPluginState({ ...getPluginState(), position });
+      }
+    });
+
+    canvas.addEventListener("mouseout", () => {
+      if (!store.lastFrame) return;
+      onHover?.({
+        position: undefined,
+        frame: store.lastFrame,
+      });
+      if (!stateless) {
+        setPluginState({ ...getPluginState(), position: undefined });
+      }
+    });
+
+    return {
+      id,
+      initialState: {},
+      afterDraw({ frame }) {
+        store.lastFrame = frame;
+      },
+    };
   };
+
+type ClickData = {
+  position?: CursorPosition;
+  frame: Frame;
 };
 
-type CursorPluginState = {
-  spanStart?: CursorPosition;
-  spanEnd?: CursorPosition;
-  hoverPosition?: CursorPosition;
-};
+export const clickPlugin =
+  <ID extends string = "hover">({
+    id = "click" as ID,
+    onClick,
+  }: {
+    id: ID;
+    onClick?: (data: ClickData) => void;
+  }): MakePlugin<ID, undefined> =>
+  ({ ctx }) => {
+    const canvas = ctx.canvas;
+    const store = {
+      lastFrame: undefined as Frame | undefined,
+    };
 
-export const makeCursorPlugin = (
-  opts: CursorPluginOptions<CursorPluginState> = {}
+    canvas.addEventListener("click", (e) => {
+      if (!store.lastFrame) return;
+      const position = eventToPositions(e, store.lastFrame);
+      onClick?.({
+        position,
+        frame: store.lastFrame,
+      });
+    });
+
+    return {
+      id,
+      initialState: undefined,
+      afterDraw({ frame }) {
+        store.lastFrame = frame;
+      },
+    };
+  };
+
+type SpanSelectPluginState =
+  | {
+      phase: "idle";
+    }
+  | {
+      phase: "active";
+      dimension: "x" | "y" | "xy";
+      start: CursorPosition;
+      end: CursorPosition;
+    };
+
+type SpanSelectData =
+  | {
+      phase: "start";
+      dimension: "x" | "y" | "xy";
+      start: CursorPosition;
+      frame: Frame;
+    }
+  | {
+      phase: "move";
+      dimension: "x" | "y" | "xy";
+      start: CursorPosition;
+      end: CursorPosition;
+      frame: Frame;
+    }
+  | {
+      phase: "end";
+      dimension: "x" | "y" | "xy";
+      start: CursorPosition;
+      end: CursorPosition;
+      frame: Frame;
+    };
+
+const positionsToDimension = (
+  start: CursorPosition,
+  end: CursorPosition,
+  tolerance = 25
 ) => {
-  let clickTimeout: number | undefined = undefined;
+  const xBelowTolerance = Math.abs(start.canvas.x - end.canvas.x) < tolerance;
+  const yBelowTolerance = Math.abs(start.canvas.y - end.canvas.y) < tolerance;
+  if (xBelowTolerance && yBelowTolerance) return "xy";
+  if (xBelowTolerance) return "y";
+  if (yBelowTolerance) return "x";
+  return "xy";
+};
 
-  const bindings: PlotPlugin<CursorPluginState> = {
-    ...opts.pluginOpts,
-    initState: () => ({
-      ...opts.pluginOpts?.initState?.(),
-    }),
-    transformFrame: (transformFrameOpts) => {
-      const { spanStart, spanEnd } = transformFrameOpts.state;
-      const facets = transformFrameOpts.frame.facets ?? [];
-      if (spanStart && spanEnd && opts.spanSelectOptions?.facetPlotter) {
-        facets.push({
-          type: "custom",
-          layer: "top",
-          plotter: opts.spanSelectOptions.facetPlotter({
-            x: { min: spanStart.canvas.x, max: spanEnd.canvas.x },
-            y: { min: spanStart.canvas.y, max: spanEnd.canvas.y },
-          }),
+export const spanSelectPlugin =
+  <ID extends string = "spanSelect">({
+    id = "spanSelect" as ID,
+    onSpanSelect,
+    stateless = false,
+  }: {
+    id: ID;
+    onSpanSelect?: (data: SpanSelectData) => void;
+    stateless?: boolean;
+  }): MakePlugin<ID, SpanSelectPluginState> =>
+  ({ ctx, setPluginState }) => {
+    const canvas = ctx.canvas;
+    const store = {
+      startPosition: undefined as CursorPosition | undefined,
+      endPosition: undefined as CursorPosition | undefined,
+      lastFrame: undefined as Frame | undefined,
+    };
+
+    canvas.addEventListener("mousedown", (e) => {
+      if (!store.lastFrame) return;
+      const position = eventToPositions(e, store.lastFrame, true);
+      if (!position) return;
+      store.startPosition = position;
+      onSpanSelect?.({
+        phase: "start",
+        dimension: "xy",
+        start: store.startPosition,
+        frame: store.lastFrame,
+      });
+      if (!stateless) {
+        setPluginState({
+          phase: "active",
+          dimension: "xy",
+          start: store.startPosition,
+          end: store.startPosition,
         });
       }
-      const newFrame: Frame = {
-        ...transformFrameOpts.frame,
-        scene: {
-          ...transformFrameOpts.frame.scene,
-          facets,
-        },
-      };
-      return (
-        opts.pluginOpts?.transformFrame?.({
-          ...transformFrameOpts,
-          frame: newFrame,
-        }) ?? newFrame
-      );
-    },
-    onInit(initOpts) {
-      const { plot, state, setState, pluginId } = initOpts;
-      const canvas = plot.getCanvas();
+    });
 
-      // mouse down
-      const mouseDownListener = (e: MouseEvent) => {
-        if (!opts.onSpanSelect) return;
-
-        const frame = plot.getFrame();
-
-        const spanStart = getPosition(e, frame);
-        if (!spanStart) return;
-
-        const spanEnd = spanStart;
-
-        setState({
-          ...state,
-          spanStart,
-          spanEnd,
+    canvas.addEventListener("mousemove", (e) => {
+      if (!store.startPosition) return;
+      if (!store.lastFrame) return;
+      const position = eventToPositions(e, store.lastFrame, true);
+      if (!position) return;
+      store.endPosition = position;
+      const dimension = positionsToDimension(store.startPosition, position);
+      onSpanSelect?.({
+        phase: "move",
+        dimension,
+        start: store.startPosition,
+        end: store.endPosition,
+        frame: store.lastFrame,
+      });
+      if (!stateless) {
+        setPluginState({
+          phase: "active",
+          dimension,
+          start: store.startPosition,
+          end: store.endPosition,
         });
+      }
+    });
 
-        opts.onSpanSelect({
-          phase: "start",
-          plot,
-          frame,
-          spanStart,
-          spanEnd,
-          pluginId,
+    canvas.addEventListener("mouseup", (e) => {
+      if (!store.startPosition) return;
+      if (!store.lastFrame) return;
+      const position = eventToPositions(e, store.lastFrame, true);
+      if (!position) return;
+      const dimension = positionsToDimension(store.startPosition, position);
+      onSpanSelect?.({
+        phase: "end",
+        dimension,
+        start: store.startPosition,
+        end: position,
+        frame: store.lastFrame,
+      });
+      store.startPosition = undefined;
+      store.endPosition = undefined;
+      if (!stateless) {
+        setPluginState({
+          phase: "idle",
         });
-      };
-      canvas.addEventListener("mousedown", mouseDownListener);
+      }
+    });
 
-      // mouse move
-      const mouseMoveListener = (e: MouseEvent) => {
-        if (!opts.onHover && !opts.onSpanSelect) return;
-        const frame = plot.getFrame();
-
-        const position = getPosition(e, frame);
-
-        opts.onHover?.({ plot, frame, position, pluginId });
-
-        const { spanStart } = state;
-        const spanEnd = getPosition(e, frame, true);
-
-        setState({
-          ...state,
-          spanEnd,
-          hoverPosition: position,
-        });
-
-        if (!spanStart || !spanEnd) return;
-
-        const threshold = opts.spanSelectOptions?.threshold ?? 50;
-        if (!spanExceedsThreshold(threshold, spanStart, spanEnd)) {
-          return;
-        }
-        opts.onSpanSelect?.({
-          phase: "move",
-          plot,
-          frame,
-          pluginId,
-          spanStart,
-          spanEnd,
-        });
-      };
-      canvas.addEventListener("mousemove", mouseMoveListener);
-
-      // mouse up
-      const mouseUpListener = (e: MouseEvent) => {
-        if (!opts.onSpanSelect) return;
-
-        const frame = plot.getFrame();
-
-        const { spanStart } = state;
-        if (!spanStart) return;
-
-        const spanEnd = getPosition(e, frame, true);
-        if (!spanEnd) return;
-
-        setState({
-          ...state,
-          spanStart: undefined,
-          spanEnd: undefined,
-        });
-
-        const threshold = opts.spanSelectOptions?.threshold ?? 50;
-        if (!spanExceedsThreshold(threshold, spanStart, spanEnd)) return;
-
-        opts.onSpanSelect({
-          phase: "end",
-          plot,
-          pluginId,
-          frame,
-          spanStart,
-          spanEnd,
-        });
-      };
-      document.addEventListener("mouseup", mouseUpListener);
-
-      // mouse leave
-      const mouseLeaveListener = () => {
-        if (!opts.onHover) return;
-        const frame = plot.getFrame();
-
-        opts.onHover({ plot, frame, pluginId });
-      };
-      canvas.addEventListener("mouseleave", mouseLeaveListener);
-
-      // click
-      const mouseClickListener = (e: MouseEvent) => {
-        if (clickTimeout) {
-          clearTimeout(clickTimeout);
-          clickTimeout = undefined;
-          return;
-        }
-        // ignore double clicks
-        if (e.detail > 1) {
-          return;
-        }
-        clickTimeout = window.setTimeout(() => {
-          clickTimeout = undefined;
-          if (!opts.onClick) return;
-          const frame = plot.getFrame();
-
-          const position = getPosition(e, frame);
-
-          if (!position) return;
-
-          opts.onClick({ plot, frame, position, pluginId });
-        }, 200);
-      };
-      canvas.addEventListener("click", mouseClickListener);
-
-      // dblclick
-      const mouseDblClickListener = (e: MouseEvent) => {
-        if (!opts.onDblClick) return;
-        const frame = plot.getFrame();
-
-        const position = getPosition(e, frame);
-
-        if (!position) return;
-
-        opts.onDblClick({ plot, frame, position, pluginId });
-      };
-      canvas.addEventListener("dblclick", mouseDblClickListener);
-      const deinit = opts.pluginOpts?.onInit?.(initOpts);
-
-      return () => {
-        const canvas = plot.getCanvas();
-        canvas.removeEventListener("mousemove", mouseMoveListener);
-        canvas.removeEventListener("mouseleave", mouseLeaveListener);
-        canvas.removeEventListener("click", mouseClickListener);
-        canvas.removeEventListener("dblclick", mouseDblClickListener);
-        canvas.removeEventListener("mousedown", mouseDownListener);
-        document.removeEventListener("mouseup", mouseUpListener);
-        deinit?.();
-      };
-    },
+    return {
+      id,
+      initialState: { phase: "idle" },
+      afterDraw({ frame }) {
+        store.lastFrame = frame;
+      },
+    };
   };
-
-  return bindings;
-};

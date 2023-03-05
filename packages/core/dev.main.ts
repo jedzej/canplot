@@ -4,11 +4,11 @@ import {
   hoverPlugin,
   linePlotter,
   spanSelectPlugin,
+  Plot,
 } from "./src/main";
-import { CanPlot } from "./src/makePlot";
 import { Facet } from "./src/types";
 
-const plot = new CanPlot({
+const plot = new Plot({
   canvas: document.getElementById("canvas")! as HTMLCanvasElement,
   dimensions: { width: "auto", height: 200 },
 })

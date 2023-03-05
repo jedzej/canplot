@@ -1,5 +1,3 @@
-import { Plot } from "./Plot";
-
 export type Style = {
   fillStyle?: CanvasFillStrokeStyles["fillStyle"];
   strokeStyle?: CanvasFillStrokeStyles["strokeStyle"];
@@ -89,48 +87,12 @@ export type PlotAxis = {
 
 export type FacetLayer = "top" | "middle" | "bottom";
 
-type NormalizedPadding = {
+type Padding = {
   top: number;
   bottom: number;
   right: number;
   left: number;
 };
-
-export type HookOpts<S> = {
-  frame: Frame;
-  plot: Plot;
-  pluginId: string;
-  state: S;
-  setState: (newState: S) => void;
-};
-
-export type Hooks<S> = {
-  onInit?: (opts: HookOpts<S>) => (() => void) | void;
-  beforeClear?: (opts: HookOpts<S>) => void;
-  afterClear?: (opts: HookOpts<S>) => void;
-  afterSeries?: (opts: HookOpts<S>) => void;
-  afterAxes?: (opts: HookOpts<S>) => void;
-  onDestroy?: (opts: Omit<HookOpts<S>, "frame">) => void;
-};
-
-export type PlotPlugin<S = never> = {
-  id?: string;
-  transformInputParams?: (opts: {
-    pluginId: string;
-    inputParams: Omit<Scene, "plugins">;
-    plot: Plot;
-    state: S;
-    setState: (newState: S) => void;
-  }) => Omit<Scene, "plugins">;
-  transformFrame?: (opts: {
-    pluginId: string;
-    frame: Frame;
-    plot: Plot;
-    state: S;
-    setState: (newState: S) => void;
-  }) => Frame;
-  initState?: () => S;
-} & Hooks<S>;
 
 export type PlotStaticConfig = {
   canvas?: HTMLCanvasElement;
@@ -154,7 +116,7 @@ export type Facet = {
 };
 
 export type Scene = {
-  padding: NormalizedPadding;
+  padding: Padding;
   axes: PlotAxis[];
   scales: SceneScale[];
   facets: Facet[];
@@ -170,7 +132,7 @@ export type Frame = {
     width: number;
     height: number;
   };
-  padding: NormalizedPadding;
+  padding: Padding;
   axes: PlotAxis[];
   scales: FrameScale[];
   facets: Facet[];

@@ -1,9 +1,4 @@
-import {
-  applyStyles,
-  getScaleLimits,
-  valToPos,
-  valToPxDistance,
-} from "../helpers";
+import { applyStyles, valToPos, valToPxDistance } from "../helpers";
 import { Frame, Plotter, FrameScale, SeriesBase, Style } from "../types";
 
 export type LinePlotterShowDistinctOpts = {
