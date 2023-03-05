@@ -3,10 +3,10 @@ import { CursorPosition } from "./main";
 import {
   Frame,
   Scene,
-  Scale,
   Style,
   XScaleId,
   YScaleId,
+  ScaleId,
 } from "./types";
 import { clamp, findClosestIndex } from "./utils";
 
@@ -16,13 +16,21 @@ export const isXScale = (scaleId: string): scaleId is XScaleId =>
 export const isYScale = (scaleId: string): scaleId is YScaleId =>
   scaleId.startsWith("y-");
 
+export const getScaleLimits = (frame:Frame, scaleId: ScaleId) => {
+  const scale = frame.scales.find(a => a.id === scaleId);
+  if(!scale) {
+    throw new Error(`Scale ${scaleId} not found`);
+  }
+  return scale.limits;
+}
+
 export const valToPxDistance = (
   frame: Frame,
   val: number,
-  scaleId: Scale["id"]
+  scaleId: ScaleId
 ) => {
   const chartArea = frame.chartArea;
-  const { min, max } = frame.scalesLimits[scaleId];
+  const { min, max } = getScaleLimits(frame, scaleId);
   const factor =
     (isXScale(scaleId) ? chartArea.width : chartArea.height) / (max - min);
   return val * factor;
@@ -31,9 +39,9 @@ export const valToPxDistance = (
 export const valToPos = (
   frame: Frame,
   val: number,
-  scaleId: Scale["id"]
+  scaleId: ScaleId
 ) => {
-  const { min } = frame.scalesLimits[scaleId];
+  const { min } = getScaleLimits(frame, scaleId);
   const chartArea = frame.chartArea;
   const relativePosition = valToPxDistance(frame, val - min, scaleId);
   if (isXScale(scaleId)) {
@@ -54,9 +62,9 @@ export const valToPos = (
 export const pxToValDistance = (
   frame: Frame,
   pxDistance: number,
-  scaleId: Scale["id"]
+  scaleId: ScaleId
 ) => {
-  const { min, max } = frame.scalesLimits[scaleId];
+  const { min, max } = getScaleLimits(frame, scaleId);
   const chartArea = frame.chartArea;
   const factor =
     (isXScale(scaleId) ? chartArea.width : chartArea.height) / (max - min);
@@ -66,9 +74,9 @@ export const pxToValDistance = (
 export const posToVal = (
   frame: Frame,
   pos: number,
-  scaleId: Scale["id"]
+  scaleId: ScaleId
 ) => {
-  const { min, max } = frame.scalesLimits[scaleId];
+  const { min, max } = getScaleLimits(frame, scaleId);
   const relativePosition = pxToValDistance(frame, pos, scaleId);
   return isXScale(scaleId) ? min + relativePosition : max - relativePosition;
 };
@@ -110,7 +118,7 @@ export const findClosestDataPoint = (
   toleranceXPx = 100,
   toleranceYPx = Infinity
 ): (DataPoint | undefined)[] => {
-  const { series } = frame.scene;
+  const { series } = frame;
   if (!position) {
     return series.map(() => undefined);
   }

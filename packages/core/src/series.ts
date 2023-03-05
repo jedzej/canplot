@@ -1,20 +1,20 @@
 import { Frame } from "./types";
 
 export const drawSeries = (frame: Frame) => {
-  const { ctx, scene: drawConfig } = frame;
+  const { ctx, series } = frame;
   ctx.save();
 
-  for (const series of drawConfig.series) {
-    const xScale = drawConfig.scales.find(
-      (scale) => scale.id === series.xScaleId
+  for (const singleSeries of series) {
+    const xScale = frame.scales.find(
+      (scale) => scale.id === singleSeries.xScaleId
     );
-    const yScale = drawConfig.scales.find(
-      (scale) => scale.id === series.yScaleId
+    const yScale = frame.scales.find(
+      (scale) => scale.id === singleSeries.yScaleId
     );
     if (!xScale || !yScale) {
       continue;
     }
-    series.plotter?.(frame, series, xScale, yScale);
+    singleSeries.plotter?.(frame, singleSeries, xScale, yScale);
   }
 
   frame.ctx.restore();

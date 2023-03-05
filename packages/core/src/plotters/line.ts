@@ -1,11 +1,16 @@
-import { applyStyles, valToPos, valToPxDistance } from "../helpers";
-import { Frame, Plotter, Scale, SeriesBase, Style } from "../types";
+import {
+  applyStyles,
+  getScaleLimits,
+  valToPos,
+  valToPxDistance,
+} from "../helpers";
+import { Frame, Plotter, FrameScale, SeriesBase, Style } from "../types";
 
 export type LinePlotterShowDistinctOpts = {
   frame: Frame;
   idx: number;
   series: SeriesBase;
-  scale: Scale;
+  scale: FrameScale;
   distinctDistance: number;
 };
 
@@ -55,11 +60,11 @@ export const linePlotter = ({
   distinctDistance = 50,
   gapDistance = Infinity,
 }: LinePlotterOpts = {}): Plotter => {
-  return (frame, singleSeries, xScale, yScale) => {
+  return (frame, series, xScale, yScale) => {
     const ctx = frame.ctx;
-    const length = Math.min(singleSeries.x.length, singleSeries.y.length);
-    const x0 = valToPos(frame, singleSeries.x[0]!, xScale.id);
-    const y0 = valToPos(frame, singleSeries.y[0]!, yScale.id);
+    const length = Math.min(series.x.length, series.y.length);
+    const x0 = valToPos(frame, series.x[0]!, xScale.id);
+    const y0 = valToPos(frame, series.y[0]!, yScale.id);
 
     // line
     ctx.save();
@@ -76,12 +81,12 @@ export const linePlotter = ({
 
     ctx.moveTo(x0, y0);
     for (let i = 1; i < length; i++) {
-      const x = singleSeries.x[i];
-      const y = singleSeries.y[i];
+      const x = series.x[i];
+      const y = series.y[i];
       const posX = valToPos(frame, x, xScale.id);
       const posY = valToPos(frame, y, yScale.id);
 
-      const distance = singleSeries.x[i] - singleSeries.x[i - 1];
+      const distance = series.x[i] - series.x[i - 1];
       if (distance > gapDistance) {
         ctx.moveTo(posX, posY);
       } else {
@@ -95,30 +100,26 @@ export const linePlotter = ({
     ctx.save();
     applyStyles(ctx, style);
     ctx.beginPath();
+
     for (let idx = 0; idx < length; idx++) {
       if (
         !showDistinct({
           frame,
           idx,
-          series: singleSeries,
+          series: series,
           scale: xScale,
           distinctDistance,
         })
       ) {
         continue;
       }
-      const x = singleSeries.x[idx];
-      const y = singleSeries.y[idx];
-      if (x < frame.scalesLimits[singleSeries.xScaleId].min) {
+      const x = series.x[idx];
+      const y = series.y[idx];
+
+      if (x < xScale.limits.min || x > xScale.limits.max) {
         continue;
       }
-      if (x > frame.scalesLimits[singleSeries.xScaleId].max) {
-        continue;
-      }
-      if (y < frame.scalesLimits[singleSeries.yScaleId].min) {
-        continue;
-      }
-      if (y > frame.scalesLimits[singleSeries.yScaleId].max) {
+      if (y < yScale.limits.min || y > yScale.limits.max) {
         continue;
       }
       const posX = valToPos(frame, x, xScale.id);

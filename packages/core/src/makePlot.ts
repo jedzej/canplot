@@ -1,61 +1,19 @@
+import { drawAxes } from "./axes";
 import { isXScale } from "./helpers";
 import { makeAutoLimits } from "./limits";
 import { drawSeries } from "./series";
 import {
   Dimensions,
-  Facet,
   FacetLayer,
-  Limits,
-  MakeLimits,
-  NormalizedPadding,
-  PlotAxis,
+  Flatten,
+  Frame,
+  MakePlugin,
+  MakeScene,
+  PlotBuilderPlugin,
   PlotStaticConfig,
-  Scale,
-  SeriesBase,
+  Scene,
   Size,
-  XScaleId,
-  YScaleId,
 } from "./types";
-
-type SceneScale = {
-  id: XScaleId | YScaleId;
-  makeLimits?: MakeLimits | undefined;
-};
-
-type FrameScale = {
-  id: XScaleId | YScaleId;
-  limits: Limits;
-};
-
-type Facet = {
-  layer: FacetLayer;
-  id?: string;
-  plotter: (frame: Frame, id?: string) => void;
-};
-
-type Scene = {
-  padding: NormalizedPadding;
-  axes: PlotAxis[];
-  scales: SceneScale[];
-  facets: Facet[];
-  series: SeriesBase[];
-};
-
-type Frame = {
-  ctx: CanvasRenderingContext2D;
-  canvasSize: Size;
-  chartArea: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  padding: NormalizedPadding;
-  axes: PlotAxis[];
-  scales: FrameScale[];
-  facets: Facet[];
-  series: SeriesBase[];
-};
 
 const drawFacets = (frame: Frame, layer: FacetLayer) => {
   for (const facet of frame.facets) {
@@ -68,67 +26,79 @@ const drawFacets = (frame: Frame, layer: FacetLayer) => {
   }
 };
 
-const drawSeries = (frame: Frame) => {
-  const { ctx, series, scales } = frame;
-  ctx.save();
-
-  for (const singleSeries of series) {
-    const xScale = scales.find((scale) => scale.id === singleSeries.xScaleId);
-    const yScale = scales.find((scale) => scale.id === singleSeries.yScaleId);
-    if (!xScale || !yScale) {
-      continue;
-    }
-    // singleSeries.plotter?.(frame, series, xScale, yScale);
-  }
-
-  frame.ctx.restore();
-};
-
-type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
-  id: ID;
-  initialState: PS;
-  transformScene?: (opts: {
-    id: ID;
-    ctx: CanvasRenderingContext2D;
-    scene: Scene;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
-    getPluginState: () => PS;
-    setPluginState: (newState: PS) => void;
-  }) => void;
-  onDraw?: (opts: {
-    id: ID;
-    ctx: CanvasRenderingContext2D;
-    frame: Frame;
-    scene: Scene;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
-    getPluginState: () => PS;
-    setPluginState: (newState: PS) => void;
-  }) => void;
-  transformFrame?: (opts: {
-    id: ID;
-    ctx: CanvasRenderingContext2D;
-    frame: Frame;
-    scene: Scene;
-    getGlobalState: () => Flatten<S & Record<ID, PS>>;
-    getPluginState: () => PS;
-    setPluginState: (newPluginState: PS) => void;
-  }) => void;
-};
-
-type MakePlugin<ID extends string, PS, S = unknown> = (opts: {
-  getGlobalState: () => S;
-  ctx: CanvasRenderingContext2D;
-}) => PlotBuilderPlugin<ID, PS, S>;
-
-type Flatten<T> = {
-  [K in keyof T]: T[K];
-} & {};
-
 const clearCanvas = ({ ctx, canvasSize: { width, height } }: Frame) => {
   ctx.clearRect(0, 0, width, height);
 };
 
-type MakeScene<S> = (state: S, size: Size) => Scene;
+const makeFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
+  const padding = scene.padding;
+  let leftAxesSize = 0;
+  let rightAxesSize = 0;
+  let bottomAxesSize = 0;
+  let topAxesSize = 0;
+  for (const axis of scene.axes) {
+    const size = axis.size ?? 50;
+    const position = axis.position ?? "primary";
+    if (isXScale(axis.scaleId)) {
+      if (position === "primary") {
+        bottomAxesSize += size;
+      } else {
+        topAxesSize += size;
+      }
+    } else {
+      if (position === "primary") {
+        leftAxesSize += size;
+      } else {
+        rightAxesSize += size;
+      }
+    }
+  }
+
+  const canvas = ctx.canvas;
+
+  const canvasSize = {
+    width: canvas.width,
+    height: canvas.height,
+  };
+
+  const frameNoScales: Omit<Frame, "scales"> = {
+    ctx,
+    chartArea: {
+      x: leftAxesSize + padding.left,
+      y: topAxesSize + padding.top,
+      width:
+        canvasSize.width -
+        leftAxesSize -
+        rightAxesSize -
+        padding.left -
+        padding.right,
+      height:
+        canvasSize.height -
+        topAxesSize -
+        bottomAxesSize -
+        padding.top -
+        padding.bottom,
+    },
+    padding,
+    canvasSize,
+    axes: scene.axes,
+    facets: scene.facets,
+    series: scene.series,
+  };
+
+  return {
+    ...frameNoScales,
+    scales: scene.scales.map((scale) => {
+      return {
+        id: scale.id,
+        limits: (scale.makeLimits ?? makeAutoLimits)({
+          frame: frameNoScales,
+          scaleId: scale.id,
+        }),
+      };
+    }),
+  };
+};
 
 export class CanPlot<S extends Record<string, unknown>> {
   #state: S = {} as S;
@@ -136,11 +106,11 @@ export class CanPlot<S extends Record<string, unknown>> {
   #pluginsInitializers: MakePlugin<string, any, any>[] = [];
   #dimensions: Required<Dimensions>;
   #lastMakeScene?: MakeScene<S>;
+  #scheduledDraw = false;
   #expectedSize: Size | undefined;
-  #redrawing = false;
   #deinitCallbacks: (() => void)[] = [];
   #canvas: HTMLCanvasElement | undefined = undefined;
-  #phase: "not-attached" | "initializing" | "initialized" | "destroyed" =
+  #phase: "not-attached" | "initializing" | "idle" | "drawing" | "destroyed" =
     "not-attached";
 
   parentResizeObserver: ResizeObserver = new ResizeObserver((entries) => {
@@ -187,22 +157,28 @@ export class CanPlot<S extends Record<string, unknown>> {
   }
 
   attach(canvas: HTMLCanvasElement) {
-    if (this.#phase !== "not-attached") {
-      throw new Error("Plot already attached");
-    }
-    this.#canvas = canvas;
-    const { width, height } = this.#dimensions;
-    if (typeof width === "number" && Number.isFinite(width)) {
-      canvas.width = width;
-    }
-    if (typeof height === "number" && Number.isFinite(height)) {
-      canvas.height = height;
-    }
-    if (width === "auto" || height === "auto") {
-      this.parentResizeObserver.observe(canvas.parentElement!);
-    } else {
-      this.#phase = "initializing";
-      this.#redraw();
+    switch (this.#phase) {
+      case "not-attached":
+        this.#canvas = canvas;
+        const { width, height } = this.#dimensions;
+        if (typeof width === "number" && Number.isFinite(width)) {
+          canvas.width = width;
+        }
+        if (typeof height === "number" && Number.isFinite(height)) {
+          canvas.height = height;
+        }
+        if (width === "auto" || height === "auto") {
+          this.parentResizeObserver.observe(canvas.parentElement!);
+        } else {
+          this.#phase = "initializing";
+          this.#redraw();
+        }
+        break;
+      case "initializing":
+      case "idle":
+      case "drawing":
+      case "destroyed":
+        throw new Error(`Invalid phase: ${this.#phase}`);
     }
   }
 
@@ -213,69 +189,11 @@ export class CanPlot<S extends Record<string, unknown>> {
     return this.#canvas;
   }
 
-  #updateCanvasSize() {
-    const { width, height } = this.#dimensions;
-    const canvas = this.getCanvas();
-    canvas.width = width === "auto" ? this.#expectedSize!.width : width;
-    canvas.height = height === "auto" ? this.#expectedSize!.height : height;
-  }
-
-  #makeFrame(scene: Scene): Frame {
-    const padding = scene.padding;
-    let leftAxesSize = 0;
-    let rightAxesSize = 0;
-    let bottomAxesSize = 0;
-    let topAxesSize = 0;
-    for (const axis of scene.axes) {
-      const size = axis.size ?? 50;
-      const position = axis.position ?? "primary";
-      if (isXScale(axis.scaleId)) {
-        if (position === "primary") {
-          bottomAxesSize += size;
-        } else {
-          topAxesSize += size;
-        }
-      } else {
-        if (position === "primary") {
-          leftAxesSize += size;
-        } else {
-          rightAxesSize += size;
-        }
-      }
+  getSize(): Size {
+    if (!this.#expectedSize) {
+      throw new Error("Invariant violation: expectedSize is undefined");
     }
-
-    const canvas = this.getCanvas();
-
-    const canvasSize = {
-      width: canvas.width,
-      height: canvas.height,
-    };
-
-    return {
-      ctx: canvas.getContext("2d")!,
-      chartArea: {
-        x: leftAxesSize + padding.left,
-        y: topAxesSize + padding.top,
-        width:
-          canvasSize.width -
-          leftAxesSize -
-          rightAxesSize -
-          padding.left -
-          padding.right,
-        height:
-          canvasSize.height -
-          topAxesSize -
-          bottomAxesSize -
-          padding.top -
-          padding.bottom,
-      },
-      padding,
-      canvasSize,
-      axes: scene.axes,
-      facets: scene.facets,
-      scales: scene.scales as FrameScale[], // TODO: fix
-      series: scene.series,
-    };
+    return this.#expectedSize;
   }
 
   use<ID extends string, PS>(
@@ -298,48 +216,60 @@ export class CanPlot<S extends Record<string, unknown>> {
 
   draw(makeScene: MakeScene<S>) {
     this.#lastMakeScene = makeScene;
-    if (this.#phase === "not-attached") {
-      return;
+    console.log(`draw in ${this.#phase}`);
+    switch (this.#phase) {
+      case "not-attached":
+        this.#scheduledDraw = true;
+        break;
+      case "initializing":
+        this.#initializePlugins();
+        this.#scheduledDraw = true;
+        this.#phase = "idle";
+        break;
+      case "destroyed":
+        console.error("Cannot redraw if already destroyed");
+        break;
+      case "drawing":
+        this.#scheduledDraw = true;
+        console.warn("Already drawing, postponing the draw");
+        break;
+      case "idle":
+        this.#phase = "drawing";
+        this.#actuallyDraw(makeScene);
+        this.#phase = "idle";
+        break;
     }
-    if (this.#phase === "destroyed") {
-      return;
+    if (this.#phase === "idle" && this.#scheduledDraw) {
+      this.#scheduledDraw = false;
+      this.draw(makeScene);
     }
-    if (this.#redrawing) {
-      console.error("Cannot redraw while redrawing");
-      return;
-    }
-    this.#redrawing = true;
-    this.#updateCanvasSize();
+  }
 
-    const size = {
-      width: this.getCanvas().width,
-      height: this.getCanvas().height,
-    };
+  #actuallyDraw(makeScene: MakeScene<S>) {
+    const canvas = this.getCanvas();
+    const size = this.getSize();
 
-    const untransformedScene = makeScene(this.#state, size);
+    canvas.width = size.width;
+    canvas.height = size.height;
 
-    if (this.#phase === "initializing") {
-      // INITIALIZE PLUGINS
-      this.#initializePlugins();
-      this.#phase = "initialized";
-    }
+    const initialScene = makeScene(this.#state, size);
 
-    let scene = untransformedScene;
-    for (const plugin of this.#plugins) {
-      scene =
+    const scene = this.#plugins.reduce(
+      (scene, plugin) =>
         plugin.transformScene?.({
           id: plugin.id,
-          scene: untransformedScene,
+          scene,
           ctx: this.getCanvas().getContext("2d")!,
           getGlobalState: () => this.#state,
           getPluginState: () => this.#state[plugin.id as keyof S],
           setPluginState: (newPluginState) => {
             this.#state[plugin.id as keyof S] = newPluginState;
           },
-        }) ?? scene;
-    }
+        }) ?? scene,
+      initialScene
+    );
 
-    const frame = this.#makeFrame(scene);
+    const frame = makeFrame(scene, this.getCanvas().getContext("2d")!);
 
     clearCanvas(frame);
 
@@ -357,8 +287,7 @@ export class CanPlot<S extends Record<string, unknown>> {
       });
     }
 
-    if (frame.chartArea.height < 0 || frame.chartArea.width < 0) {
-      this.#redrawing = false;
+    if (frame.chartArea.height <= 0 || frame.chartArea.width <= 0) {
       return;
     }
 
@@ -372,11 +301,9 @@ export class CanPlot<S extends Record<string, unknown>> {
     drawFacets(frame, "middle");
 
     // DRAW AXES
-    // drawAxes(frame);
+    drawAxes(frame);
 
     // DRAW TOP FACETS
     drawFacets(frame, "top");
-
-    this.#redrawing = false;
   }
 }

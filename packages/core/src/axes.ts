@@ -7,13 +7,13 @@ import {
   DEFAULT_SPLIT_SPACE,
   DEFAULT_TICK_SIZE,
 } from "./defaults";
-import { applyStyles, isXScale, pxToValDistance, valToPos } from "./helpers";
+import { applyStyles, getScaleLimits, isXScale, pxToValDistance, valToPos } from "./helpers";
 import {
   Frame,
   PlotAxis,
   PlotAxisGenTicks,
   PlotAxisTickFormat,
-  Scale,
+  FrameScale,
 } from "./types";
 
 const acceptable: number[] = [];
@@ -35,7 +35,7 @@ export const makeGenTicksDefault = ({
   space = DEFAULT_SPLIT_SPACE,
 }: MakeGenTicksDefaultOpts = {}): PlotAxisGenTicks => {
   return ({ frame: frame, scale }) => {
-    const limits = frame.scalesLimits[scale.id];
+    const limits = getScaleLimits(frame, scale.id);
     const ticks = [];
     const unnormalizedIncr = pxToValDistance(frame, space, scale.id);
     const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
@@ -60,7 +60,7 @@ const tickFormat: PlotAxisTickFormat = ({ ticks }) => {
 const drawYTicks = (
   frame: Frame,
   axis: PlotAxis,
-  scale: Scale,
+  scale: FrameScale,
   x: number
 ) => {
   const { ctx } = frame;
@@ -130,7 +130,7 @@ const drawYAxis = (
 const drawXTicks = (
   frame: Frame,
   axis: PlotAxis,
-  scale: Scale,
+  scale: FrameScale,
   y: number
 ) => {
   const { ctx } = frame;
@@ -263,9 +263,10 @@ export const drawAxes = (frame: Frame) => {
   const {
     ctx,
     chartArea,
-    scene: drawConfig,
     canvasSize,
     padding,
+    axes,
+    scales
   } = frame;
   const chartAreaLeft = chartArea.x;
   const chartAreaRight = chartArea.x + chartArea.width;
@@ -276,8 +277,8 @@ export const drawAxes = (frame: Frame) => {
   let currentBottomOffset = canvasSize.height - padding.bottom;
   let currentTopOffset = padding.top;
 
-  for (const axis of drawConfig.axes) {
-    const scale = drawConfig.scales.find((scale) => scale.id === axis.scaleId);
+  for (const axis of axes) {
+    const scale = scales.find((scale) => scale.id === axis.scaleId);
     if (!scale) {
       continue;
     }

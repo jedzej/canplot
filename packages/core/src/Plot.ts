@@ -1,5 +1,4 @@
 import { drawAxes } from "./axes";
-import { drawFacets } from "./facets";
 import { isXScale, normalizePadding } from "./helpers";
 import { makeAutoLimits } from "./limits";
 import { drawSeries } from "./series";

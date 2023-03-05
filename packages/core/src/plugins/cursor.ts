@@ -133,7 +133,7 @@ export const makeCursorPlugin = (
     }),
     transformFrame: (transformFrameOpts) => {
       const { spanStart, spanEnd } = transformFrameOpts.state;
-      const facets = transformFrameOpts.frame.scene.facets ?? [];
+      const facets = transformFrameOpts.frame.facets ?? [];
       if (spanStart && spanEnd && opts.spanSelectOptions?.facetPlotter) {
         facets.push({
           type: "custom",

@@ -1,6 +1,5 @@
 import { applyStyles } from "../helpers";
-import { Style } from "../types";
-import { Frame } from "../types";
+import { Style, Frame } from "../types";
 
 type SpanFacetParams = {
   x: { min: number; max: number };
