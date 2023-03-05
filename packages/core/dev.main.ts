@@ -16,7 +16,7 @@ const plot = new CanPlot({
     return {
       id: "sizer",
       initialState: { width: ctx.canvas.width, height: ctx.canvas.height },
-      onDraw({ setPluginState }) {
+      beforeDraw({ setPluginState }) {
         setPluginState({
           width: ctx.canvas.width,
           height: ctx.canvas.height,
@@ -24,112 +24,61 @@ const plot = new CanPlot({
       },
     };
   })
-  .use(() => {
-    return {
-      id: "pluginA",
-      initialState: undefined,
-      transformScene: (opts) => {
-        opts.scene.facets.push({
+  .use(hoverPlugin({ id: "hover" }))
+  .use(
+    clickPlugin({
+      id: "click",
+      onClick: (position) => {
+        // console.log(position);
+      },
+    })
+  )
+  .use(spanSelectPlugin({ id: "spanSelect" }))
+  .use(({ getGlobalState }) => ({
+    id: "line",
+    initialState: { x: 0 },
+    transformFrame: ({ frame }) => {
+      const { spanSelect } = getGlobalState();
+      if (spanSelect.phase === "active") {
+        frame.facets.push({
           layer: "top",
-          plotter: (frame) => {
-            frame.ctx.fillStyle = "red";
-            frame.ctx.fillRect(
-              opts.getGlobalState().sizer.width / 3,
-              0,
-              10,
-              10
-            );
-          },
+          plotter: absoluteSpanFacet({
+            x:
+              spanSelect.dimension === "y"
+                ? undefined
+                : {
+                    min: spanSelect.start.canvas.x,
+                    max: spanSelect.end.canvas.x,
+                  },
+            y:
+              spanSelect.dimension === "x"
+                ? undefined
+                : {
+                    min: spanSelect.start.canvas.y,
+                    max: spanSelect.end.canvas.y,
+                  },
+            style: {
+              fillStyle: "rgba(0, 0, 255, 0.2)",
+            },
+          }),
         });
-      },
-    };
-  })
-  .use(
-    hoverPlugin({
-      id: "hover",
-      onHover: (position) => {
-        // console.log(position);
-      },
-    })
-  )
-  .use(
-    clickPlugin({
-      id: "click",
-      onClick: (position) => {
-        // console.log(position);
-      },
-    })
-  )
-  .use(
-    clickPlugin({
-      id: "click",
-      onClick: (position) => {
-        // console.log(position);
-      },
-    })
-  )
-  .use(
-    clickPlugin({
-      id: "click",
-      onClick: (position) => {
-        // console.log(position);
-      },
-    })
-  )
-  .use(
-    clickPlugin({
-      id: "click",
-      onClick: (position) => {
-        // console.log(position);
-      },
-    })
-  )
-  .use(
-    clickPlugin({
-      id: "click",
-      onClick: (position) => {
-        // console.log(position);
-      },
-    })
-  )
-  .use(
-    clickPlugin({
-      id: "click",
-      onClick: (position) => {
-        // console.log(position);
-      },
-    })
-  )
-  .use(
-    spanSelectPlugin({
-      id: "spanSelect",
-      onSpanSelect: (data) => {
-        // console.log(data);
-      },
-    })
-  );
+      }
+    },
+  }));
 
-plot.draw((state, { width }) => {
-  const facets = [] as Facet[];
-  if (state.spanSelect.phase === "active") {
-    console.log(state.spanSelect.startPosition, state.spanSelect.endPosition)
-    facets.push({
-      layer: "top",
+plot.draw((state) => {
+  const facets: Facet[] = [
+    {
+      layer: "bottom",
       plotter: absoluteSpanFacet({
-        x: {
-          min: state.spanSelect.startPosition.canvas.x,
-          max: state.spanSelect.endPosition.canvas.x,
-        },
-        y: {
-          min: state.spanSelect.startPosition.canvas.y,
-          max: state.spanSelect.endPosition.canvas.y,
-        },
+        x: { min: 0, max: state.sizer.width / 2 },
+        y: { min: 0, max: state.sizer.height / 2 },
         style: {
-          fillStyle: "rgba(0, 0, 255, 0.2)",
-        }
+          fillStyle: "rgba(255, 0, 0, 0.2)",
+        },
       }),
-    });
-  }
+    },
+  ];
   if (state.hover.position) {
     const { position } = state.hover;
     facets.push({
@@ -146,34 +95,22 @@ plot.draw((state, { width }) => {
     });
   }
   return {
-    padding: {
-      bottom: 0,
-      left: 0,
-      right: 0,
-      top: 0,
-    },
+    padding: { bottom: 0, left: 0, right: 0, top: 0 },
     axes: [
-      {
-        scaleId: "x-1",
-      },
-      {
-        scaleId: "y-1",
-      },
+      { scaleId: "x-1" },
+      { scaleId: "x-1", position: "secondary" },
+      { scaleId: "y-1" },
+      { scaleId: "y-1" },
+      { scaleId: "y-1", position: "secondary" },
     ],
     scales: [
       {
         id: "x-1",
-        makeLimits: () => ({
-          max: 10,
-          min: 0,
-        }),
+        makeLimits: () => ({ max: 10, min: 0 }),
       },
       {
         id: "y-1",
-        makeLimits: () => ({
-          max: 10,
-          min: 0,
-        }),
+        makeLimits: () => ({ max: 10, min: 0 }),
       },
     ],
     series: [

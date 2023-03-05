@@ -187,7 +187,22 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     getGlobalState: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
   }) => void;
-  onDraw?: (opts: {
+  transformFrame?: (opts: {
+    id: ID;
+    ctx: CanvasRenderingContext2D;
+    frame: Frame;
+    scene: Scene;
+    getGlobalState: () => Flatten<S & Record<ID, PS>>;
+    getPluginState: () => PS;
+  }) => void;
+  beforeDraw?: (opts: {
+    id: ID;
+    ctx: CanvasRenderingContext2D;
+    getGlobalState: () => Flatten<S & Record<ID, PS>>;
+    getPluginState: () => PS;
+    setPluginState: (newState: PS) => void;
+  }) => void;
+  afterDraw?: (opts: {
     id: ID;
     ctx: CanvasRenderingContext2D;
     frame: Frame;
@@ -196,11 +211,9 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     getPluginState: () => PS;
     setPluginState: (newState: PS) => void;
   }) => void;
-  transformFrame?: (opts: {
+  deinit?: (opts: {
     id: ID;
     ctx: CanvasRenderingContext2D;
-    frame: Frame;
-    scene: Scene;
     getGlobalState: () => Flatten<S & Record<ID, PS>>;
     getPluginState: () => PS;
   }) => void;
@@ -217,4 +230,4 @@ export type Flatten<T> = {
   [K in keyof T]: T[K];
 } & {};
 
-export type MakeScene<S> = (state: S, size: Size) => Scene;
+export type MakeScene<S> = (state: S) => Scene;

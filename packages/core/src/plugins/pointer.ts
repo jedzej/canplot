@@ -103,7 +103,7 @@ export const hoverPlugin =
     return {
       id,
       initialState: {},
-      onDraw({ frame }) {
+      afterDraw({ frame }) {
         store.lastFrame = frame;
       },
     };
@@ -140,7 +140,7 @@ export const clickPlugin =
     return {
       id,
       initialState: undefined,
-      onDraw({ frame }) {
+      afterDraw({ frame }) {
         store.lastFrame = frame;
       },
     };
@@ -152,28 +152,45 @@ type SpanSelectPluginState =
     }
   | {
       phase: "active";
-      startPosition: Position;
-      endPosition: Position;
+      dimension: "x" | "y" | "xy";
+      start: Position;
+      end: Position;
     };
 
 type SpanSelectData =
   | {
       phase: "start";
-      startPosition: Position;
+      dimension: "x" | "y" | "xy";
+      start: Position;
       frame: Frame;
     }
   | {
       phase: "move";
-      startPosition: Position;
-      endPosition: Position;
+      dimension: "x" | "y" | "xy";
+      start: Position;
+      end: Position;
       frame: Frame;
     }
   | {
       phase: "end";
-      startPosition: Position;
-      endPosition: Position;
+      dimension: "x" | "y" | "xy";
+      start: Position;
+      end: Position;
       frame: Frame;
     };
+
+const positionsToDimension = (
+  start: Position,
+  end: Position,
+  tolerance = 25
+) => {
+  const xBelowTolerance = Math.abs(start.canvas.x - end.canvas.x) < tolerance;
+  const yBelowTolerance = Math.abs(start.canvas.y - end.canvas.y) < tolerance;
+  if (xBelowTolerance && yBelowTolerance) return "xy";
+  if (xBelowTolerance) return "y";
+  if (yBelowTolerance) return "x";
+  return "xy";
+};
 
 export const spanSelectPlugin =
   <ID extends string = "spanSelect">({
@@ -200,14 +217,16 @@ export const spanSelectPlugin =
       store.startPosition = position;
       onSpanSelect?.({
         phase: "start",
-        startPosition: store.startPosition,
+        dimension: "xy",
+        start: store.startPosition,
         frame: store.lastFrame,
       });
       if (!stateless) {
         setPluginState({
           phase: "active",
-          startPosition: store.startPosition,
-          endPosition: store.startPosition,
+          dimension: "xy",
+          start: store.startPosition,
+          end: store.startPosition,
         });
       }
     });
@@ -219,17 +238,20 @@ export const spanSelectPlugin =
       console.log({ position });
       if (!position) return;
       store.endPosition = position;
+      const dimension = positionsToDimension(store.startPosition, position);
       onSpanSelect?.({
         phase: "move",
-        startPosition: store.startPosition,
-        endPosition: store.endPosition,
+        dimension,
+        start: store.startPosition,
+        end: store.endPosition,
         frame: store.lastFrame,
       });
       if (!stateless) {
         setPluginState({
           phase: "active",
-          startPosition: store.startPosition,
-          endPosition: store.endPosition,
+          dimension,
+          start: store.startPosition,
+          end: store.endPosition,
         });
       }
     });
@@ -239,10 +261,12 @@ export const spanSelectPlugin =
       if (!store.lastFrame) return;
       const position = eventToPositions(e, store.lastFrame, true);
       if (!position) return;
+      const dimension = positionsToDimension(store.startPosition, position);
       onSpanSelect?.({
         phase: "end",
-        startPosition: store.startPosition,
-        endPosition: position,
+        dimension,
+        start: store.startPosition,
+        end: position,
         frame: store.lastFrame,
       });
       store.startPosition = undefined;
@@ -257,7 +281,7 @@ export const spanSelectPlugin =
     return {
       id,
       initialState: { phase: "idle" },
-      onDraw({ frame }) {
+      afterDraw({ frame }) {
         store.lastFrame = frame;
       },
     };

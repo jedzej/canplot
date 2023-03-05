@@ -26,11 +26,7 @@ const drawFacets = (frame: Frame, layer: FacetLayer) => {
   }
 };
 
-const clearCanvas = ({ ctx, canvasSize: { width, height } }: Frame) => {
-  ctx.clearRect(0, 0, width, height);
-};
-
-const makeFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
+const sceneToFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
   const padding = scene.padding;
   let leftAxesSize = 0;
   let rightAxesSize = 0;
@@ -101,14 +97,13 @@ const makeFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
 };
 
 export class CanPlot<S extends Record<string, unknown>> {
-  #state: S = {} as S;
+  #store: S = {} as S;
   #plugins: PlotBuilderPlugin<string, any, any>[] = [];
   #pluginsInitializers: MakePlugin<string, any, any>[] = [];
   #dimensions: Required<Dimensions>;
   #lastMakeScene?: MakeScene<S>;
   #scheduledDraw = false;
   #expectedSize: Size | undefined;
-  #deinitCallbacks: (() => void)[] = [];
   #canvas: HTMLCanvasElement | undefined = undefined;
   #phase: "not-attached" | "initializing" | "idle" | "drawing" | "destroyed" =
     "not-attached";
@@ -204,7 +199,7 @@ export class CanPlot<S extends Record<string, unknown>> {
   }
 
   #setPluginState(id: keyof S, state: any, redraw = true) {
-    this.#state[id] = state;
+    this.#store[id] = state;
     if (redraw) {
       this.#redraw();
     }
@@ -214,22 +209,22 @@ export class CanPlot<S extends Record<string, unknown>> {
     const idMap = new Map<any, keyof S>();
     for (const pluginInitializer of this.#pluginsInitializers) {
       const plugin = pluginInitializer({
-        getGlobalState: () => this.#state,
-        getPluginState: () => this.#state[idMap.get(pluginInitializer)!],
+        getGlobalState: () => this.#store,
+        getPluginState: () => this.#store[idMap.get(pluginInitializer)!],
         setPluginState: (state) => {
           this.#setPluginState(idMap.get(pluginInitializer)!, state);
         },
         ctx: this.getCanvas().getContext("2d")!,
       });
       idMap.set(pluginInitializer, plugin.id);
-      this.#state[plugin.id as keyof S] = plugin.initialState;
+      this.#store[plugin.id as keyof S] = plugin.initialState;
       this.#plugins.push(plugin);
     }
   }
 
   draw(makeScene: MakeScene<S>) {
     this.#lastMakeScene = makeScene;
-    console.log(`draw in ${this.#phase}`);
+    // console.log(`draw in ${this.#phase}`);
     switch (this.#phase) {
       case "not-attached":
         this.#scheduledDraw = true;
@@ -261,13 +256,27 @@ export class CanPlot<S extends Record<string, unknown>> {
   #actuallyDraw(makeScene: MakeScene<S>) {
     const canvas = this.getCanvas();
     const size = this.getSize();
+    const ctx = canvas.getContext("2d")!;
 
     if (canvas.width !== size.width || canvas.height !== size.height) {
       canvas.width = size.width;
       canvas.height = size.height;
     }
 
-    const initialScene = makeScene(this.#state, size);
+    // BEFORE DRAW
+    for (const plugin of this.#plugins) {
+      plugin.beforeDraw?.({
+        id: plugin.id,
+        ctx,
+        getGlobalState: () => this.#store,
+        getPluginState: () => this.#store[plugin.id as keyof S],
+        setPluginState: (newPluginState) => {
+          this.#setPluginState(plugin.id as keyof S, newPluginState, false);
+        },
+      });
+    }
+
+    const initialScene = makeScene(this.#store);
 
     // TRANSFORM SCENE
     const scene = this.#plugins.reduce(
@@ -276,43 +285,37 @@ export class CanPlot<S extends Record<string, unknown>> {
           id: plugin.id,
           scene,
           ctx: this.getCanvas().getContext("2d")!,
-          getGlobalState: () => this.#state,
-          getPluginState: () => this.#state[plugin.id as keyof S],
+          getGlobalState: () => this.#store,
+          getPluginState: () => this.#store[plugin.id as keyof S],
         }) ?? scene,
       initialScene
     );
 
     // TRANSFORM FRAME
-    const initialFrame = makeFrame(scene, this.getCanvas().getContext("2d")!);
-    const frame = this.#plugins.reduce(
-      (frame, plugin) =>
-        plugin.transformFrame?.({
-          id: plugin.id,
-          frame,
-          scene,
-          ctx: this.getCanvas().getContext("2d")!,
-          getGlobalState: () => this.#state,
-          getPluginState: () => this.#state[plugin.id as keyof S],
-        }) ?? initialFrame,
-      initialFrame
+    const initialFrame = sceneToFrame(
+      scene,
+      this.getCanvas().getContext("2d")!
     );
+    const frame = this.#plugins.reduce((frame, plugin) => {
+      try {
+        return (
+          plugin.transformFrame?.({
+            id: plugin.id,
+            frame,
+            scene,
+            ctx: this.getCanvas().getContext("2d")!,
+            getGlobalState: () => this.#store,
+            getPluginState: () => this.#store[plugin.id as keyof S],
+          }) ?? frame
+        );
+      } catch (err) {
+        console.error(`Error in plugin ${plugin.id}`, err);
+        return frame;
+      }
+    }, initialFrame);
 
-    clearCanvas(frame);
-
-    // ON DRAW
-    for (const plugin of this.#plugins) {
-      plugin.onDraw?.({
-        id: plugin.id,
-        frame,
-        scene,
-        ctx: this.getCanvas().getContext("2d")!,
-        getGlobalState: () => this.#state,
-        getPluginState: () => this.#state[plugin.id as keyof S],
-        setPluginState: (newPluginState) => {
-          this.#setPluginState(plugin.id as keyof S, newPluginState, false);
-        },
-      });
-    }
+    // CLEAR CANVAS
+    ctx.clearRect(0, 0, size.width, size.height);
 
     if (frame.chartArea.height <= 0 || frame.chartArea.width <= 0) {
       return;
@@ -332,5 +335,20 @@ export class CanPlot<S extends Record<string, unknown>> {
 
     // DRAW TOP FACETS
     drawFacets(frame, "top");
+
+    // AFTER DRAW
+    for (const plugin of this.#plugins) {
+      plugin.afterDraw?.({
+        id: plugin.id,
+        ctx,
+        frame,
+        scene,
+        getGlobalState: () => this.#store,
+        getPluginState: () => this.#store[plugin.id as keyof S],
+        setPluginState: (newPluginState) => {
+          this.#setPluginState(plugin.id as keyof S, newPluginState, false);
+        },
+      });
+    }
   }
 }
