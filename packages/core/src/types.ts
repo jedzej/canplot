@@ -97,6 +97,7 @@ type Padding = {
 export type PlotStaticConfig = {
   canvas?: HTMLCanvasElement;
   dimensions?: Dimensions;
+  logger?: boolean;
 };
 
 export type SceneScale = {

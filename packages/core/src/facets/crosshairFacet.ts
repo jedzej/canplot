@@ -9,8 +9,7 @@ type SpanFacetParams = {
 
 export const crosshairFacet = ({ x, y, style }: SpanFacetParams) =>
   function crosshairFacetImpl(frame: Frame) {
-    if (!x && !y) return;
-
+    if (x === undefined && y === undefined) return;
     const { ctx, chartArea } = frame;
     ctx.save();
     applyStyles(ctx, style);

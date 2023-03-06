@@ -5,12 +5,14 @@ import {
   linePlotter,
   spanSelectPlugin,
   Plot,
+  crosshairFacet,
 } from "./src/main";
 import { Facet } from "./src/types";
 
 const plot = new Plot({
   canvas: document.getElementById("canvas")! as HTMLCanvasElement,
   dimensions: { width: "auto", height: 200 },
+  logger: false,
 })
   .use<"sizer", { width: number; height: number }>(({ ctx }) => {
     return {
@@ -33,38 +35,82 @@ const plot = new Plot({
       },
     })
   )
+  .use(spanSelectPlugin({ id: "spanSelect2" }))
   .use(spanSelectPlugin({ id: "spanSelect" }))
-  .use(({ getStore }) => ({
-    id: "line",
-    initialState: { x: 0 },
-    transformFrame: ({ frame }) => {
-      const { spanSelect } = getStore();
-      if (spanSelect.phase === "active") {
-        frame.facets.push({
-          layer: "top",
-          plotter: absoluteSpanFacet({
-            x:
-              spanSelect.dimension === "y"
-                ? undefined
-                : {
-                    min: spanSelect.start.canvas.x,
-                    max: spanSelect.end.canvas.x,
-                  },
-            y:
-              spanSelect.dimension === "x"
-                ? undefined
-                : {
-                    min: spanSelect.start.canvas.y,
-                    max: spanSelect.end.canvas.y,
-                  },
-            style: {
-              fillStyle: "rgba(0, 0, 255, 0.2)",
-            },
-          }),
-        });
-      }
-    },
-  }));
+  .use(({ getStore }) => {
+    return {
+      id: "line",
+      initialState: { x: 0 },
+      transformFrame: ({ frame }) => {
+        const { spanSelect, hover } = getStore();
+        if (hover.position && spanSelect.phase === "idle") {
+          frame.facets.push({
+            layer: "bottom",
+            plotter: crosshairFacet({
+              x: hover.position.canvas.x,
+              y: hover.position.canvas.y,
+            }),
+          });
+        }
+        if (spanSelect.phase === "active") {
+          frame.facets.push({
+            layer: "bottom",
+            plotter: crosshairFacet({
+              x:
+                spanSelect.dimension !== "y"
+                  ? spanSelect.start.canvas.x
+                  : undefined,
+              y:
+                spanSelect.dimension !== "x"
+                  ? spanSelect.start.canvas.y
+                  : undefined,
+              style: {
+                strokeStyle: "rgba(0, 0, 255, 0.8)",
+              },
+            }),
+          });
+          frame.facets.push({
+            layer: "bottom",
+            plotter: crosshairFacet({
+              x:
+                spanSelect.dimension !== "y"
+                  ? spanSelect.end.canvas.x
+                  : undefined,
+              y:
+                spanSelect.dimension !== "x"
+                  ? spanSelect.end.canvas.y
+                  : undefined,
+              style: {
+                strokeStyle: "rgba(0, 0, 255, 0.8)",
+              },
+            }),
+          });
+          frame.facets.push({
+            layer: "top",
+            plotter: absoluteSpanFacet({
+              x:
+                spanSelect.dimension === "y"
+                  ? undefined
+                  : {
+                      min: spanSelect.start.canvas.x,
+                      max: spanSelect.end.canvas.x,
+                    },
+              y:
+                spanSelect.dimension === "x"
+                  ? undefined
+                  : {
+                      min: spanSelect.start.canvas.y,
+                      max: spanSelect.end.canvas.y,
+                    },
+              style: {
+                fillStyle: "rgba(0, 0, 255, 0.2)",
+              },
+            }),
+          });
+        }
+      },
+    };
+  });
 
 plot.draw((state) => {
   const facets: Facet[] = [
@@ -84,7 +130,7 @@ plot.draw((state) => {
     facets.push({
       layer: "top",
       plotter: (frame) => {
-        frame.ctx.fillStyle = "green";
+        frame.ctx.fillStyle = "orange";
         frame.ctx.fillRect(
           position.canvas.x - 5,
           position.canvas.y - 5,
@@ -125,4 +171,3 @@ plot.draw((state) => {
     facets,
   };
 });
-// }, 100);

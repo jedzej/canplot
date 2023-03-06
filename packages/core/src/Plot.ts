@@ -102,39 +102,19 @@ export class Plot<S extends Record<string, unknown>> {
   #pluginsInitializers: MakePlugin<string, unknown, unknown>[] = [];
   #dimensions: Required<Dimensions>;
   #lastMakeScene?: MakeScene<S>;
-  #scheduledDraw = false;
   #expectedSize: Size | undefined;
   #canvas: HTMLCanvasElement | undefined = undefined;
   #phase: "not-attached" | "initializing" | "idle" | "drawing" | "destroyed" =
     "not-attached";
+  #drawScheduled = false;
+  #logger: Console | undefined;
 
-  parentResizeObserver: ResizeObserver = new ResizeObserver((entries) => {
-    for (const { contentRect } of entries) {
-      const width =
-        this.#dimensions.width === "auto"
-          ? contentRect.width
-          : this.#dimensions.width;
-      const height =
-        this.#dimensions.height === "auto"
-          ? contentRect.height
-          : this.#dimensions.height;
-      if (
-        this.#expectedSize?.width === width &&
-        this.#expectedSize?.height === height
-      ) {
-        return;
-      }
-      this.#expectedSize = { width, height };
-      if (this.#phase === "not-attached") {
-        this.#phase = "initializing";
-      }
-      this.#redraw();
-    }
-  });
+  parentResizeObserver: ResizeObserver | undefined = undefined;
 
   constructor(staticConfig: PlotStaticConfig) {
     const { width = "auto", height = "auto" } = staticConfig.dimensions ?? {};
     this.#dimensions = { width, height };
+    this.#logger = staticConfig.logger ? console : undefined;
 
     if (staticConfig.canvas) {
       this.attach(staticConfig.canvas);
@@ -146,7 +126,7 @@ export class Plot<S extends Record<string, unknown>> {
       return;
     }
     this.#phase = "destroyed";
-    this.parentResizeObserver.disconnect();
+    this.parentResizeObserver?.disconnect();
 
     for (const plugin of this.#plugins) {
       plugin.deinit?.({
@@ -167,23 +147,43 @@ export class Plot<S extends Record<string, unknown>> {
   }
 
   #redraw() {
+    this.#logger?.log("redraw:", this.#lastMakeScene ? "redraw" : "first draw");
     if (this.#lastMakeScene) {
       this.draw(this.#lastMakeScene);
     }
   }
 
   attach(canvas: HTMLCanvasElement) {
+    this.#logger?.log("attach: Attaching to canvas in state", this.#phase);
     switch (this.#phase) {
       case "not-attached":
         this.#canvas = canvas;
-        const { width, height } = this.#dimensions;
-        if (typeof width === "number" && Number.isFinite(width)) {
-          canvas.width = width;
+        const { width: dimW, height: dimH } = this.#dimensions;
+        if (typeof dimW === "number" && Number.isFinite(dimW)) {
+          canvas.width = dimW;
         }
-        if (typeof height === "number" && Number.isFinite(height)) {
-          canvas.height = height;
+        if (typeof dimH === "number" && Number.isFinite(dimH)) {
+          canvas.height = dimH;
         }
-        if (width === "auto" || height === "auto") {
+        if (dimW === "auto" || dimH === "auto") {
+          this.parentResizeObserver = new ResizeObserver((entries) => {
+            for (const { contentRect } of entries) {
+              this.#logger?.log("resizeobserver: cb", contentRect);
+              const width = dimW === "auto" ? contentRect.width : dimW;
+              const height = dimH === "auto" ? contentRect.height : dimH;
+              if (
+                this.#expectedSize?.width === width &&
+                this.#expectedSize?.height === height
+              ) {
+                return;
+              }
+              this.#expectedSize = { width, height };
+              if (this.#phase === "not-attached") {
+                this.#phase = "initializing";
+              }
+              this.#redraw();
+            }
+          });
           this.parentResizeObserver.observe(canvas.parentElement!);
         } else {
           this.#phase = "initializing";
@@ -220,9 +220,17 @@ export class Plot<S extends Record<string, unknown>> {
   }
 
   #setPluginState(id: keyof S, state: any, redraw = true) {
+    this.#logger?.log("setPluginState:", id, state, redraw);
     this.#store[id] = state;
     if (redraw) {
-      this.#redraw();
+      switch (this.#phase) {
+        case "idle":
+          this.#redraw();
+          break;
+        case "drawing":
+        default:
+          break;
+      }
     }
   }
 
@@ -237,44 +245,57 @@ export class Plot<S extends Record<string, unknown>> {
         },
         ctx: this.getCanvas().getContext("2d")!,
       });
+      this.#logger?.info("initializePlugins: plugin", plugin.id);
       idMap.set(pluginInitializer, plugin.id);
       this.#store[plugin.id as keyof S] = plugin.initialState as any;
       this.#plugins.push(plugin);
     }
   }
 
-  draw(makeScene: MakeScene<S>) {
+  async draw(makeScene: MakeScene<S>) {
     this.#lastMakeScene = makeScene;
-    // console.log(`draw in ${this.#phase}`);
+    this.#logger?.info(`draw: begin in ${this.#phase}`);
     switch (this.#phase) {
       case "not-attached":
-        this.#scheduledDraw = true;
+        this.#drawScheduled = true;
         break;
       case "initializing":
         this.#initializePlugins();
-        this.#scheduledDraw = true;
+        this.#drawScheduled = true;
         this.#phase = "idle";
         break;
       case "destroyed":
         console.error("Cannot redraw if already destroyed");
         break;
       case "drawing":
-        this.#scheduledDraw = true;
+        this.#drawScheduled = true;
         console.warn("Already drawing, postponing the draw");
         break;
       case "idle":
-        this.#phase = "drawing";
-        this.#actuallyDraw(makeScene);
-        this.#phase = "idle";
+        this.#drawScheduled = true;
         break;
     }
-    if (this.#phase === "idle" && this.#scheduledDraw) {
-      this.#scheduledDraw = false;
-      this.draw(makeScene);
+    this.#logger?.info(`draw: apply in ${this.#phase}`);
+    if (this.#phase !== "idle") {
+      this.#logger?.info(`draw: skip`);
+      return;
+    }
+    this.#logger?.info(`draw: idle, drawScheduled=${this.#drawScheduled}`);
+
+    if (this.#drawScheduled) {
+      this.#drawScheduled = false;
+      this.#phase = "drawing";
+      setTimeout(() => {
+        this.#actuallyDraw(makeScene);
+        this.#phase = "idle";
+        if (this.#drawScheduled) {
+          this.#redraw();
+        }
+      }, 0);
     }
   }
 
-  #actuallyDraw(makeScene: MakeScene<S>) {
+  async #actuallyDraw(makeScene: MakeScene<S>) {
     const canvas = this.getCanvas();
     const size = this.getSize();
     const ctx = canvas.getContext("2d")!;
