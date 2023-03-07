@@ -52,6 +52,7 @@ const plot = new Plot({
             }),
           });
         }
+        console.log(spanSelect)
         if (spanSelect.phase === "active") {
           frame.facets.push({
             layer: "bottom",
@@ -103,7 +104,9 @@ const plot = new Plot({
                       max: spanSelect.end.canvas.y,
                     },
               style: {
-                fillStyle: "rgba(0, 0, 255, 0.2)",
+                fillStyle: `rgba(${spanSelect.altKey ? 255 : 0}, ${
+                  spanSelect.shiftKey ? 255 : 0
+                }, ${spanSelect.ctrlKey ? 255 : 0}, 0.2)`,
               },
             }),
           });

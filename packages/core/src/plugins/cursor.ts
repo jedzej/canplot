@@ -197,29 +197,21 @@ type SpanSelectPluginState =
       dimension: "x" | "y" | "xy";
       start: CursorPosition;
       end: CursorPosition;
+      ctrlKey: boolean;
+      shiftKey: boolean;
+      altKey: boolean;
     };
 
-type SpanSelectData =
-  | {
-      phase: "start";
-      dimension: "x" | "y" | "xy";
-      start: CursorPosition;
-      frame: Frame;
-    }
-  | {
-      phase: "move";
-      dimension: "x" | "y" | "xy";
-      start: CursorPosition;
-      end: CursorPosition;
-      frame: Frame;
-    }
-  | {
-      phase: "end";
-      dimension: "x" | "y" | "xy";
-      start: CursorPosition;
-      end: CursorPosition;
-      frame: Frame;
-    };
+type SpanSelectData = {
+  phase: "start" | "move" | "end";
+  dimension: "x" | "y" | "xy";
+  start: CursorPosition;
+  end: CursorPosition;
+  frame: Frame;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+};
 
 const positionsToDimension = (
   start: CursorPosition,
@@ -244,12 +236,15 @@ export const spanSelectPlugin =
     onSpanSelect?: (data: SpanSelectData) => void;
     stateless?: boolean;
   }): MakePlugin<ID, SpanSelectPluginState> =>
-  ({ ctx, setPluginState }) => {
+  ({ ctx, setPluginState, getPluginState }) => {
     const canvas = ctx.canvas;
     const store = {
-      startPosition: undefined as CursorPosition | undefined,
-      endPosition: undefined as CursorPosition | undefined,
+      start: undefined as CursorPosition | undefined,
+      end: undefined as CursorPosition | undefined,
       lastFrame: undefined as Frame | undefined,
+      altKey: false,
+      shiftKey: false,
+      ctrlKey: false,
     };
 
     const mouseDownListener = (e: MouseEvent) => {
@@ -257,64 +252,122 @@ export const spanSelectPlugin =
       const position = eventToPositions(e, store.lastFrame, false);
       if (!position) return;
       if (position.constrained === "out-of-chart") return;
-      store.startPosition = position;
+      store.start = position;
+      store.altKey = e.altKey;
+      store.shiftKey = e.shiftKey;
+      store.ctrlKey = e.ctrlKey;
       onSpanSelect?.({
         phase: "start",
         dimension: "xy",
-        start: store.startPosition,
+        start: store.start,
+        end: store.start,
         frame: store.lastFrame,
+        ctrlKey: e.ctrlKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
       });
       if (!stateless) {
         setPluginState({
           phase: "active",
           dimension: "xy",
-          start: store.startPosition,
-          end: store.startPosition,
+          start: store.start,
+          end: store.start,
+          ctrlKey: e.ctrlKey,
+          shiftKey: e.shiftKey,
+          altKey: e.altKey,
         });
       }
     };
     canvas.addEventListener("mousedown", mouseDownListener);
 
     const mouseMoveListener = (e: MouseEvent): void => {
-      if (!store.startPosition) return;
+      if (!store.start) return;
       if (!store.lastFrame) return;
       const position = eventToPositions(e, store.lastFrame, true);
       if (!position) return;
-      store.endPosition = position;
-      const dimension = positionsToDimension(store.startPosition, position);
+      store.end = position;
+      store.altKey = e.altKey;
+      store.shiftKey = e.shiftKey;
+      store.ctrlKey = e.ctrlKey;
+      const dimension = positionsToDimension(store.start, position);
       onSpanSelect?.({
         phase: "move",
         dimension,
-        start: store.startPosition,
-        end: store.endPosition,
+        start: store.start,
+        end: store.end,
         frame: store.lastFrame,
+        ctrlKey: e.ctrlKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
       });
       if (!stateless) {
         setPluginState({
           phase: "active",
           dimension,
-          start: store.startPosition,
-          end: store.endPosition,
+          start: store.start,
+          end: store.end,
+          ctrlKey: e.ctrlKey,
+          shiftKey: e.shiftKey,
+          altKey: e.altKey,
         });
       }
     };
     canvas.addEventListener("mousemove", mouseMoveListener);
 
+    const keyUpDownListener = (e: KeyboardEvent) => {
+      if (e.key === "Alt" || e.key === "Shift" || e.key === "Control") {
+        e.preventDefault();
+      }
+      if (!store.start) {
+        return;
+      }
+      if (
+        e.ctrlKey === store.ctrlKey &&
+        e.shiftKey === store.shiftKey &&
+        e.altKey === store.altKey
+      ) {
+        return;
+      }
+      store.altKey = e.altKey;
+      store.shiftKey = e.shiftKey;
+      store.ctrlKey = e.ctrlKey;
+      if (!stateless) {
+        const pluginState = getPluginState();
+        if (pluginState.phase === "active") {
+          setPluginState({
+            ...pluginState,
+            ctrlKey: e.ctrlKey,
+            shiftKey: e.shiftKey,
+            altKey: e.altKey,
+          });
+        }
+      }
+    };
+    document.addEventListener("keydown", keyUpDownListener);
+
+    document.addEventListener("keyup", keyUpDownListener);
+
     const mouseUpListener = (e: MouseEvent) => {
-      if (!store.startPosition) return;
+      if (!store.start) return;
       if (!store.lastFrame) return;
       const position = eventToPositions(e, store.lastFrame, true);
       if (!position) return;
-      const dimension = positionsToDimension(store.startPosition, position);
+      const dimension = positionsToDimension(store.start, position);
       onSpanSelect?.({
         phase: "end",
         dimension,
-        start: store.startPosition,
+        start: store.start,
         end: position,
         frame: store.lastFrame,
+        ctrlKey: e.ctrlKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
       });
-      store.startPosition = undefined;
-      store.endPosition = undefined;
+      store.start = undefined;
+      store.end = undefined;
+      store.altKey = false;
+      store.shiftKey = false;
+      store.ctrlKey = false;
       if (!stateless) {
         setPluginState({
           phase: "idle",
