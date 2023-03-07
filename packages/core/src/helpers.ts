@@ -1,13 +1,6 @@
 import { DEFAULT_PADDING } from "./defaults";
 import { CursorPosition } from "./main";
-import {
-  Frame,
-  Scene,
-  Style,
-  XScaleId,
-  YScaleId,
-  ScaleId,
-} from "./types";
+import { Frame, Scene, Style, XScaleId, YScaleId, ScaleId } from "./types";
 import { clamp, findClosestIndex } from "./utils";
 
 export const isXScale = (scaleId: string): scaleId is XScaleId =>
@@ -16,13 +9,13 @@ export const isXScale = (scaleId: string): scaleId is XScaleId =>
 export const isYScale = (scaleId: string): scaleId is YScaleId =>
   scaleId.startsWith("y-");
 
-export const getScaleLimits = (frame:Frame, scaleId: ScaleId) => {
-  const scale = frame.scales.find(a => a.id === scaleId);
-  if(!scale) {
+export const getScaleLimits = (frame: Frame, scaleId: ScaleId) => {
+  const scale = frame.scales.find((a) => a.id === scaleId);
+  if (!scale) {
     throw new Error(`Scale ${scaleId} not found`);
   }
   return scale.limits;
-}
+};
 
 export const valToPxDistance = (
   frame: Frame,
@@ -36,11 +29,7 @@ export const valToPxDistance = (
   return val * factor;
 };
 
-export const valToPos = (
-  frame: Frame,
-  val: number,
-  scaleId: ScaleId
-) => {
+export const valToPos = (frame: Frame, val: number, scaleId: ScaleId) => {
   const { min } = getScaleLimits(frame, scaleId);
   const chartArea = frame.chartArea;
   const relativePosition = valToPxDistance(frame, val - min, scaleId);
@@ -71,11 +60,7 @@ export const pxToValDistance = (
   return pxDistance / factor;
 };
 
-export const posToVal = (
-  frame: Frame,
-  pos: number,
-  scaleId: ScaleId
-) => {
+export const posToVal = (frame: Frame, pos: number, scaleId: ScaleId) => {
   const { min, max } = getScaleLimits(frame, scaleId);
   const relativePosition = pxToValDistance(frame, pos, scaleId);
   return isXScale(scaleId) ? min + relativePosition : max - relativePosition;
@@ -124,6 +109,9 @@ export const findClosestDataPoint = (
   }
   return series.map((series) => {
     if (series.x.length < 0) {
+      return undefined;
+    }
+    if (position.constrained === "out-of-chart") {
       return undefined;
     }
     const idx = findClosestIndex(series.x, position.scaled[series.xScaleId]);
