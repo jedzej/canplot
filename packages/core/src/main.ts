@@ -11,3 +11,4 @@ export * from "./facets/scaledSpan";
 export * from "./facets/crosshairFacet";
 
 export * from "./plugins/cursor";
+export * from "./plugins/domOverlay";

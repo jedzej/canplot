@@ -359,24 +359,22 @@ export class Plot<S extends Record<string, unknown>> {
     // CLEAR CANVAS
     ctx.clearRect(0, 0, size.width, size.height);
 
-    if (frame.chartArea.height <= 0 || frame.chartArea.width <= 0) {
-      return;
+    if (frame.chartArea.height > 0 && frame.chartArea.width > 0) {
+      // DRAW BOTTOM FACETS
+      drawFacets(frame, "bottom");
+
+      // DRAW SERIES
+      drawSeries(frame);
+
+      // DRAW MIDDLE FACETS
+      drawFacets(frame, "middle");
+
+      // DRAW AXES
+      drawAxes(frame);
+
+      // DRAW TOP FACETS
+      drawFacets(frame, "top");
     }
-
-    // DRAW BOTTOM FACETS
-    drawFacets(frame, "bottom");
-
-    // DRAW SERIES
-    drawSeries(frame);
-
-    // DRAW MIDDLE FACETS
-    drawFacets(frame, "middle");
-
-    // DRAW AXES
-    drawAxes(frame);
-
-    // DRAW TOP FACETS
-    drawFacets(frame, "top");
 
     // AFTER DRAW
     for (const plugin of this.#plugins) {

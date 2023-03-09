@@ -6,6 +6,7 @@ import {
   spanSelectPlugin,
   Plot,
   crosshairFacet,
+  domOverlayPlugin,
 } from "./src/main";
 import { Facet } from "./src/types";
 
@@ -37,6 +38,11 @@ const plot = new Plot({
   )
   .use(spanSelectPlugin({ id: "spanSelect2" }))
   .use(spanSelectPlugin({ id: "spanSelect" }))
+  .use(
+    domOverlayPlugin({
+      className: "bgcyan",
+    })
+  )
   .use(({ getStore }) => {
     return {
       id: "line",
@@ -52,7 +58,6 @@ const plot = new Plot({
             }),
           });
         }
-        console.log(spanSelect)
         if (spanSelect.phase === "active") {
           frame.facets.push({
             layer: "bottom",
@@ -143,6 +148,7 @@ plot.draw((state) => {
       },
     });
   }
+  state.overlay.element.innerHTML = `<b>overlay plugin</b>`;
   return {
     padding: { bottom: 0, left: 0, right: 0, top: 0 },
     axes: [
