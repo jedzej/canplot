@@ -140,7 +140,36 @@ export type Frame = {
   series: SeriesBase[];
 };
 
-export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
+export type PlotBuilderPlugin<ID extends string, PS, S = unknown> =
+  | StatelessPlotBuilderPlugin<S>
+  | StatefulPlotBuilderPlugin<ID, PS, S>;
+
+export type StatelessPlotBuilderPlugin<S = unknown> = {
+  transformScene?: (opts: {
+    ctx: CanvasRenderingContext2D;
+    scene: Scene;
+    getStore: () => S;
+  }) => void;
+  transformFrame?: (opts: {
+    ctx: CanvasRenderingContext2D;
+    frame: Frame;
+    scene: Scene;
+    getStore: () => S;
+  }) => void;
+  beforeDraw?: (opts: {
+    ctx: CanvasRenderingContext2D;
+    getStore: () => S;
+  }) => void;
+  afterDraw?: (opts: {
+    ctx: CanvasRenderingContext2D;
+    frame: Frame;
+    scene: Scene;
+    getStore: () => S;
+  }) => void;
+  deinit?: (opts: { ctx: CanvasRenderingContext2D; getStore: () => S }) => void;
+};
+
+export type StatefulPlotBuilderPlugin<ID extends string, PS, S = unknown> = {
   id: ID;
   initialState: PS;
   transformScene?: (opts: {
@@ -182,12 +211,23 @@ export type PlotBuilderPlugin<ID extends string, PS, S = unknown> = {
   }) => void;
 };
 
-export type MakePlugin<ID extends string, PS, S = unknown> = (opts: {
+export type MakeStatefulPlugin<ID extends string, PS, S = unknown> = (opts: {
   getStore: () => S;
   setPluginState: (newState: PS) => void;
   getPluginState: () => PS;
   ctx: CanvasRenderingContext2D;
-}) => PlotBuilderPlugin<ID, PS, S>;
+}) => StatefulPlotBuilderPlugin<ID, PS, S>;
+
+export type MakeStatelessPlugin<S = unknown> = (opts: {
+  getStore: () => S;
+  ctx: CanvasRenderingContext2D;
+}) => StatelessPlotBuilderPlugin<S> | void;
+
+export type MakePlugin<
+  ID extends string = never,
+  PS = never,
+  S = unknown
+> = ID extends never ? MakeStatelessPlugin<S> : MakeStatefulPlugin<ID, PS, S>;
 
 export type Flatten<T> = {
   [K in keyof T]: T[K];

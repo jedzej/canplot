@@ -1,5 +1,10 @@
 import { posToVal } from "../helpers";
-import { Frame, MakePlugin, ScaleId } from "../types";
+import {
+  Frame,
+  MakeStatefulPlugin,
+  MakeStatelessPlugin,
+  ScaleId,
+} from "../types";
 import { clamp } from "../utils";
 
 type XY = {
@@ -92,7 +97,7 @@ export const hoverPlugin =
     stateless?: boolean;
     clampStrategy?: "clamp" | "drop" | "pass";
     onHover?: (data: HoverData) => void;
-  }): MakePlugin<ID, HoverPluginState> =>
+  }): MakeStatefulPlugin<ID, HoverPluginState> =>
   ({ ctx, setPluginState, getPluginState }) => {
     const canvas = ctx.canvas;
     const store = {
@@ -135,7 +140,7 @@ export const hoverPlugin =
     return {
       id,
       initialState: {},
-      afterDraw({ frame }) {
+      afterDraw: ({ frame }) => {
         store.lastFrame = frame;
       },
       deinit() {
@@ -151,15 +156,10 @@ type ClickData = {
 };
 
 export const clickPlugin =
-  <ID extends string = "hover">({
-    id = "click" as ID,
-    onClick,
-    clampToChartArea = false,
-  }: {
-    id: ID;
+  <S>(opts: {
     onClick?: (data: ClickData) => void;
     clampToChartArea?: boolean;
-  }): MakePlugin<ID, undefined> =>
+  }): MakeStatelessPlugin<S> =>
   ({ ctx }) => {
     const canvas = ctx.canvas;
     const store = {
@@ -168,8 +168,12 @@ export const clickPlugin =
 
     const clickListener = (e: MouseEvent) => {
       if (!store.lastFrame) return;
-      const position = eventToPositions(e, store.lastFrame, clampToChartArea);
-      onClick?.({
+      const position = eventToPositions(
+        e,
+        store.lastFrame,
+        opts.clampToChartArea ?? false
+      );
+      opts.onClick?.({
         position,
         frame: store.lastFrame,
       });
@@ -177,8 +181,6 @@ export const clickPlugin =
     canvas.addEventListener("click", clickListener);
 
     return {
-      id,
-      initialState: undefined,
       afterDraw({ frame }) {
         store.lastFrame = frame;
       },
@@ -235,7 +237,7 @@ export const spanSelectPlugin =
     id: ID;
     onSpanSelect?: (data: SpanSelectData) => void;
     stateless?: boolean;
-  }): MakePlugin<ID, SpanSelectPluginState> =>
+  }): MakeStatefulPlugin<ID, SpanSelectPluginState> =>
   ({ ctx, setPluginState, getPluginState }) => {
     const canvas = ctx.canvas;
     const store = {

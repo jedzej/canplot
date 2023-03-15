@@ -19,7 +19,7 @@ const plot = new Plot({
     return {
       id: "sizer",
       initialState: { width: ctx.canvas.width, height: ctx.canvas.height },
-      beforeDraw({ setPluginState }) {
+      beforeDraw:({ setPluginState }) => {
         setPluginState({
           width: ctx.canvas.width,
           height: ctx.canvas.height,
@@ -36,7 +36,6 @@ const plot = new Plot({
       },
     })
   )
-  .use(spanSelectPlugin({ id: "spanSelect2" }))
   .use(spanSelectPlugin({ id: "spanSelect" }))
   .use(
     domOverlayPlugin({
@@ -44,9 +43,18 @@ const plot = new Plot({
     })
   )
   .use(({ getStore }) => {
+    getStore().overlay.element.innerHTML = "<b>overlay plugin</b>";
     return {
-      id: "line",
-      initialState: { x: 0 },
+      afterDraw({ frame }) {
+      },
+      deinit: (props) => {
+        props.
+        getStore().overlay.element.innerHTML = "";
+      }
+    }
+  })
+  .use(({ getStore }) => {
+    return {
       transformFrame: ({ frame }) => {
         const { spanSelect, hover } = getStore();
         if (hover.position && spanSelect.phase === "idle") {
@@ -148,7 +156,6 @@ plot.draw((state) => {
       },
     });
   }
-  state.overlay.element.innerHTML = `<b>overlay plugin</b>`;
   return {
     padding: { bottom: 0, left: 0, right: 0, top: 0 },
     axes: [

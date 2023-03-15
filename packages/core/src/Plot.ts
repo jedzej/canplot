@@ -13,6 +13,7 @@ import {
   PlotStaticConfig,
   Scene,
   Size,
+  StatefulPlotBuilderPlugin,
 } from "./types";
 
 const drawFacets = (frame: Frame, layer: FacetLayer) => {
@@ -96,6 +97,12 @@ const sceneToFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
   };
 };
 
+const isStatefulPlugin = <ID extends string, PS, S>(
+  plugin: PlotBuilderPlugin<ID, PS, S>
+): plugin is StatefulPlotBuilderPlugin<ID, PS, S> => {
+  return "id" in plugin;
+};
+
 export class Plot<S extends Record<string, unknown>> {
   #store: S = {} as S;
   #plugins: PlotBuilderPlugin<string, unknown, unknown>[] = [];
@@ -128,17 +135,19 @@ export class Plot<S extends Record<string, unknown>> {
     this.#phase = "destroyed";
     this.parentResizeObserver?.disconnect();
 
+    const getStore = () => this.#store;
+    const ctx = this.getCanvas().getContext("2d")!;
     for (const plugin of this.#plugins) {
-      plugin.deinit?.({
-        ctx: this.getCanvas().getContext("2d")!,
-        getStore: () => {
-          return this.#store;
-        },
-        getPluginState: () => {
-          return this.#store[plugin.id];
-        },
-        id: plugin.id,
-      });
+      if (isStatefulPlugin(plugin)) {
+        plugin.deinit?.({
+          ctx,
+          getStore,
+          getPluginState: () => this.#store[plugin.id],
+          id: plugin.id,
+        });
+      } else {
+        plugin.deinit?.({ ctx, getStore });
+      }
     }
   }
 
@@ -212,7 +221,7 @@ export class Plot<S extends Record<string, unknown>> {
     return this.#expectedSize;
   }
 
-  use<ID extends string, PS>(
+  use<ID extends string=never, PS=never>(
     makePlugin: MakePlugin<ID, PS, S>
   ): Plot<Flatten<S & Record<ID, PS>>> {
     this.#pluginsInitializers.push(makePlugin as any);
@@ -245,9 +254,14 @@ export class Plot<S extends Record<string, unknown>> {
         },
         ctx: this.getCanvas().getContext("2d")!,
       });
-      this.#logger?.info("initializePlugins: plugin", plugin.id);
-      idMap.set(pluginInitializer, plugin.id);
-      this.#store[plugin.id as keyof S] = plugin.initialState as any;
+      if (!plugin) {
+        continue;
+      }
+      if (isStatefulPlugin(plugin)) {
+        this.#logger?.info("initializePlugins: stateful plugin", plugin.id);
+        idMap.set(pluginInitializer, plugin.id);
+        this.#store[plugin.id as keyof S] = plugin.initialState as any;
+      }
       this.#plugins.push(plugin);
     }
   }
@@ -300,6 +314,18 @@ export class Plot<S extends Record<string, unknown>> {
     const size = this.getSize();
     const ctx = canvas.getContext("2d")!;
 
+    const getStore = () => this.#store;
+    const makePluginStatefulPartial = <ID extends keyof S>(
+      id: ID,
+      redraw: boolean
+    ) => ({
+      id,
+      getPluginState: () => this.#store[id],
+      setPluginState: (newPluginState: any) => {
+        this.#setPluginState(id, newPluginState, redraw);
+      },
+    });
+
     if (canvas.width !== size.width || canvas.height !== size.height) {
       canvas.width = size.width;
       canvas.height = size.height;
@@ -307,31 +333,38 @@ export class Plot<S extends Record<string, unknown>> {
 
     // BEFORE DRAW
     for (const plugin of this.#plugins) {
-      plugin.beforeDraw?.({
-        id: plugin.id,
-        ctx,
-        getStore: () => this.#store,
-        getPluginState: () => this.#store[plugin.id as keyof S],
-        setPluginState: (newPluginState) => {
-          this.#setPluginState(plugin.id as keyof S, newPluginState, false);
-        },
-      });
+      if (isStatefulPlugin(plugin)) {
+        plugin.beforeDraw?.({
+          ctx,
+          getStore,
+          ...makePluginStatefulPartial(plugin.id, false),
+        });
+      } else {
+        plugin.beforeDraw?.({ ctx, getStore });
+      }
     }
 
     const initialScene = makeScene(this.#store);
 
     // TRANSFORM SCENE
-    const scene = this.#plugins.reduce(
-      (scene, plugin) =>
-        plugin.transformScene?.({
-          id: plugin.id,
-          scene,
-          ctx: this.getCanvas().getContext("2d")!,
-          getStore: () => this.#store,
-          getPluginState: () => this.#store[plugin.id as keyof S],
-        }) ?? scene,
-      initialScene
-    );
+    const scene = this.#plugins.reduce((scene, plugin) => {
+      try {
+        if (isStatefulPlugin(plugin)) {
+          plugin.transformScene?.({
+            id: plugin.id,
+            scene,
+            ctx,
+            getStore,
+            getPluginState: () => this.#store[plugin.id as keyof S],
+          });
+        } else {
+          plugin.transformScene?.({ scene, ctx, getStore });
+        }
+      } catch (err) {
+        console.error(`Error in plugin`, err);
+      }
+      return scene;
+    }, initialScene);
 
     // TRANSFORM FRAME
     const initialFrame = sceneToFrame(
@@ -340,7 +373,7 @@ export class Plot<S extends Record<string, unknown>> {
     );
     const frame = this.#plugins.reduce((frame, plugin) => {
       try {
-        return (
+        if (isStatefulPlugin(plugin)) {
           plugin.transformFrame?.({
             id: plugin.id,
             frame,
@@ -348,12 +381,14 @@ export class Plot<S extends Record<string, unknown>> {
             ctx: this.getCanvas().getContext("2d")!,
             getStore: () => this.#store,
             getPluginState: () => this.#store[plugin.id as keyof S],
-          }) ?? frame
-        );
+          });
+        } else {
+          plugin.transformFrame?.({ frame, scene, ctx, getStore });
+        }
       } catch (err) {
-        console.error(`Error in plugin ${plugin.id}`, err);
-        return frame;
+        console.error(`Error in plugin`, err);
       }
+      return frame;
     }, initialFrame);
 
     // CLEAR CANVAS
@@ -378,17 +413,21 @@ export class Plot<S extends Record<string, unknown>> {
 
     // AFTER DRAW
     for (const plugin of this.#plugins) {
-      plugin.afterDraw?.({
-        id: plugin.id,
-        ctx,
-        frame,
-        scene,
-        getStore: () => this.#store,
-        getPluginState: () => this.#store[plugin.id as keyof S],
-        setPluginState: (newPluginState) => {
-          this.#setPluginState(plugin.id as keyof S, newPluginState, false);
-        },
-      });
+      if (isStatefulPlugin(plugin)) {
+        plugin.afterDraw?.({
+          id: plugin.id,
+          ctx,
+          frame,
+          scene,
+          getStore,
+          getPluginState: () => this.#store[plugin.id as keyof S],
+          setPluginState: (newPluginState) => {
+            this.#setPluginState(plugin.id as keyof S, newPluginState, false);
+          },
+        });
+      } else {
+        plugin.afterDraw?.({ ctx, frame, scene, getStore });
+      }
     }
   }
 }
