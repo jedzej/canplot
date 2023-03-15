@@ -86,19 +86,15 @@ type HoverData = {
   frame: Frame;
 };
 
-export const hoverPlugin =
-  <ID extends string = "hover">({
-    id = "hover" as ID,
-    stateless = false,
+export const hoverStatelessPlugin =
+  ({
     clampStrategy = "drop",
     onHover,
   }: {
-    id: ID;
-    stateless?: boolean;
     clampStrategy?: "clamp" | "drop" | "pass";
-    onHover?: (data: HoverData) => void;
-  }): MakeStatefulPlugin<ID, HoverPluginState> =>
-  ({ ctx, setPluginState, getPluginState }) => {
+    onHover: (data: HoverData) => void;
+  }): MakeStatelessPlugin =>
+  ({ ctx }) => {
     const canvas = ctx.canvas;
     const store = {
       lastFrame: undefined as Frame | undefined,
@@ -115,13 +111,10 @@ export const hoverPlugin =
         clampStrategy === "drop" && position?.constrained === "out-of-chart"
           ? undefined
           : position;
-      onHover?.({
+      onHover({
         position: effectivePosition,
         frame: store.lastFrame,
       });
-      if (!stateless) {
-        setPluginState({ ...getPluginState(), position: effectivePosition });
-      }
     };
     canvas.addEventListener("mousemove", mouseMoveListener);
 
@@ -131,15 +124,10 @@ export const hoverPlugin =
         position: undefined,
         frame: store.lastFrame,
       });
-      if (!stateless) {
-        setPluginState({ ...getPluginState(), position: undefined });
-      }
     };
     canvas.addEventListener("mouseout", mouseOutListener);
 
     return {
-      id,
-      initialState: {},
       afterDraw: ({ frame }) => {
         store.lastFrame = frame;
       },
@@ -147,6 +135,30 @@ export const hoverPlugin =
         canvas.removeEventListener("mousemove", mouseMoveListener);
         canvas.removeEventListener("mouseout", mouseOutListener);
       },
+    };
+  };
+
+export const hoverStatefulPlugin =
+  <ID extends string>({
+    clampStrategy = "drop",
+    onHover,
+  }: {
+    clampStrategy?: "clamp" | "drop" | "pass";
+    onHover?: (data: HoverData) => void;
+  } = {}): MakeStatefulPlugin<ID, HoverPluginState> =>
+  ({ ctx, getStore, setPluginState, getPluginState }) => {
+    const stateLessPlugin =
+      hoverStatelessPlugin({
+        clampStrategy,
+        onHover: (data) => {
+          onHover?.(data);
+          setPluginState({ ...getPluginState(), position: data.position });
+        },
+      })({ ctx, getStore }) ?? {};
+
+    return {
+      initialState: {},
+      ...stateLessPlugin,
     };
   };
 
@@ -229,12 +241,10 @@ const positionsToDimension = (
 };
 
 export const spanSelectPlugin =
-  <ID extends string = "spanSelect">({
-    id = "spanSelect" as ID,
+  <ID extends string>({
     onSpanSelect,
     stateless = false,
   }: {
-    id: ID;
     onSpanSelect?: (data: SpanSelectData) => void;
     stateless?: boolean;
   }): MakeStatefulPlugin<ID, SpanSelectPluginState> =>
@@ -379,7 +389,6 @@ export const spanSelectPlugin =
     document.addEventListener("mouseup", mouseUpListener);
 
     return {
-      id,
       initialState: { phase: "idle" },
       afterDraw({ frame }) {
         store.lastFrame = frame;

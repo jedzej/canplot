@@ -170,7 +170,6 @@ export type StatelessPlotBuilderPlugin<S = unknown> = {
 };
 
 export type StatefulPlotBuilderPlugin<ID extends string, PS, S = unknown> = {
-  id: ID;
   initialState: PS;
   transformScene?: (opts: {
     id: ID;

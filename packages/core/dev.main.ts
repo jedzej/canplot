@@ -1,12 +1,13 @@
 import {
   absoluteSpanFacet,
   clickPlugin,
-  hoverPlugin,
   linePlotter,
   spanSelectPlugin,
   Plot,
   crosshairFacet,
   domOverlayPlugin,
+  hoverStatefulPlugin,
+  hoverStatelessPlugin,
 } from "./src/main";
 import { Facet } from "./src/types";
 
@@ -15,11 +16,10 @@ const plot = new Plot({
   dimensions: { width: "auto", height: 200 },
   logger: false,
 })
-  .use<"sizer", { width: number; height: number }>(({ ctx }) => {
+  .useStateful("sizer")<{ width: number; height: number }>(({ ctx }) => {
     return {
-      id: "sizer",
       initialState: { width: ctx.canvas.width, height: ctx.canvas.height },
-      beforeDraw:({ setPluginState }) => {
+      beforeDraw: ({ setPluginState }) => {
         setPluginState({
           width: ctx.canvas.width,
           height: ctx.canvas.height,
@@ -27,17 +27,23 @@ const plot = new Plot({
       },
     };
   })
-  .use(hoverPlugin({ id: "hover" }))
   .use(
-    clickPlugin({
-      id: "click",
-      onClick: (position) => {
-        // console.log(position);
+    hoverStatelessPlugin({
+      onHover: (position) => {
+        console.log("hover stateless", position);
       },
     })
   )
-  .use(spanSelectPlugin({ id: "spanSelect" }))
+  .useStateful("hover")(hoverStatefulPlugin())
   .use(
+    clickPlugin({
+      onClick: (position) => {
+        console.log(position);
+      },
+    })
+  )
+  .useStateful("spanSelect")(spanSelectPlugin({}))
+  .useStateful("overlay")(
     domOverlayPlugin({
       className: "bgcyan",
     })
@@ -45,13 +51,10 @@ const plot = new Plot({
   .use(({ getStore }) => {
     getStore().overlay.element.innerHTML = "<b>overlay plugin</b>";
     return {
-      afterDraw({ frame }) {
-      },
       deinit: (props) => {
-        props.
-        getStore().overlay.element.innerHTML = "";
-      }
-    }
+        props.getStore().overlay.element.innerHTML = "";
+      },
+    };
   })
   .use(({ getStore }) => {
     return {
