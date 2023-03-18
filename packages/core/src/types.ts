@@ -170,13 +170,13 @@ export type StatelessPlotBuilderPlugin<S = unknown> = {
   deinit?: (opts: { ctx: CanvasRenderingContext2D; getStore: () => S }) => void;
 };
 
-export type StatefulPlotBuilderPlugin<ID extends string, PS, S = unknown> = {
+export type StatefulPlotBuilderPlugin<ID extends string|undefined, PS, S = unknown> = {
   initialState: PS;
   transformScene?: (opts: {
     id: ID;
     ctx: CanvasRenderingContext2D;
     scene: Scene;
-    getStore: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
     getPluginState: () => PS;
   }) => void;
   transformFrame?: (opts: {
@@ -184,13 +184,13 @@ export type StatefulPlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     ctx: CanvasRenderingContext2D;
     frame: Frame;
     scene: Scene;
-    getStore: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
     getPluginState: () => PS;
   }) => void;
   beforeDraw?: (opts: {
     id: ID;
     ctx: CanvasRenderingContext2D;
-    getStore: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
     getPluginState: () => PS;
     setPluginState: (newState: PS) => void;
   }) => void;
@@ -199,19 +199,19 @@ export type StatefulPlotBuilderPlugin<ID extends string, PS, S = unknown> = {
     ctx: CanvasRenderingContext2D;
     frame: Frame;
     scene: Scene;
-    getStore: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
     getPluginState: () => PS;
     setPluginState: (newState: PS) => void;
   }) => void;
   deinit?: (opts: {
     id: ID;
     ctx: CanvasRenderingContext2D;
-    getStore: () => Flatten<S & Record<ID, PS>>;
+    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
     getPluginState: () => PS;
   }) => void;
 };
 
-export type MakeStatefulPlugin<ID extends string, PS, S = unknown> = (opts: {
+export type MakeStatefulPlugin<ID extends string|undefined, PS, S = unknown> = (opts: {
   getStore: () => S;
   setPluginState: (newState: PS) => void;
   getPluginState: () => PS;

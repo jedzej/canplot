@@ -10,7 +10,6 @@ import {
   MakePlugin,
   MakeScene,
   MakeStatefulPlugin,
-  MakeStatelessPlugin,
   PlotBuilderPlugin,
   PlotStaticConfig,
   Scene,
@@ -112,8 +111,15 @@ const isStatefulPlugin = <ID extends string, PS, S>(
 
 export class Plot<S extends Record<string, unknown>> {
   #store: S = {} as S;
-  #plugins: [string, PlotBuilderPlugin<string, unknown, unknown>][] = [];
-  #pluginsInitializers: [string, MakePlugin<string, unknown, unknown>][] = [];
+  #plugins: {
+    id: string;
+    isStateful: boolean;
+    plugin: PlotBuilderPlugin<string, unknown, unknown>;
+  }[] = [];
+  #pluginsInitializers: [
+    id: string | undefined,
+    makePlugin: MakePlugin<string, unknown, unknown>
+  ][] = [];
   #dimensions: Required<Dimensions>;
   #lastMakeScene?: MakeScene<S>;
   #expectedSize: Size | undefined;
@@ -144,7 +150,7 @@ export class Plot<S extends Record<string, unknown>> {
 
     const getStore = () => this.#store;
     const ctx = this.#getCtx();
-    for (const [id, plugin] of this.#plugins) {
+    for (const { id, plugin } of this.#plugins) {
       if (isStatefulPlugin(plugin)) {
         plugin.deinit?.({
           ctx,
@@ -242,53 +248,65 @@ export class Plot<S extends Record<string, unknown>> {
     return this.#expectedSize;
   }
 
-  useStateful<ID extends string>(id: ID) {
-    return <PS>(makePlugin: MakeStatefulPlugin<ID, PS, S>) => {
-      this.#pluginsInitializers.push([id, makePlugin as any]);
-      return this as Plot<Flatten<S & Record<ID, PS>>>;
-    };
-  }
-
-  use(makePlugin: MakeStatelessPlugin<S>): Plot<S> {
-    this.#pluginsInitializers.push([undefined, makePlugin] as any);
-    return this as any;
+  use<PS, ID extends string>(
+    id: ID,
+    makePlugin: MakeStatefulPlugin<ID, PS, S>
+  ): Plot<Flatten<S & Record<ID, PS>>>;
+  use<PS>(makePlugin: MakeStatefulPlugin<never, PS, S>): Plot<S>;
+  use(arg1: any, arg2?: any): Plot<S> {
+    if (typeof arg1 === "string") {
+      this.#pluginsInitializers.push([arg1, arg2]);
+    } else {
+      this.#pluginsInitializers.push([undefined, arg1]);
+    }
+    return this;
   }
 
   #setPluginState(id: keyof S, state: any, redraw = true) {
     this.#logger?.log("setPluginState:", id, state, redraw);
     this.#store[id] = state;
-    if (redraw) {
-      switch (this.#phase) {
-        case "idle":
-          this.#redraw();
-          break;
-        case "drawing":
-        default:
-          break;
-      }
+    if (!redraw) {
+      return;
+    }
+    const isStateful = !!this.#plugins.find((entry) => entry.id === id)
+      ?.isStateful;
+    if (!isStateful) {
+      return;
+    }
+    switch (this.#phase) {
+      case "idle":
+        this.#redraw();
+        break;
+      case "drawing":
+      default:
+        break;
     }
   }
 
   #initializePlugins() {
-    const idMap = new Map<any, keyof S>();
-    for (const [id, pluginInitializer] of this.#pluginsInitializers) {
+    for (let i = 0; i < this.#pluginsInitializers.length; i++) {
+      const [id, pluginInitializer] = this.#pluginsInitializers[i];
+      const effectiveId = id ?? `__plugin_id_${i}`;
       const plugin = pluginInitializer({
         getStore: () => this.#store,
-        getPluginState: () => this.#store[idMap.get(pluginInitializer)!],
+        getPluginState: () => this.#store[effectiveId],
         setPluginState: (state) => {
-          this.#setPluginState(idMap.get(pluginInitializer)!, state);
+          this.#setPluginState(effectiveId, state);
         },
         ctx: this.#getCtx(),
       });
       if (!plugin) {
         continue;
       }
-      if (id && isStatefulPlugin(plugin)) {
+      if (effectiveId && isStatefulPlugin(plugin)) {
         this.#logger?.info("initializePlugins: stateful plugin", id);
-        idMap.set(pluginInitializer, id);
-        this.#store[id as keyof S] = plugin.initialState as any;
+        this.#store[effectiveId as keyof S] = plugin.initialState as any;
       }
-      this.#plugins.push([id, plugin]);
+      this.#plugins.push({
+        id: effectiveId,
+        isStateful: id ? true : false,
+        plugin,
+      });
     }
   }
 
@@ -362,34 +380,26 @@ export class Plot<S extends Record<string, unknown>> {
     }
 
     // BEFORE DRAW
-    for (const [id, plugin] of this.#plugins) {
-      if (isStatefulPlugin(plugin)) {
-        plugin.beforeDraw?.({
-          ctx,
-          getStore,
-          ...makePluginStatefulPartial(id, false),
-        });
-      } else {
-        plugin.beforeDraw?.({ ctx, getStore });
-      }
+    for (const { id, plugin } of this.#plugins) {
+      plugin.beforeDraw?.({
+        ctx,
+        getStore,
+        ...makePluginStatefulPartial(id, false),
+      });
     }
 
     const initialScene = makeScene(this.#store);
 
     // TRANSFORM SCENE
-    const scene = this.#plugins.reduce((scene, [id, plugin]) => {
+    const scene = this.#plugins.reduce((scene, { id, plugin }) => {
       try {
-        if (isStatefulPlugin(plugin)) {
-          plugin.transformScene?.({
-            id,
-            scene,
-            ctx,
-            getStore,
-            getPluginState: () => this.#store[id as keyof S],
-          });
-        } else {
-          plugin.transformScene?.({ scene, ctx, getStore });
-        }
+        plugin.transformScene?.({
+          id,
+          scene,
+          ctx,
+          getStore,
+          getPluginState: () => this.#store[id as keyof S],
+        });
       } catch (err) {
         console.error(`Error in plugin`, err);
       }
@@ -398,20 +408,16 @@ export class Plot<S extends Record<string, unknown>> {
 
     // TRANSFORM FRAME
     const initialFrame = sceneToFrame(scene, ctx, window.devicePixelRatio || 1);
-    const frame = this.#plugins.reduce((frame, [id, plugin]) => {
+    const frame = this.#plugins.reduce((frame, { id, plugin }) => {
       try {
-        if (isStatefulPlugin(plugin)) {
-          plugin.transformFrame?.({
-            id,
-            frame,
-            scene,
-            ctx,
-            getStore,
-            getPluginState: () => this.#store[id as keyof S],
-          });
-        } else {
-          plugin.transformFrame?.({ frame, scene, ctx, getStore });
-        }
+        plugin.transformFrame?.({
+          id,
+          frame,
+          scene,
+          ctx,
+          getStore,
+          getPluginState: () => this.#store[id as keyof S],
+        });
       } catch (err) {
         console.error(`Error in plugin`, err);
       }
@@ -419,7 +425,7 @@ export class Plot<S extends Record<string, unknown>> {
     }, initialFrame);
 
     // CLEAR CANVAS
-    ctx.clearRect(0, 0, dprAwareWidth, dprAwareWidth);
+    ctx.clearRect(0, 0, dprAwareWidth, dprAwareHeight);
 
     if (frame.chartArea.height > 0 && frame.chartArea.width > 0) {
       // DRAW BOTTOM FACETS
@@ -439,22 +445,18 @@ export class Plot<S extends Record<string, unknown>> {
     }
 
     // AFTER DRAW
-    for (const [id, plugin] of this.#plugins) {
-      if (isStatefulPlugin(plugin)) {
-        plugin.afterDraw?.({
-          id,
-          ctx,
-          frame,
-          scene,
-          getStore,
-          getPluginState: () => this.#store[id as keyof S],
-          setPluginState: (newPluginState) => {
-            this.#setPluginState(id as keyof S, newPluginState, false);
-          },
-        });
-      } else {
-        plugin.afterDraw?.({ ctx, frame, scene, getStore });
-      }
+    for (const { id, plugin } of this.#plugins) {
+      plugin.afterDraw?.({
+        id,
+        ctx,
+        frame,
+        scene,
+        getStore,
+        getPluginState: () => this.#store[id as keyof S],
+        setPluginState: (newPluginState) => {
+          this.#setPluginState(id as keyof S, newPluginState, false);
+        },
+      });
     }
   }
 }

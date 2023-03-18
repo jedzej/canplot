@@ -1,16 +1,16 @@
-import { MakeScene, Plot, PlotStaticConfig } from "@canplot/core";
+import { Plot, PlotStaticConfig, Scene } from "@canplot/core";
 import { RefObject, useLayoutEffect, useRef } from "react";
 
 export type UsePlotStaticConfig = Omit<PlotStaticConfig, "canvas"> & {
   canvasRef?: RefObject<HTMLCanvasElement>;
 };
 
-export const usePlot = <S extends Record<string, unknown>, SS extends S>(
-  makePlot: () => Plot<SS>,
-  makeScene: MakeScene<SS>,
+export const usePlot = <S extends Record<string, unknown>>(
+  makePlot: () => Plot<S>,
+  makeScene: (state: S) => Scene,
   deps: any[]
 ) => {
-  const plotInstance = useRef<Plot<SS>>();
+  const plotInstance = useRef<Plot<S>>();
 
   useLayoutEffect(() => {
     if (!plotInstance.current) {
