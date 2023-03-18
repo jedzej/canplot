@@ -11,7 +11,7 @@ export const scatterPlotter = ({
   radius = 3,
 }: ScatterPlotterOpts = {}): Plotter => {
   return function scatterPlotterImpl(frame, singleSeries, xScale, yScale) {
-    const ctx = frame.ctx;
+    const { ctx, dpr } = frame;
     ctx.save();
     ctx.beginPath();
     applyStyles(ctx, style);
@@ -24,8 +24,8 @@ export const scatterPlotter = ({
       }
       const xPos = valToPos(frame, x, xScale.id);
       const yPos = valToPos(frame, y, yScale.id);
-      ctx.moveTo(xPos + radius, yPos);
-      ctx.arc(xPos, yPos, radius, 0, 2 * Math.PI);
+      ctx.moveTo(dpr * (xPos + radius), dpr * yPos);
+      ctx.arc(dpr * xPos, dpr * yPos, dpr * radius, 0, 2 * Math.PI);
     }
     ctx.closePath();
     ctx.stroke();

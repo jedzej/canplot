@@ -7,7 +7,13 @@ import {
   DEFAULT_SPLIT_SPACE,
   DEFAULT_TICK_SIZE,
 } from "./defaults";
-import { applyStyles, getScaleLimits, isXScale, pxToValDistance, valToPos } from "./helpers";
+import {
+  applyStyles,
+  getScaleLimits,
+  isXScale,
+  pxToValDistance,
+  valToPos,
+} from "./helpers";
 import {
   Frame,
   PlotAxis,
@@ -63,7 +69,7 @@ const drawYTicks = (
   scale: FrameScale,
   x: number
 ) => {
-  const { ctx } = frame;
+  const { ctx, dpr } = frame;
   const tickSize = axis.tickSize ?? DEFAULT_TICK_SIZE;
   const x0 = x;
   const x1 = isPrimary(axis) ? x - tickSize : x + tickSize;
@@ -74,7 +80,7 @@ const drawYTicks = (
     [];
 
   const labels = (axis.tickFormat ?? tickFormat)({
-    frame: frame,
+    frame,
     scale,
     ticks,
   });
@@ -86,8 +92,8 @@ const drawYTicks = (
 
   for (let i = 0; i < ticks.length; i++) {
     const y = valToPos(frame, ticks[i], scale.id);
-    ctx.moveTo(x0, y);
-    ctx.lineTo(x1, y);
+    ctx.moveTo(dpr * x0, dpr * y);
+    ctx.lineTo(dpr * x1, dpr * y);
   }
   ctx.stroke();
   ctx.restore();
@@ -104,14 +110,14 @@ const drawYTicks = (
     const y = valToPos(frame, ticks[i], scale.id);
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
-      ctx.fillText(labelLines[j], x1, y + j * multilineGap);
+      ctx.fillText(labelLines[j], dpr * x1, dpr * (y + j * multilineGap));
     }
   }
   ctx.restore();
 };
 
 const drawYAxis = (
-  ctx: CanvasRenderingContext2D,
+  { ctx, dpr }: Frame,
   axis: PlotAxis,
   x: number,
   y0: number,
@@ -120,8 +126,8 @@ const drawYAxis = (
   ctx.save();
   applyStyles(ctx, axis.axisStyle);
   ctx.beginPath();
-  ctx.moveTo(x, y0);
-  ctx.lineTo(x, y1);
+  ctx.moveTo(dpr * x, dpr * y0);
+  ctx.lineTo(dpr * x, dpr * y1);
   ctx.closePath();
   ctx.stroke();
   ctx.restore();
@@ -133,7 +139,7 @@ const drawXTicks = (
   scale: FrameScale,
   y: number
 ) => {
-  const { ctx } = frame;
+  const { ctx, dpr } = frame;
   const position = axis.position ?? DEFAULT_POSITION;
   const tickSize = axis.tickSize ?? DEFAULT_TICK_SIZE;
   const y0 = y;
@@ -141,11 +147,10 @@ const drawXTicks = (
   const multilineGap = axis.multilineGap ?? DEFAULT_MULTILINE_GAP;
 
   const ticks =
-    (axis.genTicks ?? makeGenTicksDefault())({ frame: frame, scale, axis }) ??
-    [];
+    (axis.genTicks ?? makeGenTicksDefault())({ frame, scale, axis }) ?? [];
 
   const labels = (axis.tickFormat ?? tickFormat)({
-    frame: frame,
+    frame,
     scale,
     ticks,
   });
@@ -156,8 +161,8 @@ const drawXTicks = (
   ctx.beginPath();
   for (let i = 0; i < ticks.length; i++) {
     const x = valToPos(frame, ticks[i], scale.id);
-    ctx.moveTo(x, y0);
-    ctx.lineTo(x, y1);
+    ctx.moveTo(dpr * x, dpr * y0);
+    ctx.lineTo(dpr * x, dpr * y1);
   }
   ctx.stroke();
   ctx.restore();
@@ -174,7 +179,7 @@ const drawXTicks = (
     const x = valToPos(frame, ticks[i], scale.id);
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
-      ctx.fillText(labelLines[j], x, y1 + j * multilineGap);
+      ctx.fillText(labelLines[j], dpr * x, dpr * (y1 + j * multilineGap));
     }
   }
   ctx.restore();
@@ -212,7 +217,7 @@ const drawXLabel = (frame: Frame, axis: PlotAxis, y: number) => {
 };
 
 const drawXAxis = (
-  ctx: CanvasRenderingContext2D,
+  { ctx, dpr }: Frame,
   axis: PlotAxis,
   y: number,
   x0: number,
@@ -221,8 +226,8 @@ const drawXAxis = (
   ctx.save();
   applyStyles(ctx, axis.axisStyle);
   ctx.beginPath();
-  ctx.moveTo(x0, y);
-  ctx.lineTo(x1, y);
+  ctx.moveTo(dpr * x0, dpr * y);
+  ctx.lineTo(dpr * x1, dpr * y);
   ctx.closePath();
   ctx.stroke();
   ctx.restore();
@@ -260,14 +265,7 @@ const drawYLabel = (frame: Frame, axis: PlotAxis, x: number) => {
 };
 
 export const drawAxes = (frame: Frame) => {
-  const {
-    ctx,
-    chartArea,
-    canvasSize,
-    padding,
-    axes,
-    scales
-  } = frame;
+  const { chartArea, canvasSize, padding, axes, scales } = frame;
   const chartAreaLeft = chartArea.x;
   const chartAreaRight = chartArea.x + chartArea.width;
   const chartAreaTop = chartArea.y;
@@ -289,7 +287,7 @@ export const drawAxes = (frame: Frame) => {
       if (position === "primary") {
         currentBottomOffset -= size;
         drawXAxis(
-          ctx,
+          frame,
           axis,
           currentBottomOffset,
           chartAreaLeft,
@@ -299,19 +297,31 @@ export const drawAxes = (frame: Frame) => {
         drawXLabel(frame, axis, currentBottomOffset);
       } else {
         currentTopOffset += size;
-        drawXAxis(ctx, axis, currentTopOffset, chartAreaLeft, chartAreaRight);
+        drawXAxis(frame, axis, currentTopOffset, chartAreaLeft, chartAreaRight);
         drawXTicks(frame, axis, scale, currentTopOffset);
         drawXLabel(frame, axis, currentTopOffset);
       }
     } else {
       if (position === "primary") {
         currentLeftOffset += size;
-        drawYAxis(ctx, axis, currentLeftOffset, chartAreaTop, chartAreaBottom);
+        drawYAxis(
+          frame,
+          axis,
+          currentLeftOffset,
+          chartAreaTop,
+          chartAreaBottom
+        );
         drawYTicks(frame, axis, scale, currentLeftOffset);
         drawYLabel(frame, axis, currentLeftOffset);
       } else {
         currentRightOffset -= size;
-        drawYAxis(ctx, axis, currentRightOffset, chartAreaTop, chartAreaBottom);
+        drawYAxis(
+          frame,
+          axis,
+          currentRightOffset,
+          chartAreaTop,
+          chartAreaBottom
+        );
         drawYTicks(frame, axis, scale, currentRightOffset);
         drawYLabel(frame, axis, currentRightOffset);
       }

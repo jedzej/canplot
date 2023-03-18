@@ -56,7 +56,7 @@ export const linePlotter = ({
   gapDistance = Infinity,
 }: LinePlotterOpts = {}): Plotter => {
   return function linePlotterImpl(frame, series, xScale, yScale) {
-    const ctx = frame.ctx;
+    const { ctx, dpr, chartArea } = frame;
     const length = Math.min(series.x.length, series.y.length);
     const x0 = valToPos(frame, series.x[0]!, xScale.id);
     const y0 = valToPos(frame, series.y[0]!, yScale.id);
@@ -66,15 +66,15 @@ export const linePlotter = ({
     applyStyles(ctx, style);
     const clipPath = new Path2D();
     clipPath.rect(
-      frame.chartArea.x,
-      frame.chartArea.y,
-      frame.chartArea.width,
-      frame.chartArea.height
+      dpr * chartArea.x,
+      dpr * chartArea.y,
+      dpr * chartArea.width,
+      dpr * chartArea.height
     );
     ctx.clip(clipPath);
     ctx.beginPath();
 
-    ctx.moveTo(x0, y0);
+    ctx.moveTo(dpr * x0, dpr * y0);
     for (let i = 1; i < length; i++) {
       const x = series.x[i];
       const y = series.y[i];
@@ -83,9 +83,9 @@ export const linePlotter = ({
 
       const distance = series.x[i] - series.x[i - 1];
       if (distance > gapDistance) {
-        ctx.moveTo(posX, posY);
+        ctx.moveTo(dpr * posX, dpr * posY);
       } else {
-        ctx.lineTo(posX, posY);
+        ctx.lineTo(dpr * posX, dpr * posY);
       }
     }
     ctx.stroke();
@@ -119,8 +119,8 @@ export const linePlotter = ({
       }
       const posX = valToPos(frame, x, xScale.id);
       const posY = valToPos(frame, y, yScale.id);
-      ctx.moveTo(posX + radius, posY);
-      ctx.arc(posX, posY, radius, 0, 2 * Math.PI);
+      ctx.moveTo(dpr * (posX + radius), dpr * posY);
+      ctx.arc(dpr * posX, dpr * posY, dpr * radius, 0, 2 * Math.PI);
     }
 
     ctx.fill();

@@ -126,6 +126,7 @@ export type Scene = {
 
 export type Frame = {
   ctx: CanvasRenderingContext2D;
+  dpr: number;
   canvasSize: Size;
   chartArea: {
     x: number;

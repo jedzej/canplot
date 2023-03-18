@@ -17,7 +17,6 @@ type YSpan = {
 };
 
 type SpanFacetParams = {
-  frame: Frame;
   x?: XSpan;
   y?: YSpan;
   style?: Style;
@@ -25,7 +24,7 @@ type SpanFacetParams = {
 
 export const scaledSpanFacet = ({ x, y, style }: SpanFacetParams) =>
   function scaledSpanFacetImpl(frame: Frame) {
-    const { ctx, chartArea } = frame;
+    const { ctx, chartArea, dpr } = frame;
     let x0 = chartArea.x;
     let x1 = chartArea.x + chartArea.width;
     let y0 = chartArea.y;
@@ -53,6 +52,6 @@ export const scaledSpanFacet = ({ x, y, style }: SpanFacetParams) =>
       ...style,
     });
     ctx.beginPath();
-    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.fillRect(dpr * x0, dpr * y0, dpr * (x1 - x0), dpr * (y1 - y0));
     ctx.restore();
   };

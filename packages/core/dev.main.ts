@@ -4,7 +4,7 @@ import {
   linePlotter,
   spanSelectPlugin,
   Plot,
-  crosshairFacet,
+  absoluteCrosshairFacet,
   domOverlayPlugin,
   hoverStatefulPlugin,
   hoverStatelessPlugin,
@@ -63,7 +63,7 @@ const plot = new Plot({
         if (hover.position && spanSelect.phase === "idle") {
           frame.facets.push({
             layer: "bottom",
-            plotter: crosshairFacet({
+            plotter: absoluteCrosshairFacet({
               x: hover.position.canvas.x,
               y: hover.position.canvas.y,
             }),
@@ -72,7 +72,7 @@ const plot = new Plot({
         if (spanSelect.phase === "active") {
           frame.facets.push({
             layer: "bottom",
-            plotter: crosshairFacet({
+            plotter: absoluteCrosshairFacet({
               x:
                 spanSelect.dimension !== "y"
                   ? spanSelect.start.canvas.x
@@ -88,7 +88,7 @@ const plot = new Plot({
           });
           frame.facets.push({
             layer: "bottom",
-            plotter: crosshairFacet({
+            plotter: absoluteCrosshairFacet({
               x:
                 spanSelect.dimension !== "y"
                   ? spanSelect.end.canvas.x
@@ -151,10 +151,10 @@ plot.draw((state) => {
       plotter: (frame) => {
         frame.ctx.fillStyle = "orange";
         frame.ctx.fillRect(
-          position.canvas.x - 5,
-          position.canvas.y - 5,
-          10,
-          10
+          frame.dpr * (position.canvas.x - 5),
+          frame.dpr * (position.canvas.y - 5),
+          frame.dpr * 10,
+          frame.dpr * 10
         );
       },
     });
@@ -183,7 +183,7 @@ plot.draw((state) => {
         xScaleId: "x-1",
         yScaleId: "y-1",
         x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        y: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        y: [1, 2, 1, 2, 1, 2, 1, 2, 1, 5],
         plotter: linePlotter(),
       },
     ],

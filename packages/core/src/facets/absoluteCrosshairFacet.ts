@@ -7,20 +7,20 @@ type SpanFacetParams = {
   style?: Style;
 };
 
-export const crosshairFacet = ({ x, y, style }: SpanFacetParams) =>
+export const absoluteCrosshairFacet = ({ x, y, style }: SpanFacetParams) =>
   function crosshairFacetImpl(frame: Frame) {
     if (x === undefined && y === undefined) return;
-    const { ctx, chartArea } = frame;
+    const { ctx, dpr, chartArea } = frame;
     ctx.save();
     applyStyles(ctx, style);
     ctx.beginPath();
     if (typeof x === "number") {
-      ctx.moveTo(x, chartArea.y);
-      ctx.lineTo(x, chartArea.y + chartArea.height);
+      ctx.moveTo(dpr * x, dpr * chartArea.y);
+      ctx.lineTo(dpr * x, dpr * (chartArea.y + chartArea.height));
     }
     if (typeof y === "number") {
-      ctx.moveTo(chartArea.x, y);
-      ctx.lineTo(chartArea.x + chartArea.width, y);
+      ctx.moveTo(dpr * chartArea.x, dpr * y);
+      ctx.lineTo(dpr * (chartArea.x + chartArea.width), dpr * y);
     }
     ctx.stroke();
     ctx.restore();

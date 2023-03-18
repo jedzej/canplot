@@ -1,6 +1,5 @@
-import { DEFAULT_PADDING } from "./defaults";
 import { CursorPosition } from "./main";
-import { Frame, Scene, Style, XScaleId, YScaleId, ScaleId } from "./types";
+import { Frame, Style, XScaleId, YScaleId, ScaleId } from "./types";
 import { clamp, findClosestIndex } from "./utils";
 
 export const isXScale = (scaleId: string): scaleId is XScaleId =>
@@ -67,32 +66,19 @@ export const posToVal = (frame: Frame, pos: number, scaleId: ScaleId) => {
 };
 
 export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
+  const dpr = window.devicePixelRatio || 1;
   ctx.lineCap = style?.lineCap ?? "butt";
-  ctx.lineDashOffset = style?.lineDashOffset ?? 0;
+  ctx.lineDashOffset = dpr * (style?.lineDashOffset ?? 0);
   ctx.lineJoin = style?.lineJoin ?? "miter";
-  ctx.lineWidth = style?.lineWidth ?? 1;
-  ctx.miterLimit = style?.miterLimit ?? 10;
+  ctx.lineWidth = dpr * (style?.lineWidth ?? 1);
+  ctx.miterLimit = dpr * (style?.miterLimit ?? 10);
   ctx.strokeStyle = style?.strokeStyle ?? "black";
   ctx.fillStyle = style?.fillStyle ?? ctx.strokeStyle;
-  ctx.font = style?.font ?? "10px sans-serif";
+  ctx.font = style?.font ?? `${dpr * 10}px sans-serif`;
   ctx.textAlign = style?.textAlign ?? "start";
   ctx.direction = style?.direction ?? "inherit";
   ctx.textBaseline = style?.textBaseline ?? "alphabetic";
   ctx.fontKerning = style?.fontKerning ?? "auto";
-};
-
-export const normalizePadding = (padding: Scene["padding"]) => {
-  if (typeof padding === "number" || typeof padding === "undefined") {
-    const paddingWithDefault = padding ?? DEFAULT_PADDING;
-    return {
-      top: paddingWithDefault,
-      right: paddingWithDefault,
-      bottom: paddingWithDefault,
-      left: paddingWithDefault,
-    };
-  }
-
-  return { ...padding };
 };
 
 type DataPoint = { x: number; y: number };
@@ -103,7 +89,7 @@ export const findClosestDataPoint = (
   toleranceXPx = 100,
   toleranceYPx = Infinity
 ): (DataPoint | undefined)[] => {
-  const { series } = frame;
+  const { series, dpr } = frame;
   if (!position) {
     return series.map(() => undefined);
   }
@@ -117,13 +103,13 @@ export const findClosestDataPoint = (
     const idx = findClosestIndex(series.x, position.scaled[series.xScaleId]);
     if (Number.isFinite(toleranceXPx)) {
       const xPos = valToPos(frame, series.x[idx], series.xScaleId);
-      if (Math.abs(position.canvas.x - xPos) > toleranceXPx) {
+      if (Math.abs(position.canvas.x - xPos) > dpr * toleranceXPx) {
         return undefined;
       }
     }
     if (Number.isFinite(toleranceYPx)) {
       const yPos = valToPos(frame, series.y[idx], series.yScaleId);
-      if (Math.abs(position.canvas.y - yPos) > toleranceYPx) {
+      if (Math.abs(position.canvas.y - yPos) > dpr * toleranceYPx) {
         return undefined;
       }
     }

@@ -29,7 +29,11 @@ const drawFacets = (frame: Frame, layer: FacetLayer) => {
   }
 };
 
-const sceneToFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
+const sceneToFrame = (
+  scene: Scene,
+  ctx: CanvasRenderingContext2D,
+  dpr: number
+): Frame => {
   const padding = scene.padding;
   let leftAxesSize = 0;
   let rightAxesSize = 0;
@@ -56,12 +60,13 @@ const sceneToFrame = (scene: Scene, ctx: CanvasRenderingContext2D): Frame => {
   const canvas = ctx.canvas;
 
   const canvasSize = {
-    width: canvas.width,
-    height: canvas.height,
+    width: canvas.width / dpr,
+    height: canvas.height / dpr,
   };
 
   const frameNoScales: Omit<Frame, "scales"> = {
     ctx,
+    dpr,
     chartArea: {
       x: leftAxesSize + padding.left,
       y: topAxesSize + padding.top,
@@ -138,7 +143,7 @@ export class Plot<S extends Record<string, unknown>> {
     this.parentResizeObserver?.disconnect();
 
     const getStore = () => this.#store;
-    const ctx = this.getCanvas().getContext("2d")!;
+    const ctx = this.#getCtx();
     for (const [id, plugin] of this.#plugins) {
       if (isStatefulPlugin(plugin)) {
         plugin.deinit?.({
@@ -166,15 +171,18 @@ export class Plot<S extends Record<string, unknown>> {
 
   attach(canvas: HTMLCanvasElement) {
     this.#logger?.log("attach: Attaching to canvas in state", this.#phase);
+    const dpr = window.devicePixelRatio;
     switch (this.#phase) {
       case "not-attached":
         this.#canvas = canvas;
         const { width: dimW, height: dimH } = this.#dimensions;
         if (typeof dimW === "number" && Number.isFinite(dimW)) {
-          canvas.width = dimW;
+          canvas.width = dpr * dimW;
+          canvas.style.width = `${dimW}px`;
         }
         if (typeof dimH === "number" && Number.isFinite(dimH)) {
-          canvas.height = dimH;
+          canvas.height = dpr * dimH;
+          canvas.style.height = `${dimH}px`;
         }
         if (dimW === "auto" || dimH === "auto") {
           this.parentResizeObserver = new ResizeObserver((entries) => {
@@ -195,7 +203,10 @@ export class Plot<S extends Record<string, unknown>> {
               this.#redraw();
             }
           });
-          this.parentResizeObserver.observe(canvas.parentElement!);
+          if (!canvas.parentElement) {
+            throw new Error("Canvas must be attached to the DOM");
+          }
+          this.parentResizeObserver.observe(canvas.parentElement);
         } else {
           this.#phase = "initializing";
           this.#redraw();
@@ -207,6 +218,14 @@ export class Plot<S extends Record<string, unknown>> {
       case "destroyed":
         throw new Error(`Invalid phase: ${this.#phase}`);
     }
+  }
+
+  #getCtx(): CanvasRenderingContext2D {
+    const ctx = this.getCanvas().getContext("2d");
+    if (!ctx) {
+      throw new Error("Failed to get 2d context");
+    }
+    return ctx;
   }
 
   getCanvas(): HTMLCanvasElement {
@@ -259,7 +278,7 @@ export class Plot<S extends Record<string, unknown>> {
         setPluginState: (state) => {
           this.#setPluginState(idMap.get(pluginInitializer)!, state);
         },
-        ctx: this.getCanvas().getContext("2d")!,
+        ctx: this.#getCtx(),
       });
       if (!plugin) {
         continue;
@@ -319,7 +338,7 @@ export class Plot<S extends Record<string, unknown>> {
   async #actuallyDraw(makeScene: MakeScene<S>) {
     const canvas = this.getCanvas();
     const size = this.getSize();
-    const ctx = canvas.getContext("2d")!;
+    const ctx = this.#getCtx();
 
     const getStore = () => this.#store;
     const makePluginStatefulPartial = <ID extends keyof S>(
@@ -333,9 +352,13 @@ export class Plot<S extends Record<string, unknown>> {
       },
     });
 
-    if (canvas.width !== size.width || canvas.height !== size.height) {
-      canvas.width = size.width;
-      canvas.height = size.height;
+    const dpr = window.devicePixelRatio;
+
+    const dprAwareWidth = dpr * size.width;
+    const dprAwareHeight = dpr * size.height;
+    if (canvas.width !== dprAwareWidth || canvas.height !== dprAwareHeight) {
+      canvas.width = dprAwareWidth;
+      canvas.height = dprAwareHeight;
     }
 
     // BEFORE DRAW
@@ -374,10 +397,7 @@ export class Plot<S extends Record<string, unknown>> {
     }, initialScene);
 
     // TRANSFORM FRAME
-    const initialFrame = sceneToFrame(
-      scene,
-      this.getCanvas().getContext("2d")!
-    );
+    const initialFrame = sceneToFrame(scene, ctx, window.devicePixelRatio || 1);
     const frame = this.#plugins.reduce((frame, [id, plugin]) => {
       try {
         if (isStatefulPlugin(plugin)) {
@@ -399,7 +419,7 @@ export class Plot<S extends Record<string, unknown>> {
     }, initialFrame);
 
     // CLEAR CANVAS
-    ctx.clearRect(0, 0, size.width, size.height);
+    ctx.clearRect(0, 0, dprAwareWidth, dprAwareWidth);
 
     if (frame.chartArea.height > 0 && frame.chartArea.width > 0) {
       // DRAW BOTTOM FACETS
