@@ -7,14 +7,13 @@ import {
   FacetLayer,
   Flatten,
   Frame,
-  MakePlugin,
   MakeScene,
-  MakeStatefulPlugin,
+  MakePlugin,
   PlotBuilderPlugin,
   PlotStaticConfig,
   Scene,
   Size,
-  StatefulPlotBuilderPlugin,
+  Plugin,
 } from "./types";
 
 const drawFacets = (frame: Frame, layer: FacetLayer) => {
@@ -105,7 +104,7 @@ const sceneToFrame = (
 
 const isStatefulPlugin = <ID extends string, PS, S>(
   plugin: PlotBuilderPlugin<ID, PS, S>
-): plugin is StatefulPlotBuilderPlugin<ID, PS, S> => {
+): plugin is Plugin<ID, PS, S> => {
   return "initialState" in plugin;
 };
 
@@ -250,9 +249,9 @@ export class Plot<S extends Record<string, unknown>> {
 
   use<PS, ID extends string>(
     id: ID,
-    makePlugin: MakeStatefulPlugin<ID, PS, S>
+    makePlugin: MakePlugin<ID, PS, S>
   ): Plot<Flatten<S & Record<ID, PS>>>;
-  use<PS>(makePlugin: MakeStatefulPlugin<never, PS, S>): Plot<S>;
+  use<PS>(makePlugin: MakePlugin<never, PS, S>): Plot<S>;
   use(arg1: any, arg2?: any): Plot<S> {
     if (typeof arg1 === "string") {
       this.#pluginsInitializers.push([arg1, arg2]);

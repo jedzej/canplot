@@ -143,7 +143,7 @@ export type Frame = {
 
 export type PlotBuilderPlugin<ID extends string, PS, S = unknown> =
   | StatelessPlotBuilderPlugin<S>
-  | StatefulPlotBuilderPlugin<ID, PS, S>;
+  | Plugin<ID, PS, S>;
 
 export type StatelessPlotBuilderPlugin<S = unknown> = {
   transformScene?: (opts: {
@@ -170,7 +170,7 @@ export type StatelessPlotBuilderPlugin<S = unknown> = {
   deinit?: (opts: { ctx: CanvasRenderingContext2D; getStore: () => S }) => void;
 };
 
-export type StatefulPlotBuilderPlugin<ID extends string|undefined, PS, S = unknown> = {
+export type Plugin<ID extends string | undefined, PS, S = unknown> = {
   initialState: PS;
   transformScene?: (opts: {
     id: ID;
@@ -211,23 +211,16 @@ export type StatefulPlotBuilderPlugin<ID extends string|undefined, PS, S = unkno
   }) => void;
 };
 
-export type MakeStatefulPlugin<ID extends string|undefined, PS, S = unknown> = (opts: {
+export type MakePlugin<
+  ID extends string | undefined,
+  PS,
+  S = unknown
+> = (opts: {
   getStore: () => S;
   setPluginState: (newState: PS) => void;
   getPluginState: () => PS;
   ctx: CanvasRenderingContext2D;
-}) => StatefulPlotBuilderPlugin<ID, PS, S>;
-
-export type MakeStatelessPlugin<S = unknown> = (opts: {
-  getStore: () => S;
-  ctx: CanvasRenderingContext2D;
-}) => StatelessPlotBuilderPlugin<S> | void;
-
-export type MakePlugin<
-  ID extends string = never,
-  PS = never,
-  S = unknown
-> = ID extends never ? MakeStatelessPlugin<S> : MakeStatefulPlugin<ID, PS, S>;
+}) => Plugin<ID, PS, S>;
 
 export type Flatten<T> = {
   [K in keyof T]: T[K];

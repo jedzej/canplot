@@ -6,8 +6,7 @@ import {
   Plot,
   absoluteCrosshairFacet,
   domOverlayPlugin,
-  hoverStatefulPlugin,
-  hoverStatelessPlugin,
+  hoverPlugin,
 } from "./src/main";
 import { Facet } from "./src/types";
 
@@ -16,7 +15,7 @@ const plot = new Plot({
   dimensions: { width: "auto", height: 200 },
   logger: false,
 })
-  .useStateful("sizer")<{ width: number; height: number }>(({ ctx }) => {
+  .use<{ width: number; height: number }, "sizer">("sizer", ({ ctx }) => {
     return {
       initialState: { width: ctx.canvas.width, height: ctx.canvas.height },
       beforeDraw: ({ setPluginState }) => {
@@ -28,13 +27,13 @@ const plot = new Plot({
     };
   })
   .use(
-    hoverStatelessPlugin({
+    hoverPlugin({
       onHover: (position) => {
         console.log("hover stateless", position);
       },
     })
   )
-  .useStateful("hover")(hoverStatefulPlugin())
+  .use("hover", hoverPlugin())
   .use(
     clickPlugin({
       onClick: (position) => {
@@ -42,8 +41,9 @@ const plot = new Plot({
       },
     })
   )
-  .useStateful("spanSelect")(spanSelectPlugin({}))
-  .useStateful("overlay")(
+  .use("spanSelect", spanSelectPlugin({}))
+  .use(
+    "overlay",
     domOverlayPlugin({
       className: "bgcyan",
     })

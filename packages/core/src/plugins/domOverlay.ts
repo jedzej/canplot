@@ -1,4 +1,4 @@
-import { Frame, MakeStatefulPlugin } from "../types";
+import { Frame, MakePlugin } from "../types";
 
 const defaultPlaceElement = ({
   frame,
@@ -37,7 +37,7 @@ export const domOverlayPlugin =
     className?: string;
     overlayElement?: HTMLDivElement;
     placeElement?: (params: { frame: Frame; element: HTMLDivElement }) => void;
-  }): MakeStatefulPlugin<ID, { element: HTMLDivElement }> =>
+  }): MakePlugin<ID, { element: HTMLDivElement }> =>
   ({ ctx }) => {
     const shouldInitializeOwnElement = !overlayElement;
     let element = overlayElement ?? document.createElement("div");

@@ -1,10 +1,5 @@
 import { posToVal } from "../helpers";
-import {
-  Frame,
-  MakeStatefulPlugin,
-  MakeStatelessPlugin,
-  ScaleId,
-} from "../types";
+import { Frame, MakePlugin, ScaleId } from "../types";
 import { clamp } from "../utils";
 
 type XY = {
@@ -86,15 +81,15 @@ type HoverData = {
   frame: Frame;
 };
 
-export const hoverStatelessPlugin =
-  ({
+export const hoverPlugin =
+  <ID extends string>({
     clampStrategy = "drop",
     onHover,
   }: {
     clampStrategy?: "clamp" | "drop" | "pass";
-    onHover: (data: HoverData) => void;
-  }): MakeStatelessPlugin =>
-  ({ ctx }) => {
+    onHover?: (data: HoverData) => void;
+  } = {}): MakePlugin<ID, HoverPluginState> =>
+  ({ ctx, setPluginState }) => {
     const canvas = ctx.canvas;
     const store = {
       lastFrame: undefined as Frame | undefined,
@@ -102,19 +97,20 @@ export const hoverStatelessPlugin =
 
     const mouseMoveListener = (e: MouseEvent): void => {
       if (!store.lastFrame) return;
-      const position = eventToPositions(
+      const rawPosition = eventToPositions(
         e,
         store.lastFrame,
         clampStrategy === "clamp"
       );
-      const effectivePosition =
-        clampStrategy === "drop" && position?.constrained === "out-of-chart"
+      const position =
+        clampStrategy === "drop" && rawPosition?.constrained === "out-of-chart"
           ? undefined
-          : position;
-      onHover({
-        position: effectivePosition,
+          : rawPosition;
+      onHover?.({
+        position: position,
         frame: store.lastFrame,
       });
+      setPluginState({ position });
     };
     canvas.addEventListener("mousemove", mouseMoveListener);
 
@@ -124,10 +120,12 @@ export const hoverStatelessPlugin =
         position: undefined,
         frame: store.lastFrame,
       });
+      setPluginState({ position: undefined });
     };
     canvas.addEventListener("mouseout", mouseOutListener);
 
     return {
+      initialState: {},
       afterDraw: ({ frame }) => {
         store.lastFrame = frame;
       },
@@ -135,30 +133,6 @@ export const hoverStatelessPlugin =
         canvas.removeEventListener("mousemove", mouseMoveListener);
         canvas.removeEventListener("mouseout", mouseOutListener);
       },
-    };
-  };
-
-export const hoverStatefulPlugin =
-  <ID extends string>({
-    clampStrategy = "drop",
-    onHover,
-  }: {
-    clampStrategy?: "clamp" | "drop" | "pass";
-    onHover?: (data: HoverData) => void;
-  } = {}): MakeStatefulPlugin<ID, HoverPluginState> =>
-  ({ ctx, getStore, setPluginState, getPluginState }) => {
-    const stateLessPlugin =
-      hoverStatelessPlugin({
-        clampStrategy,
-        onHover: (data) => {
-          onHover?.(data);
-          setPluginState({ ...getPluginState(), position: data.position });
-        },
-      })({ ctx, getStore }) ?? {};
-
-    return {
-      initialState: {},
-      ...stateLessPlugin,
     };
   };
 
@@ -171,7 +145,7 @@ export const clickPlugin =
   <S>(opts: {
     onClick?: (data: ClickData) => void;
     clampToChartArea?: boolean;
-  }): MakeStatelessPlugin<S> =>
+  }): MakePlugin<undefined, undefined, S> =>
   ({ ctx }) => {
     const canvas = ctx.canvas;
     const store = {
@@ -193,6 +167,7 @@ export const clickPlugin =
     canvas.addEventListener("click", clickListener);
 
     return {
+      initialState: undefined,
       afterDraw({ frame }) {
         store.lastFrame = frame;
       },
@@ -241,13 +216,11 @@ const positionsToDimension = (
 };
 
 export const spanSelectPlugin =
-  <ID extends string>({
+  <ID extends string, S>({
     onSpanSelect,
-    stateless = false,
   }: {
     onSpanSelect?: (data: SpanSelectData) => void;
-    stateless?: boolean;
-  }): MakeStatefulPlugin<ID, SpanSelectPluginState> =>
+  }): MakePlugin<ID, SpanSelectPluginState, S> =>
   ({ ctx, setPluginState, getPluginState }) => {
     const canvas = ctx.canvas;
     const store = {
@@ -278,17 +251,15 @@ export const spanSelectPlugin =
         shiftKey: e.shiftKey,
         altKey: e.altKey,
       });
-      if (!stateless) {
-        setPluginState({
-          phase: "active",
-          dimension: "xy",
-          start: store.start,
-          end: store.start,
-          ctrlKey: e.ctrlKey,
-          shiftKey: e.shiftKey,
-          altKey: e.altKey,
-        });
-      }
+      setPluginState({
+        phase: "active",
+        dimension: "xy",
+        start: store.start,
+        end: store.start,
+        ctrlKey: e.ctrlKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+      });
     };
     canvas.addEventListener("mousedown", mouseDownListener);
 
@@ -301,28 +272,18 @@ export const spanSelectPlugin =
       store.altKey = e.altKey;
       store.shiftKey = e.shiftKey;
       store.ctrlKey = e.ctrlKey;
-      const dimension = positionsToDimension(store.start, position);
-      onSpanSelect?.({
-        phase: "move",
-        dimension,
+
+      const payload = {
+        dimension: positionsToDimension(store.start, position),
         start: store.start,
         end: store.end,
         frame: store.lastFrame,
         ctrlKey: e.ctrlKey,
         shiftKey: e.shiftKey,
         altKey: e.altKey,
-      });
-      if (!stateless) {
-        setPluginState({
-          phase: "active",
-          dimension,
-          start: store.start,
-          end: store.end,
-          ctrlKey: e.ctrlKey,
-          shiftKey: e.shiftKey,
-          altKey: e.altKey,
-        });
-      }
+      } as const;
+      onSpanSelect?.({ phase: "move", ...payload });
+      setPluginState({ phase: "active", ...payload });
     };
     canvas.addEventListener("mousemove", mouseMoveListener);
 
@@ -343,16 +304,15 @@ export const spanSelectPlugin =
       store.altKey = e.altKey;
       store.shiftKey = e.shiftKey;
       store.ctrlKey = e.ctrlKey;
-      if (!stateless) {
-        const pluginState = getPluginState();
-        if (pluginState.phase === "active") {
-          setPluginState({
-            ...pluginState,
-            ctrlKey: e.ctrlKey,
-            shiftKey: e.shiftKey,
-            altKey: e.altKey,
-          });
-        }
+
+      const pluginState = getPluginState();
+      if (pluginState.phase === "active") {
+        setPluginState({
+          ...pluginState,
+          ctrlKey: e.ctrlKey,
+          shiftKey: e.shiftKey,
+          altKey: e.altKey,
+        });
       }
     };
     document.addEventListener("keydown", keyUpDownListener);
@@ -380,11 +340,9 @@ export const spanSelectPlugin =
       store.altKey = false;
       store.shiftKey = false;
       store.ctrlKey = false;
-      if (!stateless) {
-        setPluginState({
-          phase: "idle",
-        });
-      }
+      setPluginState({
+        phase: "idle",
+      });
     };
     document.addEventListener("mouseup", mouseUpListener);
 

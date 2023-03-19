@@ -4,7 +4,7 @@ import {
   Plot,
   Scene,
   absoluteCrosshairFacet,
-  hoverStatefulPlugin,
+  hoverPlugin,
   linePlotter,
   scaledSpanFacet,
   scatterPlotter,
@@ -26,7 +26,7 @@ const Template: Story = () => {
         canvas: ref.current!,
       }).use(
         "hover",
-        hoverStatefulPlugin({
+        hoverPlugin({
           onHover: (data) => {
             console.log("callback", data);
           },
