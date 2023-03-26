@@ -1,5 +1,5 @@
 export * from "./types";
-export * from "./Plot";
+export * from "./makePlot";
 export * as helpers from "./helpers";
 
 export * from "./time";

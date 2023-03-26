@@ -1,4 +1,5 @@
-import { Frame, MakePlugin } from "../types";
+import { makePlugin } from "../makePlot";
+import { Frame } from "../types";
 
 const defaultPlaceElement = ({
   frame,
@@ -24,40 +25,38 @@ const defaultPlaceElement = ({
   }
 };
 
-export const domOverlayPlugin =
-  <ID extends string = "overlay">({
-    id = "overlay" as ID,
-    captureCursorEvents = false,
-    className,
-    overlayElement,
-    placeElement,
-  }: {
-    id?: ID;
-    captureCursorEvents?: boolean;
-    className?: string;
-    overlayElement?: HTMLDivElement;
-    placeElement?: (params: { frame: Frame; element: HTMLDivElement }) => void;
-  }): MakePlugin<ID, { element: HTMLDivElement }> =>
-  ({ ctx }) => {
-    const shouldInitializeOwnElement = !overlayElement;
-    let element = overlayElement ?? document.createElement("div");
-    if (shouldInitializeOwnElement) {
-      element.style.position = "absolute";
-      element.className = className ?? "";
-      if (!captureCursorEvents) {
-        element.style.pointerEvents = "none";
+export const domOverlayPlugin = ({
+  captureCursorEvents = false,
+  className,
+  overlayElement,
+  placeElement,
+}: {
+  captureCursorEvents?: boolean;
+  className?: string;
+  overlayElement?: HTMLDivElement;
+  placeElement?: (params: { frame: Frame; element: HTMLDivElement }) => void;
+}) =>
+  makePlugin()
+    .output<{ element: HTMLDivElement }>()
+    .make(({ ctx }) => {
+      const shouldInitializeOwnElement = !overlayElement;
+      let element = overlayElement ?? document.createElement("div");
+      if (shouldInitializeOwnElement) {
+        element.style.position = "absolute";
+        element.className = className ?? "";
+        if (!captureCursorEvents) {
+          element.style.pointerEvents = "none";
+        }
+
+        ctx.canvas.after(element);
       }
 
-      ctx.canvas.after(element);
-    }
-
-    return {
-      id,
-      initialState: {
-        element,
-      },
-      afterDraw({ frame }) {
-        (placeElement ?? defaultPlaceElement)({ frame, element });
-      },
-    };
-  };
+      return {
+        defaultOutput: {
+          element,
+        },
+        afterDraw({ frame }) {
+          (placeElement ?? defaultPlaceElement)({ frame, element });
+        },
+      };
+    });

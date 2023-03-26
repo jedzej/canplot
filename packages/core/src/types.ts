@@ -29,12 +29,14 @@ export type YScaleId = `y-${string}`;
 
 export type ScaleId = XScaleId | YScaleId;
 
-export type MakeLimitsOpts = {
-  frame: Omit<Frame, "scales">;
+export type MakeLimitsOpts<TInputs = {}> = {
+  frame: Omit<Frame<TInputs>, "scales">;
   scaleId: ScaleId;
 };
 
-export type MakeLimits = (opts: MakeLimitsOpts) => Limits;
+export type MakeLimits = <TInputs = {}>(
+  opts: MakeLimitsOpts<TInputs>
+) => Limits;
 
 export type SeriesBase = {
   id?: string;
@@ -116,15 +118,16 @@ export type Facet = {
   plotter: (frame: Frame, id?: string) => void;
 };
 
-export type Scene = {
+export type Scene<TInputs = {}> = {
   padding: Padding;
   axes: PlotAxis[];
   scales: SceneScale[];
   facets: Facet[];
   series: SeriesBase[];
+  inputs: TInputs;
 };
 
-export type Frame = {
+export type Frame<TInputs = {}> = {
   ctx: CanvasRenderingContext2D;
   dpr: number;
   canvasSize: Size;
@@ -139,91 +142,181 @@ export type Frame = {
   scales: FrameScale[];
   facets: Facet[];
   series: SeriesBase[];
+  inputs: TInputs;
 };
 
-export type PlotBuilderPlugin<ID extends string, PS, S = unknown> =
-  | StatelessPlotBuilderPlugin<S>
-  | Plugin<ID, PS, S>;
-
-export type StatelessPlotBuilderPlugin<S = unknown> = {
+export type Plugin<
+  ID extends string = never,
+  POut = never,
+  PIn = never,
+  Outputs = {}
+> = {
+  storeKey?: ID;
+  defaultState?: POut;
+  init: (opts: {
+    state: { current: any };
+    ctx: CanvasRenderingContext2D;
+    outputs: Outputs;
+    setOutput: (newOutput: POut) => void;
+  }) =>
+    | void
+    | ((opts: { ctx: CanvasRenderingContext2D; outputs: Outputs }) => void);
   transformScene?: (opts: {
+    state: { current: any };
+    id: ID;
     ctx: CanvasRenderingContext2D;
     scene: Scene;
-    getStore: () => S;
+    outputs: Outputs;
+    input: PIn;
+    output: POut;
+    setOutput: (newOutput: POut) => void;
   }) => void;
   transformFrame?: (opts: {
+    state: { current: any };
+    id: ID;
     ctx: CanvasRenderingContext2D;
     frame: Frame;
     scene: Scene;
-    getStore: () => S;
+    outputs: Outputs;
+    input: PIn;
+    output: POut;
+    setOutput: (newOutput: POut) => void;
   }) => void;
   beforeDraw?: (opts: {
+    state: { current: any };
+    id: ID;
     ctx: CanvasRenderingContext2D;
-    getStore: () => S;
+    outputs: Outputs;
+    input: PIn;
+    output: POut;
+    setOutput: (newOutput: POut) => void;
   }) => void;
   afterDraw?: (opts: {
-    ctx: CanvasRenderingContext2D;
-    frame: Frame;
-    scene: Scene;
-    getStore: () => S;
-  }) => void;
-  deinit?: (opts: { ctx: CanvasRenderingContext2D; getStore: () => S }) => void;
-};
-
-export type Plugin<ID extends string | undefined, PS, S = unknown> = {
-  initialState: PS;
-  transformScene?: (opts: {
-    id: ID;
-    ctx: CanvasRenderingContext2D;
-    scene: Scene;
-    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
-    getPluginState: () => PS;
-  }) => void;
-  transformFrame?: (opts: {
+    state: { current: any };
     id: ID;
     ctx: CanvasRenderingContext2D;
     frame: Frame;
     scene: Scene;
-    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
-    getPluginState: () => PS;
-  }) => void;
-  beforeDraw?: (opts: {
-    id: ID;
-    ctx: CanvasRenderingContext2D;
-    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
-    getPluginState: () => PS;
-    setPluginState: (newState: PS) => void;
-  }) => void;
-  afterDraw?: (opts: {
-    id: ID;
-    ctx: CanvasRenderingContext2D;
-    frame: Frame;
-    scene: Scene;
-    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
-    getPluginState: () => PS;
-    setPluginState: (newState: PS) => void;
-  }) => void;
-  deinit?: (opts: {
-    id: ID;
-    ctx: CanvasRenderingContext2D;
-    getStore: () => ID extends string ? Flatten<S & Record<ID, PS>> : S;
-    getPluginState: () => PS;
+    outputs: Outputs;
+    input: PIn;
+    output: POut;
+    setOutput: (newOutput: POut) => void;
   }) => void;
 };
 
-export type MakePlugin<
-  ID extends string | undefined,
-  PS,
-  S = unknown
-> = (opts: {
-  getStore: () => S;
-  setPluginState: (newState: PS) => void;
-  getPluginState: () => PS;
+type IfDefined<TCond, TIfDefined, TIfNever = {}> = [TCond] extends [never]
+  ? TIfNever
+  : TIfDefined;
+
+type IDInOutPartial<
+  ID extends string = never,
+  TIn = never,
+  TOut = never
+> = IfDefined<ID, { id: ID }> &
+  IfDefined<TOut, { output: TOut; setOutput: (newOutput: TOut) => void }> &
+  IfDefined<TIn, { input: TIn }>;
+
+type TransformSceneOpts<
+  ID extends string = never,
+  TIn = never,
+  TOut = never,
+  TInputs = {}
+> = IDInOutPartial<ID, TIn, TOut> & {
   ctx: CanvasRenderingContext2D;
-}) => Plugin<ID, PS, S>;
+  scene: Scene<TInputs>;
+};
 
-export type Flatten<T> = {
-  [K in keyof T]: T[K];
-} & {};
+type TransformFrameOpts<
+  ID extends string = never,
+  TIn = never,
+  TOut = never,
+  TInputs = {}
+> = IDInOutPartial<ID, TIn, TOut> & {
+  ctx: CanvasRenderingContext2D;
+  scene: Scene<TInputs>;
+  frame: Frame<TInputs>;
+};
 
-export type MakeScene<S> = (state: S) => Scene;
+type BeforeDrawOpts<ID extends string = never, TOut = never> = IDInOutPartial<
+  ID,
+  never,
+  TOut
+> & {
+  ctx: CanvasRenderingContext2D;
+};
+
+type AfterDrawOpts<
+  ID extends string = never,
+  TIn = never,
+  TOut = never,
+  TInputs = {}
+> = IDInOutPartial<ID, TIn, TOut> & {
+  ctx: CanvasRenderingContext2D;
+  frame: Frame<TInputs>;
+  scene: Scene<TInputs>;
+};
+
+export type InstantiatedPlugin<
+  ID extends string = never,
+  TIn = never,
+  TOut = never,
+  TInputs = {}
+> = {
+  transformScene?: (opts: TransformSceneOpts<ID, TIn, TOut, TInputs>) => void;
+  transformFrame?: (opts: TransformFrameOpts<ID, TIn, TOut, TInputs>) => void;
+  beforeDraw?: (opts: BeforeDrawOpts<ID, TOut>) => void;
+  afterDraw?: (opts: AfterDrawOpts<ID, TIn, TOut, TInputs>) => void;
+  deinit?: () => void;
+} & IfDefined<TOut, { defaultOutput: TOut }>;
+
+export type MakePluginOpts<POut = never> = {
+  ctx: CanvasRenderingContext2D;
+} & IfDefined<POut, { setOutput: (newOutput: POut) => void }>;
+
+export type MakePlugin<ID extends string, PIn, POut, TInputs> = (
+  opts: MakePluginOpts<POut>
+) => InstantiatedPlugin<ID, PIn, POut, TInputs>;
+
+export type PluginBuilder<
+  ID extends string = never,
+  TIn = never,
+  TOut = never
+> = {
+  as<T extends string>(id: T): PluginBuilder<T, TIn, TOut>;
+  input<T>(): PluginBuilder<ID, T, TOut>;
+  output<T>(): PluginBuilder<ID, TIn, T>;
+  make: (maker: MakePlugin<ID, TIn, TOut, {}>) => PluginBuilder<ID, TIn, TOut>;
+  __initialize: MakePlugin<ID, TIn, TOut, {}>;
+  __getId: () => ID | undefined;
+};
+
+export type MakeScene<TInputs, TOutputs> = (
+  outputs: TOutputs
+) => Scene<TInputs>;
+
+export type PlotPhase =
+  | "not-attached"
+  | "initializing"
+  | "idle"
+  | "drawing"
+  | "detached";
+
+export type CanPlot<TInputs = {}, TOutputs = {}> = {
+  attach(canvas: HTMLCanvasElement): void;
+  detach(): void;
+  use<ID extends string = never, PIn = undefined, POut = undefined>(
+    plugin: PluginBuilder<ID, PIn, POut>
+  ): IfDefined<
+    ID,
+    CanPlot<
+      IfDefined<
+        PIn,
+        IfDefined<TInputs, TInputs, {}> & Record<ID, PIn>,
+        TInputs
+      >,
+      IfDefined<POut, TOutputs & Record<ID, POut>, TOutputs>
+    >,
+    CanPlot<TInputs, TOutputs>
+  >;
+  draw(makeScene: MakeScene<TInputs, TOutputs>): void;
+};

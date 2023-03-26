@@ -1,162 +1,65 @@
 import {
   absoluteSpanFacet,
-  clickPlugin,
   linePlotter,
   spanSelectPlugin,
-  Plot,
   absoluteCrosshairFacet,
-  domOverlayPlugin,
   hoverPlugin,
+  domOverlayPlugin,
 } from "./src/main";
 import { Facet } from "./src/types";
+import { makePlot } from "./src/makePlot";
 
-const plot = new Plot({
+const plot = makePlot({
   canvas: document.getElementById("canvas")! as HTMLCanvasElement,
   dimensions: { width: "auto", height: 200 },
   logger: false,
 })
-  .use<{ width: number; height: number }, "sizer">("sizer", ({ ctx }) => {
-    return {
-      initialState: { width: ctx.canvas.width, height: ctx.canvas.height },
-      beforeDraw: ({ setPluginState }) => {
-        setPluginState({
-          width: ctx.canvas.width,
-          height: ctx.canvas.height,
-        });
-      },
-    };
-  })
+  .use(spanSelectPlugin({}).as("spanSelect"))
+  .use(hoverPlugin({}).as("hover"))
   .use(
-    hoverPlugin({
-      onHover: (position) => {
-        console.log("hover stateless", position);
-      },
-    })
-  )
-  .use("hover", hoverPlugin())
-  .use(
-    clickPlugin({
-      onClick: (position) => {
-        console.log(position);
-      },
-    })
-  )
-  .use("spanSelect", spanSelectPlugin({}))
-  .use(
-    "overlay",
     domOverlayPlugin({
       className: "bgcyan",
-    })
-  )
-  .use(({ getStore }) => {
-    getStore().overlay.element.innerHTML = "<b>overlay plugin</b>";
-    return {
-      deinit: (props) => {
-        props.getStore().overlay.element.innerHTML = "";
-      },
-    };
-  })
-  .use(({ getStore }) => {
-    return {
-      transformFrame: ({ frame }) => {
-        const { spanSelect, hover } = getStore();
-        if (hover.position && spanSelect.phase === "idle") {
-          frame.facets.push({
-            layer: "bottom",
-            plotter: absoluteCrosshairFacet({
-              x: hover.position.canvas.x,
-              y: hover.position.canvas.y,
-            }),
-          });
-        }
-        if (spanSelect.phase === "active") {
-          frame.facets.push({
-            layer: "bottom",
-            plotter: absoluteCrosshairFacet({
-              x:
-                spanSelect.dimension !== "y"
-                  ? spanSelect.start.canvas.x
-                  : undefined,
-              y:
-                spanSelect.dimension !== "x"
-                  ? spanSelect.start.canvas.y
-                  : undefined,
-              style: {
-                strokeStyle: "rgba(0, 0, 255, 0.8)",
-              },
-            }),
-          });
-          frame.facets.push({
-            layer: "bottom",
-            plotter: absoluteCrosshairFacet({
-              x:
-                spanSelect.dimension !== "y"
-                  ? spanSelect.end.canvas.x
-                  : undefined,
-              y:
-                spanSelect.dimension !== "x"
-                  ? spanSelect.end.canvas.y
-                  : undefined,
-              style: {
-                strokeStyle: "rgba(0, 0, 255, 0.8)",
-              },
-            }),
-          });
-          frame.facets.push({
-            layer: "top",
-            plotter: absoluteSpanFacet({
-              x:
-                spanSelect.dimension === "y"
-                  ? undefined
-                  : {
-                      min: spanSelect.start.canvas.x,
-                      max: spanSelect.end.canvas.x,
-                    },
-              y:
-                spanSelect.dimension === "x"
-                  ? undefined
-                  : {
-                      min: spanSelect.start.canvas.y,
-                      max: spanSelect.end.canvas.y,
-                    },
-              style: {
-                fillStyle: `rgba(${spanSelect.altKey ? 255 : 0}, ${
-                  spanSelect.shiftKey ? 255 : 0
-                }, ${spanSelect.ctrlKey ? 255 : 0}, 0.2)`,
-              },
-            }),
-          });
-        }
-      },
-    };
-  });
+    }).as("domOverlay")
+  );
 
-plot.draw((state) => {
-  const facets: Facet[] = [
-    {
-      layer: "bottom",
-      plotter: absoluteSpanFacet({
-        x: { min: 0, max: state.sizer.width / 2 },
-        y: { min: 0, max: state.sizer.height / 2 },
-        style: {
-          fillStyle: "rgba(255, 0, 0, 0.2)",
-        },
-      }),
-    },
-  ];
-  if (state.hover.position) {
-    const { position } = state.hover;
+plot.draw((outputs) => {
+  const facets: Facet[] = [];
+  if (outputs.hover.position) {
+    const { position } = outputs.hover;
     facets.push({
       layer: "top",
-      plotter: (frame) => {
-        frame.ctx.fillStyle = "orange";
-        frame.ctx.fillRect(
-          frame.dpr * (position.canvas.x - 5),
-          frame.dpr * (position.canvas.y - 5),
-          frame.dpr * 10,
-          frame.dpr * 10
-        );
-      },
+      plotter: absoluteCrosshairFacet({
+        x: position.canvas.x,
+        y: position.canvas.y,
+      }),
+    });
+  }
+  if (outputs.spanSelect.phase === "active") {
+    facets.push({
+      layer: "top",
+      plotter: absoluteSpanFacet({
+        x:
+          outputs.spanSelect.dimension === "x" ||
+          outputs.spanSelect.dimension === "xy"
+            ? {
+                min: outputs.spanSelect.start.canvas.x,
+                max: outputs.spanSelect.end.canvas.x,
+              }
+            : undefined,
+        y:
+          outputs.spanSelect.dimension === "y" ||
+          outputs.spanSelect.dimension === "xy"
+            ? {
+                min: outputs.spanSelect.start.canvas.y,
+                max: outputs.spanSelect.end.canvas.y,
+              }
+            : undefined,
+        style: {
+          fillStyle: `rgba(${outputs.spanSelect.altKey ? 255 : 0}, ${
+            outputs.spanSelect.ctrlKey ? 255 : 0
+          }, ${outputs.spanSelect.shiftKey ? 255 : 0}, 0.2)`,
+        },
+      }),
     });
   }
   return {
@@ -188,5 +91,10 @@ plot.draw((state) => {
       },
     ],
     facets,
+    inputs: {
+      myPlugin: {
+        a: 2,
+      },
+    },
   };
 });
