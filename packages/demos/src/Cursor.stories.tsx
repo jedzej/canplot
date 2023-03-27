@@ -1,24 +1,60 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Meta, Story } from "@storybook/react";
-import { linePlotter, makeCursorPlugin } from "@canplot/core";
-import { usePlot } from "@canplot/react";
+import {
+  linePlotter,
+  hoverPlugin,
+  absoluteCrosshairFacet,
+  Facet,
+} from "@canplot/core";
+import { makeUsePlot } from "@canplot/react";
 
 export default {
   title: "Cursor",
 } as Meta;
 
+const usePlot = makeUsePlot({ dimensions: { height: 400 } }, (plot) =>
+  plot.use(hoverPlugin().as("hover"))
+);
+
 const Template: Story = () => {
   const ref = useRef<HTMLCanvasElement>(null);
 
+  const [yLimit, setYLimit] = useState(20);
+
   usePlot(
-    {
-      dimensions: { height: 400 },
-      canvasRef: ref,
-    },
-    () => {
+    (inputs) => {
+      const facets: Facet[] = [];
+      if (inputs.hover.position) {
+        facets.push({
+          layer: "top",
+          plotter: absoluteCrosshairFacet({
+            x: inputs.hover.position.canvas.x,
+            y: inputs.hover.position.canvas.y,
+          }),
+        });
+      }
+
       return {
-        padding: 10,
-        scales: [{ id: "x-1" }, { id: "x-2" }, { id: "y-1" }, { id: "y-2" }],
+        facets,
+        inputs: {},
+        padding: {
+          top: 10,
+          right: 10,
+          bottom: 10,
+          left: 10,
+        },
+        scales: [
+          { id: "x-1" },
+          { id: "x-2" },
+          {
+            id: "y-1",
+            makeLimits: () => ({
+              min: 0,
+              max: yLimit,
+            }),
+          },
+          { id: "y-2" },
+        ],
         axes: [
           { scaleId: "x-1" },
           { scaleId: "x-2" },
@@ -43,55 +79,10 @@ const Template: Story = () => {
             y: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 20],
           },
         ],
-        plugins: [
-          makeCursorPlugin({
-            onHover: (event) => {
-              const tooltip = document.getElementById("tooltip")!;
-              tooltip.style.pointerEvents = "none";
-              tooltip.style.userSelect = "none";
-
-              tooltip.innerHTML = JSON.stringify(event.position, null, 2);
-              if (event.position) {
-                tooltip.style.display = "block";
-                tooltip.style.left = `${event.position.screen.x}px`;
-                tooltip.style.top = `${event.position.screen.y}px`;
-              } else {
-                tooltip.style.display = "none";
-              }
-            },
-            onClick: (event) => {
-              event.plot.update((old) => ({
-                ...old,
-                facets: [
-                  ...(old.facets ?? []),
-                  {
-                    type: "v-line",
-                    scaleId: "x-1",
-                    x: event.position.scaled["x-1"],
-                    style: { strokeStyle: "#ff000099" },
-                  },
-                ],
-              }));
-            },
-            onDblClick: (event) => {
-              event.plot.update((old) => ({
-                ...old,
-                facets: [
-                  ...(old.facets ?? []),
-                  {
-                    type: "h-line",
-                    scaleId: "y-1",
-                    y: event.position.scaled["y-1"],
-                    style: { strokeStyle: "#00444499" },
-                  },
-                ],
-              }));
-            },
-          }),
-        ],
       };
     },
-    []
+    [yLimit],
+    ref
   );
 
   return (
@@ -106,6 +97,11 @@ const Template: Story = () => {
         }}
       />
       <canvas ref={ref} />
+      <div>
+        <button onClick={() => setYLimit((v) => v - 1)}>-</button>
+        <span>{yLimit}</span>
+        <button onClick={() => setYLimit((v) => v + 1)}>+</button>
+      </div>
     </>
   );
 };

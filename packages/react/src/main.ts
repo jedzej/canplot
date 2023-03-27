@@ -1,1 +1,1 @@
-export * from "./usePlot";
+export * from "./makeUsePlot";
