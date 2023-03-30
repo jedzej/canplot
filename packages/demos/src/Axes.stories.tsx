@@ -1,30 +1,32 @@
-import React from "react";
-import { ComponentMeta, ComponentStory } from "@storybook/react";
-import { PlotPlugin, linePlotter } from "@canplot/core";
-import { animationLoop, EmbeddedPlot } from "./helpers";
+import React, { useEffect, useRef } from "react";
+import { Meta, Story } from "@storybook/react";
+import { linePlotter } from "@canplot/core";
+import { makeUsePlot } from "@canplot/react";
+import { animationLoop } from "./helpers";
+
+const usePlot = makeUsePlot({
+  dimensions: { height: 400 },
+});
+
+type UsePlotMeta<
+  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
+> = Meta<ReturnType<Parameters<T>[0]>>;
+
+type UsePlotStory<
+  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
+> = Story<ReturnType<Parameters<T>[0]>>;
 
 export default {
   title: "Axes",
   args: {
-    dimensions: { height: 400 },
-    plugins: [
-      {
-        initState: () => "asdas",
-        onInit: ({ plot }) =>
-          animationLoop(() => {
-            plot.update((plot) => {
-              plot.series[0].y = new Array(plot.series[0].x.length)
-                .fill(0)
-                .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100));
-              plot.series[1].y = new Array(plot.series[1].x.length)
-                .fill(0)
-                .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100));
-              return plot;
-            });
-          }),
-      } as PlotPlugin<string>,
-    ],
-    padding: 10,
+    padding: {
+      bottom: 10,
+      left: 10,
+      top: 10,
+      right: 10,
+    },
+    facets: [],
+    inputs: [],
     axes: [
       { scaleId: "x-1" },
       { scaleId: "x-1" },
@@ -56,11 +58,42 @@ export default {
       },
     ],
   },
-} as ComponentMeta<typeof EmbeddedPlot>;
+} as UsePlotMeta<typeof usePlot>;
 
-const Template: ComponentStory<typeof EmbeddedPlot> = ({ ...args }) => (
-  <EmbeddedPlot {...args} />
-);
+const Template: UsePlotStory<typeof usePlot> = (scene) => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const plot = usePlot(() => scene, [], ref);
+  useEffect(() => {
+    animationLoop(() => {
+      plot.draw(() => {
+        return {
+          ...scene,
+          series: [
+            {
+              xScaleId: "x-1",
+              yScaleId: "y-1",
+              plotter: linePlotter({ style: { strokeStyle: "blue" } }),
+              x: new Array(1000).fill(0).map((_, i) => i / 10),
+              y: new Array(scene.series[0].x.length)
+                .fill(0)
+                .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100)),
+            },
+            {
+              xScaleId: "x-1",
+              yScaleId: "y-1",
+              plotter: linePlotter({ style: { strokeStyle: "red" } }),
+              x: new Array(100).fill(0).map((_, i) => i),
+              y: new Array(scene.series[1].x.length)
+                .fill(0)
+                .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100)),
+            },
+          ],
+        };
+      });
+    });
+  }, []);
+  return <canvas ref={ref} />;
+};
 
 export const Default = Template.bind({});
 

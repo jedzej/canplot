@@ -1,28 +1,60 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Meta, Story } from "@storybook/react";
 import {
   linePlotter,
   hoverPlugin,
   absoluteCrosshairFacet,
   Facet,
+  spanSelectPlugin,
+  absoluteSpanFacet,
+  makePlot,
 } from "@canplot/core";
-import { makeUsePlot } from "@canplot/react";
 
 export default {
   title: "Cursor",
 } as Meta;
 
-const usePlot = makeUsePlot({ dimensions: { height: 400 } }, (plot) =>
-  plot.use(hoverPlugin().as("hover"))
-);
-
 const Template: Story = () => {
   const ref = useRef<HTMLCanvasElement>(null);
 
-  const [yLimit, setYLimit] = useState(20);
+  const [yLimits, setYLimits] = useState({ min: 0, max: 20 });
 
-  usePlot(
-    (inputs) => {
+  const plot = useMemo(() => {
+    return makePlot({ dimensions: { height: 400 } })
+      .use(hoverPlugin().as("hover"))
+      .use(
+        spanSelectPlugin({
+          onSpanSelect: (data) => {
+            if (data.phase === "end") {
+              if (data.dimension === "y") {
+                if (
+                  data.start.constrained !== "out-of-chart" &&
+                  data.end.constrained !== "out-of-chart"
+                ) {
+                  setYLimits({
+                    min: Math.min(
+                      data.start.scaled["y-1"],
+                      data.end.scaled["y-1"]
+                    ),
+                    max: Math.max(
+                      data.start.scaled["y-1"],
+                      data.end.scaled["y-1"]
+                    ),
+                  });
+                }
+              }
+            }
+          },
+        }).as("spanSelect")
+      );
+  }, []);
+
+  useEffect(() => {
+    plot.attach(ref.current!);
+  }, []);
+
+  useEffect(() => {
+    plot.draw((inputs) => {
       const facets: Facet[] = [];
       if (inputs.hover.position) {
         facets.push({
@@ -30,6 +62,32 @@ const Template: Story = () => {
           plotter: absoluteCrosshairFacet({
             x: inputs.hover.position.canvas.x,
             y: inputs.hover.position.canvas.y,
+          }),
+        });
+      }
+      if (inputs.spanSelect.phase === "active") {
+        facets.push({
+          layer: "top",
+          plotter: absoluteSpanFacet({
+            style: {
+              fillStyle: `rgba(${inputs.spanSelect.ctrlKey ? 200 : 100}, ${
+                inputs.spanSelect.altKey ? 200 : 100
+              }, ${inputs.spanSelect.shiftKey ? 200 : 100}, 0.2)`,
+            },
+            x:
+              inputs.spanSelect.dimension !== "y"
+                ? {
+                    min: inputs.spanSelect.start.canvas.x,
+                    max: inputs.spanSelect.end.canvas.x,
+                  }
+                : undefined,
+            y:
+              inputs.spanSelect.dimension !== "x"
+                ? {
+                    min: inputs.spanSelect.start.canvas.y,
+                    max: inputs.spanSelect.end.canvas.y,
+                  }
+                : undefined,
           }),
         });
       }
@@ -48,10 +106,7 @@ const Template: Story = () => {
           { id: "x-2" },
           {
             id: "y-1",
-            makeLimits: () => ({
-              min: 0,
-              max: yLimit,
-            }),
+            makeLimits: () => yLimits,
           },
           { id: "y-2" },
         ],
@@ -80,10 +135,8 @@ const Template: Story = () => {
           },
         ],
       };
-    },
-    [yLimit],
-    ref
-  );
+    });
+  }, [yLimits]);
 
   return (
     <>
@@ -98,9 +151,29 @@ const Template: Story = () => {
       />
       <canvas ref={ref} />
       <div>
-        <button onClick={() => setYLimit((v) => v - 1)}>-</button>
-        <span>{yLimit}</span>
-        <button onClick={() => setYLimit((v) => v + 1)}>+</button>
+        <button
+          onClick={() =>
+            setYLimits((limits) => ({
+              ...limits,
+              max: limits.max - 1,
+            }))
+          }
+        >
+          -
+        </button>
+        <span>
+          {yLimits.min} - {yLimits.max}
+        </span>
+        <button
+          onClick={() =>
+            setYLimits((limits) => ({
+              ...limits,
+              max: limits.max + 1,
+            }))
+          }
+        >
+          +
+        </button>
       </div>
     </>
   );

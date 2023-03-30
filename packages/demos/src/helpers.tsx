@@ -1,23 +1,7 @@
 import { Scene, PlotStaticConfig } from "@canplot/core";
-import { usePlot } from "@canplot/react";
-import React from "react";
 
 export type PlotStoryProps = Omit<PlotStaticConfig, "canvas"> & Scene;
 
-export const EmbeddedPlot: React.FC<PlotStoryProps> = ({
-  dimensions,
-  ...scene
-}) => {
-  const [ref] = usePlot(
-    { dimensions },
-    () => {
-      return scene;
-    },
-    [scene]
-  );
-
-  return <canvas ref={ref} />;
-};
 
 export const animationLoop = (foo: () => void) => {
   let continueLoop = true;
