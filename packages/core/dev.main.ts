@@ -1,30 +1,27 @@
-import {
-  absoluteSpanFacet,
-  linePlotter,
-  spanSelectPlugin,
-  absoluteCrosshairFacet,
-  hoverPlugin,
-  domOverlayPlugin,
-} from "./src/main";
+import { absoluteCrosshairFacet, absoluteSpanFacet, linePlotter } from "./src/main";
 import { Facet } from "./src/types";
 import { makePlot } from "./src/makePlot";
 
 const plot = makePlot({
   canvas: document.getElementById("canvas")! as HTMLCanvasElement,
   logger: false,
-})
-  .use(spanSelectPlugin({}).as("spanSelect"))
-  .use(hoverPlugin({}).as("hover"))
-  .use(
-    domOverlayPlugin({
-      className: "bgcyan",
-    }).as("domOverlay")
-  );
+  cursor: {
+    hover: {
+      propagate: true,
+    },
+    span: {
+      propagate: true,
+      onSpan: (data) => {
+        console.log("onSpan:", data);
+      },
+    },
+  },
+});
 
-plot.draw((outputs) => {
+plot.draw(({ cursor }) => {
   const facets: Facet[] = [];
-  if (outputs.hover.position) {
-    const { position } = outputs.hover;
+  if (cursor.hover.position) {
+    const { position } = cursor.hover;
     facets.push({
       layer: "top",
       plotter: absoluteCrosshairFacet({
@@ -33,30 +30,28 @@ plot.draw((outputs) => {
       }),
     });
   }
-  if (outputs.spanSelect.phase === "active") {
+  if (cursor.span.phase === "active") {
     facets.push({
       layer: "top",
       plotter: absoluteSpanFacet({
         x:
-          outputs.spanSelect.dimension === "x" ||
-          outputs.spanSelect.dimension === "xy"
+          cursor.span.dimension === "x" || cursor.span.dimension === "xy"
             ? {
-                min: outputs.spanSelect.start.canvas.x,
-                max: outputs.spanSelect.end.canvas.x,
+                min: cursor.span.start.canvas.x,
+                max: cursor.span.end.canvas.x,
               }
             : undefined,
         y:
-          outputs.spanSelect.dimension === "y" ||
-          outputs.spanSelect.dimension === "xy"
+          cursor.span.dimension === "y" || cursor.span.dimension === "xy"
             ? {
-                min: outputs.spanSelect.start.canvas.y,
-                max: outputs.spanSelect.end.canvas.y,
+                min: cursor.span.start.canvas.y,
+                max: cursor.span.end.canvas.y,
               }
             : undefined,
         style: {
-          fillStyle: `rgba(${outputs.spanSelect.altKey ? 255 : 0}, ${
-            outputs.spanSelect.ctrlKey ? 255 : 0
-          }, ${outputs.spanSelect.shiftKey ? 255 : 0}, 0.2)`,
+          fillStyle: `rgba(${cursor.span.altKey ? 255 : 0}, ${
+            cursor.span.ctrlKey ? 255 : 0
+          }, ${cursor.span.shiftKey ? 255 : 0}, 0.2)`,
         },
       }),
     });

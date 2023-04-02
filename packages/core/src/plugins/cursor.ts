@@ -1,6 +1,6 @@
 import { posToVal } from "../helpers";
 import { makePlugin } from "../makePlot";
-import { Frame, ScaleId } from "../types";
+import { ClickEventData, DblClickEventData, Frame, HoverEventData, ScaleId, SpanSelectEventData, SpanSelectState } from "../types";
 import { clamp } from "../utils";
 
 type XY = {
@@ -73,21 +73,12 @@ const eventToPositions = (
   };
 };
 
-type HoverPluginState = {
-  position?: CursorPosition;
-};
-
-type HoverData = {
-  position?: CursorPosition;
-  frame: Frame;
-};
-
 export const hoverPlugin = ({
   clampStrategy = "drop",
   onHover,
 }: {
   clampStrategy?: "clamp" | "drop" | "pass";
-  onHover?: (data: HoverData) => void;
+  onHover?: (data: HoverEventData) => void;
 } = {}) =>
   makePlugin()
     .output<HoverPluginState>()
@@ -139,13 +130,8 @@ export const hoverPlugin = ({
       };
     });
 
-type ClickData = {
-  position?: CursorPosition;
-  frame: Frame;
-};
-
 export const clickPlugin = (opts: {
-  onClick?: (data: ClickData) => void;
+  onClick?: (data: ClickEventData) => void;
   clampToChartArea?: boolean;
 }) =>
   makePlugin().make(({ ctx }) => {
@@ -178,13 +164,8 @@ export const clickPlugin = (opts: {
     };
   });
 
-type DblClickData = {
-  position?: CursorPosition;
-  frame: Frame;
-};
-
 export const dblClickPlugin = (opts: {
-  onClick?: (data: DblClickData) => void;
+  onClick?: (data: DblClickEventData) => void;
   clampToChartArea?: boolean;
 }) =>
   makePlugin().make(({ ctx }) => {
@@ -217,30 +198,7 @@ export const dblClickPlugin = (opts: {
     };
   });
 
-type SpanSelectPluginState =
-  | {
-      phase: "idle";
-    }
-  | {
-      phase: "active";
-      dimension: "x" | "y" | "xy";
-      start: CursorPosition;
-      end: CursorPosition;
-      ctrlKey: boolean;
-      shiftKey: boolean;
-      altKey: boolean;
-    };
 
-type SpanSelectData = {
-  phase: "start" | "move" | "end";
-  dimension: "x" | "y" | "xy";
-  start: CursorPosition;
-  end: CursorPosition;
-  frame: Frame;
-  ctrlKey: boolean;
-  shiftKey: boolean;
-  altKey: boolean;
-};
 
 const positionsToDimension = (
   start: CursorPosition,
@@ -258,17 +216,17 @@ const positionsToDimension = (
 export const spanSelectPlugin = ({
   onSpanSelect,
 }: {
-  onSpanSelect?: (data: SpanSelectData) => void;
+  onSpanSelect?: (data: SpanSelectEventData) => void;
 }) =>
   makePlugin()
-    .output<SpanSelectPluginState>()
+    .output<SpanSelectState>()
     .make(({ ctx, setOutput }) => {
       const canvas = ctx.canvas;
       const store = {
         start: undefined as CursorPosition | undefined,
         end: undefined as CursorPosition | undefined,
         lastFrame: undefined as Frame | undefined,
-        lastOutput: undefined as SpanSelectPluginState | undefined,
+        lastOutput: undefined as SpanSelectState | undefined,
         altKey: false,
         shiftKey: false,
         ctrlKey: false,

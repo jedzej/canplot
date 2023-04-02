@@ -1,4 +1,5 @@
 import { drawAxes } from "./axes";
+import { makeHoverManager, makeSpanSelectManager } from "./cursor";
 import { sceneToFrame } from "./frame";
 
 import { drawSeries } from "./series";
@@ -7,72 +8,78 @@ import {
   CanPlot,
   FacetLayer,
   Frame,
-  InstantiatedPlugin,
-  MakePluginOpts,
+  HoverEventData,
   MakeScene,
+  MakeSceneInput,
   PlotPhase,
-  PlotStaticConfig,
-  PluginBuilder,
+  Scene,
+  SpanSelectEventData,
 } from "./types";
 
-const makePluginBuilder = <
-  ID extends string = never,
-  TIn = never,
-  TOut = never
->(pluginParam: {
-  id?: ID;
-  maker?: (p: MakePluginOpts<TOut>) => InstantiatedPlugin<ID, TIn, TOut>;
-}): PluginBuilder<ID, TIn, TOut> => {
-  return {
-    as: <T extends string>(id: T) =>
-      makePluginBuilder<T, TIn, TOut>({
-        id,
-        maker: pluginParam.maker as (
-          p: MakePluginOpts<TOut>
-        ) => InstantiatedPlugin<T, TIn, TOut>,
-      }),
-    input: <T>() => makePluginBuilder<ID, T, TOut>({ id: pluginParam.id }),
-    output: <T>() => makePluginBuilder<ID, TIn, T>({ id: pluginParam.id }),
-    make: (maker) => {
-      return makePluginBuilder<ID, TIn, TOut>({ id: pluginParam.id, maker });
-    },
-    __initialize: (params) => {
-      return pluginParam.maker!(params);
-    },
-    __getId: () => pluginParam.id,
-  };
-};
-
-export const makePlugin = () => makePluginBuilder({});
-
-type PlotState<TInputs, TOutputs> = {
+type PlotState<
+  THoverPropagate extends true = never,
+  TSpanPropagate extends true = never
+> = {
   canvas?: HTMLCanvasElement | undefined;
   phase: PlotPhase;
   drawScheduled: boolean;
-  lastMakeScene?: MakeScene<TInputs, TOutputs>;
-  outputs: TOutputs;
-  plugins: {
-    id: string;
-    isStateful: boolean;
-    plugin: InstantiatedPlugin<string, unknown, unknown, TInputs>;
-  }[];
-  pluginsInitializers: PluginBuilder<string, unknown, unknown>[];
+  lastMakeScene?: MakeScene<THoverPropagate, TSpanPropagate>;
+  lastScene?: Scene;
+  lastFrame?: Frame;
+  lastHoverEvent?: HoverEventData;
+  lastSpanSelectEvent?: SpanSelectEventData;
 };
 
-export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
-  staticConfig: PlotStaticConfig
-): CanPlot<TInputs, TOutputs> => {
+export const makePlot = <
+  THoverPropagate extends true = never,
+  TSpanPropagate extends true = never
+>(staticConfig: {
+  canvas?: HTMLCanvasElement | undefined;
+  logger?: boolean | undefined;
+  cursor?: {
+    hover?: {
+      propagate?: THoverPropagate;
+      onHover?: (data: HoverEventData) => void;
+    };
+    span?: {
+      propagate?: TSpanPropagate;
+      onSpan?: (data: SpanSelectEventData) => void;
+    };
+    // click?: {
+    //   onClick?: (data) => void;
+    // };
+  };
+}): CanPlot<THoverPropagate, TSpanPropagate> => {
   const logger = staticConfig.logger ? console : undefined;
 
-  const state: PlotState<TInputs, TOutputs> = {
+  const state: PlotState<THoverPropagate, TSpanPropagate> = {
     phase: "not-attached",
     drawScheduled: false,
-    outputs: {} as TOutputs,
-    plugins: [],
-    pluginsInitializers: [],
   };
 
   const sizeManager = makeSizeManager({ onResize: () => redraw() });
+  const hoverManager = makeHoverManager({
+    getFrame: () => state.lastFrame!,
+    onHover: (data) => {
+      logger?.log("onHover:", data);
+      staticConfig.cursor?.hover?.onHover?.(data);
+      if (staticConfig.cursor?.hover?.propagate) {
+        state.lastHoverEvent = data;
+        redraw();
+      }
+    },
+  });
+  const spanSelectManager = makeSpanSelectManager({
+    getFrame: () => state.lastFrame!,
+    onSpanSelect: (data) => {
+      logger?.log("onSpanSelect:", data);
+      staticConfig.cursor?.span?.onSpan?.(data);
+      if (staticConfig.cursor?.span?.propagate) {
+        state.lastSpanSelectEvent = data;
+        redraw();
+      }
+    },
+  });
 
   const getCanvas = (): HTMLCanvasElement => {
     if (!state.canvas) {
@@ -95,10 +102,8 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
     }
     state.phase = "detached";
     sizeManager.deinit();
-
-    for (const { plugin } of state.plugins) {
-      plugin.deinit?.();
-    }
+    hoverManager.detach();
+    spanSelectManager.detach();
   };
 
   const redraw = () => {
@@ -114,6 +119,8 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
       case "not-attached":
         state.canvas = canvas;
         state.phase = "initializing";
+        hoverManager.attach(canvas);
+        spanSelectManager.attach(canvas);
         redraw();
         break;
       case "initializing":
@@ -128,49 +135,7 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
     attach(staticConfig.canvas);
   }
 
-  const setPluginOutput = (id: any, newOutput: any, shouldRedraw = true) => {
-    logger?.log("setPluginState:", id, newOutput, shouldRedraw);
-    state.outputs[id as keyof TOutputs] = newOutput;
-    if (!shouldRedraw) {
-      return;
-    }
-    const isStateful = !!state.plugins.find((entry) => entry.id === id)
-      ?.isStateful;
-    if (!isStateful) {
-      return;
-    }
-    switch (state.phase) {
-      case "idle":
-        redraw();
-        break;
-      case "drawing":
-      default:
-        break;
-    }
-  };
-
-  const initializePlugins = () => {
-    for (let i = 0; i < state.pluginsInitializers.length; i++) {
-      const pluginInitializer = state.pluginsInitializers[i];
-      const id = pluginInitializer.__getId() ?? `__plugin_id_${i}`;
-      const plugin = pluginInitializer.__initialize({
-        setOutput: (state) => {
-          setPluginOutput(id, state);
-        },
-        ctx: getCtx(),
-      });
-      logger?.info("initializePlugins: stateful plugin", id);
-      state.outputs[id as keyof TOutputs] =
-        plugin.defaultOutput as TOutputs[keyof TOutputs];
-      state.plugins.push({
-        id,
-        isStateful: id ? true : false,
-        plugin,
-      });
-    }
-  };
-
-  const draw = (makeScene: MakeScene<TInputs, TOutputs>) => {
+  const draw = (makeScene: MakeScene<THoverPropagate, TSpanPropagate>) => {
     state.lastMakeScene = makeScene;
     logger?.info(`draw: begin in ${state.phase}`);
     switch (state.phase) {
@@ -178,7 +143,6 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
         state.drawScheduled = true;
         break;
       case "initializing":
-        initializePlugins();
         state.drawScheduled = true;
         state.phase = "idle";
         break;
@@ -213,80 +177,48 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
     }
   };
 
-  const actuallyDraw = (makeScene: MakeScene<TInputs, TOutputs>) => {
+  const actuallyDraw = (
+    makeScene: MakeScene<THoverPropagate, TSpanPropagate>
+  ) => {
     const ctx = getCtx();
 
-    // BEFORE DRAW
-    for (const { id, plugin } of state.plugins) {
-      plugin.beforeDraw?.({
-        ctx,
-        id,
-        get output() {
-          return state.outputs[id as keyof TOutputs];
-        },
-        setOutput(newOutput) {
-          setPluginOutput(id, newOutput, false);
-        },
-      });
+    const sceneInputs: MakeSceneInput<true, true> = {
+      previousScene: state.lastScene,
+      cursor: {
+        hover: { position: undefined },
+        span: { phase: "idle" },
+      },
+    };
+    if (staticConfig.cursor?.hover?.propagate) {
+      // todo take actual cursor position
+      sceneInputs.cursor.hover.position = state.lastHoverEvent?.position;
+    }
+    if (staticConfig.cursor?.span?.propagate) {
+      // todo take actual cursor position
+      sceneInputs.cursor.span = !state.lastSpanSelectEvent ||
+      state.lastSpanSelectEvent?.phase === "end"
+        ? { phase: "idle" }
+        : {
+          ...state.lastSpanSelectEvent,
+            phase: "active",
+          };
     }
 
-    const initialScene = makeScene(state.outputs as TOutputs);
-
-    // TRANSFORM SCENE
-    const scene = state.plugins.reduce((scene, { id, plugin }) => {
-      try {
-        plugin.transformScene?.({
-          id,
-          scene,
-          ctx,
-          get output() {
-            return state.outputs[id as keyof TOutputs];
-          },
-          get input() {
-            return scene.inputs[id as keyof TInputs];
-          },
-          setOutput(newOutput) {
-            setPluginOutput(id, newOutput, false);
-          },
-        });
-      } catch (err) {
-        console.error(`Error in plugin`, err);
-      }
-      return scene;
-    }, initialScene);
+    // MAKE SCENE
+    const scene = makeScene(sceneInputs);
+    state.lastScene = scene;
 
     const canvas = getCanvas();
     sizeManager.applyDimensions(canvas, scene.dimensions);
 
-    // TRANSFORM FRAME
-    const initialFrame = sceneToFrame({
+    // MAKE FRAME
+    const frame = sceneToFrame({
       scene,
       canvasSize: sizeManager.getCanvasSize(),
       ctx,
       dpr: window.devicePixelRatio || 1,
     });
-    const frame = state.plugins.reduce((frame, { id, plugin }) => {
-      try {
-        plugin.transformFrame?.({
-          id,
-          frame,
-          scene,
-          ctx,
-          get output() {
-            return state.outputs[id as keyof TOutputs];
-          },
-          get input() {
-            return scene.inputs[id as keyof TInputs];
-          },
-          setOutput(newOutput) {
-            setPluginOutput(id, newOutput, false);
-          },
-        });
-      } catch (err) {
-        console.error(`Error in plugin`, err);
-      }
-      return frame;
-    }, initialFrame);
+    state.lastFrame = frame;
 
     // CLEAR CANVAS
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -319,34 +251,11 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
       // DRAW TOP FACETS
       drawFacets(untypedFrame, "top");
     }
-
-    // AFTER DRAW
-    for (const { id, plugin } of state.plugins) {
-      plugin.afterDraw?.({
-        id,
-        ctx,
-        frame,
-        scene,
-        get input() {
-          return scene.inputs[id as keyof TInputs];
-        },
-        get output() {
-          return state.outputs[id as keyof TOutputs];
-        },
-        setOutput: (newPluginState) => {
-          setPluginOutput(id, newPluginState, false);
-        },
-      });
-    }
   };
 
   return {
     attach,
     draw,
-    use<ID extends string, TIn, TOut>(plugin: PluginBuilder<ID, TIn, TOut>) {
-      state.pluginsInitializers.push(plugin as any);
-      return this as any;
-    },
     detach,
   };
 };
