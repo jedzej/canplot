@@ -98,7 +98,6 @@ type Padding = {
 
 export type PlotStaticConfig = {
   canvas?: HTMLCanvasElement;
-  dimensions?: Dimensions;
   logger?: boolean;
 };
 
@@ -119,6 +118,7 @@ export type Facet = {
 };
 
 export type Scene<TInputs = {}> = {
+  dimensions?: Dimensions;
   padding: Padding;
   axes: PlotAxis[];
   scales: SceneScale[];
@@ -237,11 +237,10 @@ type TransformFrameOpts<
   frame: Frame<TInputs>;
 };
 
-type BeforeDrawOpts<ID extends string = never, TOut = never> = IDInOutPartial<
-  ID,
-  never,
-  TOut
-> & {
+type BeforeDrawOpts<
+  ID extends string = never,
+  TOut = never
+> = IDInOutPartial<ID, never, TOut> & {
   ctx: CanvasRenderingContext2D;
 };
 

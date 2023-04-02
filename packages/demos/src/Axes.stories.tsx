@@ -1,24 +1,17 @@
 import React, { useEffect, useRef } from "react";
-import { Meta, Story } from "@storybook/react";
 import { linePlotter } from "@canplot/core";
 import { makeUsePlot } from "@canplot/react";
-import { animationLoop } from "./helpers";
+import { UsePlotMeta, UsePlotStory, animationLoop } from "./helpers";
 
-const usePlot = makeUsePlot({
-  dimensions: { height: 400 },
-});
+const usePlot = makeUsePlot();
 
-type UsePlotMeta<
-  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
-> = Meta<ReturnType<Parameters<T>[0]>>;
-
-type UsePlotStory<
-  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
-> = Story<ReturnType<Parameters<T>[0]>>;
 
 export default {
   title: "Axes",
   args: {
+    dimensions: {
+      height: 400,
+    },
     padding: {
       bottom: 10,
       left: 10,

@@ -178,6 +178,45 @@ export const clickPlugin = (opts: {
     };
   });
 
+type DblClickData = {
+  position?: CursorPosition;
+  frame: Frame;
+};
+
+export const dblClickPlugin = (opts: {
+  onClick?: (data: DblClickData) => void;
+  clampToChartArea?: boolean;
+}) =>
+  makePlugin().make(({ ctx }) => {
+    const canvas = ctx.canvas;
+    const store = {
+      lastFrame: undefined as Frame | undefined,
+    };
+
+    const dblClickListener = (e: MouseEvent) => {
+      if (!store.lastFrame) return;
+      const position = eventToPositions(
+        e,
+        store.lastFrame,
+        opts.clampToChartArea ?? false
+      );
+      opts.onClick?.({
+        position,
+        frame: store.lastFrame,
+      });
+    };
+    canvas.addEventListener("dblclick", dblClickListener);
+
+    return {
+      afterDraw({ frame }) {
+        store.lastFrame = frame;
+      },
+      deinit() {
+        canvas.removeEventListener("dblclick", dblClickListener);
+      },
+    };
+  });
+
 type SpanSelectPluginState =
   | {
       phase: "idle";

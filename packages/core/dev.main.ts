@@ -11,7 +11,6 @@ import { makePlot } from "./src/makePlot";
 
 const plot = makePlot({
   canvas: document.getElementById("canvas")! as HTMLCanvasElement,
-  dimensions: { width: "auto", height: 200 },
   logger: false,
 })
   .use(spanSelectPlugin({}).as("spanSelect"))
@@ -63,6 +62,7 @@ plot.draw((outputs) => {
     });
   }
   return {
+    dimensions: { width: "auto", height: 200 },
     padding: { bottom: 0, left: 0, right: 0, top: 0 },
     axes: [
       { scaleId: "x-1" },

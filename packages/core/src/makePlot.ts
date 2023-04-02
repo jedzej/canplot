@@ -1,8 +1,8 @@
 import { drawAxes } from "./axes";
-import { isXScale } from "./helpers";
-import { makeAutoLimits } from "./limits";
+import { sceneToFrame } from "./frame";
 
 import { drawSeries } from "./series";
+import { makeSizeManager } from "./sizeManager";
 import {
   CanPlot,
   FacetLayer,
@@ -13,8 +13,6 @@ import {
   PlotPhase,
   PlotStaticConfig,
   PluginBuilder,
-  Scene,
-  Size,
 } from "./types";
 
 const makePluginBuilder = <
@@ -47,88 +45,10 @@ const makePluginBuilder = <
 
 export const makePlugin = () => makePluginBuilder({});
 
-const sceneToFrame = <TInputs>(
-  scene: Scene<TInputs>,
-  ctx: CanvasRenderingContext2D,
-  dpr: number
-): Frame<TInputs> => {
-  const padding = scene.padding;
-  let leftAxesSize = 0;
-  let rightAxesSize = 0;
-  let bottomAxesSize = 0;
-  let topAxesSize = 0;
-  for (const axis of scene.axes) {
-    const size = axis.size ?? 50;
-    const position = axis.position ?? "primary";
-    if (isXScale(axis.scaleId)) {
-      if (position === "primary") {
-        bottomAxesSize += size;
-      } else {
-        topAxesSize += size;
-      }
-    } else {
-      if (position === "primary") {
-        leftAxesSize += size;
-      } else {
-        rightAxesSize += size;
-      }
-    }
-  }
-
-  const canvas = ctx.canvas;
-
-  const canvasSize = {
-    width: canvas.width / dpr,
-    height: canvas.height / dpr,
-  };
-
-  const frameNoScales: Omit<Frame<TInputs>, "scales"> = {
-    ctx,
-    dpr,
-    chartArea: {
-      x: leftAxesSize + padding.left,
-      y: topAxesSize + padding.top,
-      width:
-        canvasSize.width -
-        leftAxesSize -
-        rightAxesSize -
-        padding.left -
-        padding.right,
-      height:
-        canvasSize.height -
-        topAxesSize -
-        bottomAxesSize -
-        padding.top -
-        padding.bottom,
-    },
-    padding,
-    canvasSize,
-    axes: scene.axes,
-    facets: scene.facets,
-    series: scene.series,
-    inputs: scene.inputs,
-  };
-
-  return {
-    ...frameNoScales,
-    scales: scene.scales.map((scale) => {
-      return {
-        id: scale.id,
-        limits: (scale.makeLimits ?? makeAutoLimits)({
-          frame: frameNoScales,
-          scaleId: scale.id,
-        }),
-      };
-    }),
-  };
-};
-
 type PlotState<TInputs, TOutputs> = {
-  expectedSize?: Size;
   canvas?: HTMLCanvasElement | undefined;
   phase: PlotPhase;
   drawScheduled: boolean;
-  parentResizeObserver?: ResizeObserver;
   lastMakeScene?: MakeScene<TInputs, TOutputs>;
   outputs: TOutputs;
   plugins: {
@@ -142,10 +62,6 @@ type PlotState<TInputs, TOutputs> = {
 export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
   staticConfig: PlotStaticConfig
 ): CanPlot<TInputs, TOutputs> => {
-  const dimensions = {
-    width: staticConfig.dimensions?.width ?? "auto",
-    height: staticConfig.dimensions?.height ?? "auto",
-  };
   const logger = staticConfig.logger ? console : undefined;
 
   const state: PlotState<TInputs, TOutputs> = {
@@ -155,6 +71,8 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
     plugins: [],
     pluginsInitializers: [],
   };
+
+  const sizeManager = makeSizeManager({ onResize: () => redraw() });
 
   const getCanvas = (): HTMLCanvasElement => {
     if (!state.canvas) {
@@ -171,19 +89,12 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
     return ctx;
   };
 
-  const getSize = (): Size => {
-    if (!state.expectedSize) {
-      throw new Error("Invariant violation: expectedSize is undefined");
-    }
-    return state.expectedSize;
-  };
-
   const detach = () => {
     if (state.phase === "detached") {
       return;
     }
     state.phase = "detached";
-    state.parentResizeObserver?.disconnect();
+    sizeManager.deinit();
 
     for (const { plugin } of state.plugins) {
       plugin.deinit?.();
@@ -199,46 +110,11 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
 
   const attach = (canvas: HTMLCanvasElement) => {
     logger?.log("attach: Attaching to canvas in state", state.phase);
-    const dpr = window.devicePixelRatio;
     switch (state.phase) {
       case "not-attached":
         state.canvas = canvas;
-        const { width: dimW, height: dimH } = dimensions;
-        if (typeof dimW === "number" && Number.isFinite(dimW)) {
-          canvas.width = dpr * dimW;
-          canvas.style.width = `${dimW}px`;
-        }
-        if (typeof dimH === "number" && Number.isFinite(dimH)) {
-          canvas.height = dpr * dimH;
-          canvas.style.height = `${dimH}px`;
-        }
-        if (dimW === "auto" || dimH === "auto") {
-          state.parentResizeObserver = new ResizeObserver((entries) => {
-            for (const { contentRect } of entries) {
-              logger?.log("resizeobserver: cb", contentRect);
-              const width = dimW === "auto" ? contentRect.width : dimW;
-              const height = dimH === "auto" ? contentRect.height : dimH;
-              if (
-                state.expectedSize?.width === width &&
-                state.expectedSize?.height === height
-              ) {
-                return;
-              }
-              state.expectedSize = { width, height };
-              if (state.phase === "not-attached") {
-                state.phase = "initializing";
-              }
-              redraw();
-            }
-          });
-          if (!canvas.parentElement) {
-            throw new Error("Canvas must be attached to the DOM");
-          }
-          state.parentResizeObserver.observe(canvas.parentElement);
-        } else {
-          state.phase = "initializing";
-          redraw();
-        }
+        state.phase = "initializing";
+        redraw();
         break;
       case "initializing":
       case "idle":
@@ -338,18 +214,7 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
   };
 
   const actuallyDraw = (makeScene: MakeScene<TInputs, TOutputs>) => {
-    const canvas = getCanvas();
-    const size = getSize();
     const ctx = getCtx();
-
-    const dpr = window.devicePixelRatio;
-
-    const dprAwareWidth = dpr * size.width;
-    const dprAwareHeight = dpr * size.height;
-    if (canvas.width !== dprAwareWidth || canvas.height !== dprAwareHeight) {
-      canvas.width = dprAwareWidth;
-      canvas.height = dprAwareHeight;
-    }
 
     // BEFORE DRAW
     for (const { id, plugin } of state.plugins) {
@@ -390,8 +255,16 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
       return scene;
     }, initialScene);
 
+    const canvas = getCanvas();
+    sizeManager.applyDimensions(canvas, scene.dimensions);
+
     // TRANSFORM FRAME
-    const initialFrame = sceneToFrame(scene, ctx, window.devicePixelRatio || 1);
+    const initialFrame = sceneToFrame({
+      scene,
+      canvasSize: sizeManager.getCanvasSize(),
+      ctx,
+      dpr: window.devicePixelRatio || 1,
+    });
     const frame = state.plugins.reduce((frame, { id, plugin }) => {
       try {
         plugin.transformFrame?.({
@@ -416,7 +289,7 @@ export const makePlot = <TInputs extends {} = {}, TOutputs extends {} = {}>(
     }, initialFrame);
 
     // CLEAR CANVAS
-    ctx.clearRect(0, 0, dprAwareWidth, dprAwareHeight);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const drawFacets = (frame: Frame, layer: FacetLayer) => {
       for (const facet of frame.facets) {

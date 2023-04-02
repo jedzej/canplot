@@ -8,6 +8,7 @@ import {
   spanSelectPlugin,
   absoluteSpanFacet,
   makePlot,
+  dblClickPlugin,
 } from "@canplot/core";
 
 export default {
@@ -20,8 +21,15 @@ const Template: Story = () => {
   const [yLimits, setYLimits] = useState({ min: 0, max: 20 });
 
   const plot = useMemo(() => {
-    return makePlot({ dimensions: { height: 400 } })
+    return makePlot({})
       .use(hoverPlugin().as("hover"))
+      .use(
+        dblClickPlugin({
+          onClick: () => {
+            setYLimits({ min: 0, max: 20 });
+          },
+        })
+      )
       .use(
         spanSelectPlugin({
           onSpanSelect: (data) => {
@@ -93,6 +101,7 @@ const Template: Story = () => {
       }
 
       return {
+        dimensions: { height: 400 },
         facets,
         inputs: {},
         padding: {

@@ -3,8 +3,8 @@ import { makePlot } from "@canplot/core";
 import { useLayoutEffect, useRef } from "react";
 
 export const makeUsePlot = <Inputs = {}, Outputs = {}>(
-  staticConfig: Omit<PlotStaticConfig, "canvas">,
-  maker?: (plot: CanPlot) => CanPlot<Inputs, Outputs>
+  maker?: (plot: CanPlot) => CanPlot<Inputs, Outputs>,
+  staticConfig: Omit<PlotStaticConfig, "canvas"> = {}
 ) => {
   return (
     makeScene: MakeScene<Inputs, Outputs>,

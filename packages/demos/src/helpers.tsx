@@ -1,6 +1,15 @@
 import { Scene, PlotStaticConfig } from "@canplot/core";
+import { Meta, Story } from "@storybook/react";
 
 export type PlotStoryProps = Omit<PlotStaticConfig, "canvas"> & Scene;
+
+export type UsePlotMeta<
+  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
+> = Meta<ReturnType<Parameters<T>[0]>>;
+
+export type UsePlotStory<
+  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
+> = Story<ReturnType<Parameters<T>[0]>>;
 
 
 export const animationLoop = (foo: () => void) => {
