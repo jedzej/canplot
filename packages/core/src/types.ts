@@ -117,11 +117,12 @@ export type Facet = {
 
 export type Scene = {
   dimensions?: Dimensions;
-  padding: Padding;
-  axes: PlotAxis[];
+  padding?: Padding;
+  axes?: PlotAxis[];
   scales: SceneScale[];
-  facets: Facet[];
+  facets?: Facet[];
   series: SeriesBase[];
+  afterDraw?: (frame: Frame) => void;
 };
 
 export type Frame = {

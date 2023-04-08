@@ -1,6 +1,8 @@
 import { posToVal } from "./helpers";
 import {
+  ClickEventData,
   CursorPosition,
+  DblClickEventData,
   Frame,
   HoverEventData,
   ScaleId,
@@ -8,12 +10,53 @@ import {
 } from "./types";
 import { clamp } from "./utils";
 
+export const makeClickManager = ({
+  onClick,
+  onDblClick,
+  getFrame,
+}: {
+  onDblClick?: (data: DblClickEventData) => void;
+  onClick?: (data: ClickEventData) => void;
+  getFrame: () => Frame;
+}) => {
+  const store = {
+    canvas: undefined as HTMLCanvasElement | undefined,
+  };
+
+  const mouseClickListener = (e: MouseEvent): void => {
+    const frame = getFrame();
+    if (!frame) return;
+    const position = eventToPositions(e, frame, false);
+    onClick?.({ position, frame });
+  };
+
+  const mouseDblClickListener = (e: MouseEvent): void => {
+    const frame = getFrame();
+    if (!frame) return;
+    const position = eventToPositions(e, frame, false);
+    onDblClick?.({ position, frame });
+  };
+
+  return {
+    attach(canvas: HTMLCanvasElement) {
+      store.canvas = canvas;
+      store.canvas.addEventListener("click", mouseClickListener);
+      store.canvas.addEventListener("dblclick", mouseDblClickListener);
+    },
+    detach() {
+      if (store.canvas) {
+        store.canvas.removeEventListener("click", mouseClickListener);
+        store.canvas.removeEventListener("dblclick", mouseDblClickListener);
+        store.canvas = undefined;
+      }
+    },
+  };
+};
+
 export const makeHoverManager = ({
-  clampStrategy = "drop",
   onHover,
   getFrame,
 }: {
-  clampStrategy?: "clamp" | "drop" | "pass";
   onHover: (data: HoverEventData) => void;
   getFrame: () => Frame;
 }) => {
@@ -24,12 +67,8 @@ export const makeHoverManager = ({
   const mouseMoveListener = (e: MouseEvent): void => {
     const frame = getFrame();
     if (!frame) return;
-    const rawPosition = eventToPositions(e, frame, clampStrategy === "clamp");
-    const position =
-      clampStrategy === "drop" && rawPosition?.constrained === "out-of-chart"
-        ? undefined
-        : rawPosition;
-    onHover?.({ position: position, frame });
+    const position = eventToPositions(e, frame, false);
+    onHover?.({ position, frame });
   };
 
   const mouseOutListener = () => {
@@ -224,9 +263,9 @@ const eventToPositions = (
   const scaled: Record<ScaleId, number> = {};
   for (const scale of scales) {
     if (scale.id.startsWith("x-")) {
-      scaled[scale.id] = posToVal(frame, canvasX, scale.id);
+      scaled[scale.id] = posToVal(frame, canvasX - chartArea.x, scale.id);
     } else {
-      scaled[scale.id] = posToVal(frame, canvasY, scale.id);
+      scaled[scale.id] = posToVal(frame, canvasY - chartArea.y, scale.id);
     }
   }
   return {

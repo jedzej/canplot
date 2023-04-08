@@ -1,11 +1,17 @@
 import { drawAxes } from "./axes";
-import { makeHoverManager, makeSpanSelectManager } from "./cursor";
+import {
+  makeClickManager,
+  makeHoverManager,
+  makeSpanSelectManager,
+} from "./cursor";
 import { sceneToFrame } from "./frame";
 
 import { drawSeries } from "./series";
 import { makeSizeManager } from "./sizeManager";
 import {
   CanPlot,
+  ClickEventData,
+  DblClickEventData,
   FacetLayer,
   Frame,
   HoverEventData,
@@ -45,9 +51,10 @@ export const makePlot = <
       propagate?: TSpanPropagate;
       onSpan?: (data: SpanSelectEventData) => void;
     };
-    // click?: {
-    //   onClick?: (data) => void;
-    // };
+    click?: {
+      onClick?: (data: ClickEventData) => void;
+      onDblClick?: (data: DblClickEventData) => void;
+    };
   };
 }): CanPlot<THoverPropagate, TSpanPropagate> => {
   const logger = staticConfig.logger ? console : undefined;
@@ -80,6 +87,17 @@ export const makePlot = <
       }
     },
   });
+  const clickManager = makeClickManager({
+    getFrame: () => state.lastFrame!,
+    onClick: (data) => {
+      logger?.log("onClick:", data);
+      staticConfig.cursor?.click?.onClick?.(data);
+    },
+    onDblClick: (data) => {
+      logger?.log("onDblClick:", data);
+      staticConfig.cursor?.click?.onDblClick?.(data);
+    },
+  });
 
   const getCanvas = (): HTMLCanvasElement => {
     if (!state.canvas) {
@@ -104,6 +122,7 @@ export const makePlot = <
     sizeManager.deinit();
     hoverManager.detach();
     spanSelectManager.detach();
+    clickManager.detach();
   };
 
   const redraw = () => {
@@ -195,13 +214,10 @@ export const makePlot = <
     }
     if (staticConfig.cursor?.span?.propagate) {
       // todo take actual cursor position
-      sceneInputs.cursor.span = !state.lastSpanSelectEvent ||
-      state.lastSpanSelectEvent?.phase === "end"
-        ? { phase: "idle" }
-        : {
-          ...state.lastSpanSelectEvent,
-            phase: "active",
-          };
+      sceneInputs.cursor.span =
+        !state.lastSpanSelectEvent || state.lastSpanSelectEvent?.phase === "end"
+          ? { phase: "idle" }
+          : { ...state.lastSpanSelectEvent, phase: "active" };
     }
 
     // MAKE SCENE
@@ -235,22 +251,23 @@ export const makePlot = <
     };
 
     if (frame.chartArea.height > 0 && frame.chartArea.width > 0) {
-      const untypedFrame = frame as Frame;
       // DRAW BOTTOM FACETS
-      drawFacets(untypedFrame, "bottom");
+      drawFacets(frame, "bottom");
 
       // DRAW SERIES
-      drawSeries(untypedFrame);
+      drawSeries(frame);
 
       // DRAW MIDDLE FACETS
-      drawFacets(untypedFrame, "middle");
+      drawFacets(frame, "middle");
 
       // DRAW AXES
-      drawAxes(untypedFrame);
+      drawAxes(frame);
 
       // DRAW TOP FACETS
-      drawFacets(untypedFrame, "top");
+      drawFacets(frame, "top");
     }
+
+    scene?.afterDraw?.(frame);
   };
 
   return {

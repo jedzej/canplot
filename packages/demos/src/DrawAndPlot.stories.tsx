@@ -1,105 +1,134 @@
-import React, { useState } from "react";
-import { ComponentMeta, ComponentStory } from "@storybook/react";
-import { linePlotter, makeCursorPlugin } from "@canplot/core";
-import { EmbeddedPlot } from "./helpers";
-import { usePlot } from "@canplot/react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Meta, Story } from "@storybook/react";
+import {
+  Facet,
+  absoluteCrosshairFacet,
+  absoluteSpanFacet,
+  linePlotter,
+  makePlot,
+} from "@canplot/core";
+import { range } from "./helpers";
 
 export default {
   title: "Draw and Plot",
   args: {},
-} as ComponentMeta<typeof EmbeddedPlot>;
+} as Meta;
 
-const Template: ComponentStory<typeof EmbeddedPlot> = () => {
-  const [data, setData] = useState(() => ({
-    x: [...Array(100).keys()],
-    y: Array(100).fill(0),
-  }));
+const x = range(0, 100, 0.1);
 
-  const [inputCanvasRef] = usePlot(
-    {
-      dimensions: {
-        height: 400,
-      },
-      plugins: [
-        makeCursorPlugin({
-          onSpanSelect(event) {
-            if (event.phase === "move") {
-              const normalizedStart = Math.min(
-                event.spanStart.scaled["x-1"],
-                event.spanEnd.scaled["x-1"]
-              );
-              const normalizedEnd = Math.max(
-                event.spanStart.scaled["x-1"],
-                event.spanEnd.scaled["x-1"]
-              );
-              setData((data) => ({
-                x: data.x,
-                y: data.y.map((y, i) => {
-                  if (i >= normalizedStart && i <= normalizedEnd) {
-                    return event.spanEnd.scaled["y-1"];
+const Template: Story = () => {
+  const [series, setSeries] = useState<{ x: number; y: number }[]>(() =>
+    x.map((x) => ({ x, y: 0 }))
+  );
+
+  const plot = useMemo(
+    () =>
+      makePlot({
+        cursor: {
+          span: {
+            onSpan: (data) => {
+              if (data.phase === "end") {
+                console.log(data);
+                setSeries((s) => {
+                  const pos = data.start;
+                  if (pos.constrained === "out-of-chart") {
+                    return s;
                   }
-                  return y;
-                }),
-              }));
-            }
+                  return s.map((p) =>
+                    p.x < pos.scaled["x-1"]
+                      ? p
+                      : { x: p.x, y: pos.scaled["y-1"] }
+                  );
+                });
+              }
+            },
           },
-        }),
-      ],
-    },
-    () => ({
-      padding: 20,
-      axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
-      scales: [
-        { id: "x-1" },
-        {
-          id: "y-1",
-          makeLimits: () => ({
-            min: -1,
-            max: 1,
-          }),
+          hover: {
+            propagate: true,
+          },
         },
-      ],
-      series: [
-        {
-          xScaleId: "x-1",
-          yScaleId: "y-1",
-          plotter: linePlotter({ style: { strokeStyle: "blue" } }),
-          x: data.x,
-          y: data.y,
-        },
-      ],
-    }),
-    [data]
+      }),
+    []
   );
 
-  const [outputCanvasRef] = usePlot(
-    {
-      dimensions: {
-        height: 400,
-      },
-      plugins: [makeCursorPlugin({})],
-    },
-    () => ({
-      padding: 20,
-      axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
-      scales: [{ id: "x-1" }, { id: "y-1" }],
-      series: [
-        {
-          xScaleId: "x-1",
-          yScaleId: "y-1",
-          plotter: linePlotter({ style: { strokeStyle: "blue" } }),
-          x: data.x,
-          y: data.y.map((y) => Math.sin(y * 2)),
+  const inputRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    plot.attach(inputRef.current!);
+  }, []);
+
+  useEffect(() => {
+    plot.draw(({ cursor }) => {
+      let seriesToShow = series;
+      const cpos = cursor.hover.position;
+      let seriesToFade = [] as typeof series;
+      let seriesToMake = [] as typeof series;
+
+      if (cpos && cpos.constrained === "in-chart") {
+        seriesToShow = series.filter((p) => p.x < cpos.scaled["x-1"]);
+        seriesToFade = series.filter((p) => p.x >= cpos.scaled["x-1"]);
+        seriesToMake = series.map((p) =>
+          p.x < cpos.scaled["x-1"] ? p : { x: p.x, y: cpos.scaled["y-1"] }
+        );
+      }
+
+      return {
+        dimensions: { height: 400 },
+        facets: [],
+        inputs: {},
+        padding: {
+          top: 10,
+          right: 10,
+          bottom: 10,
+          left: 10,
         },
-      ],
-    }),
-    [data]
-  );
+        scales: [
+          { id: "x-1", makeLimits: () => ({ min: 0, max: 100 }) },
+          {
+            id: "y-1",
+            makeLimits: () => ({ min: -10, max: 10 }),
+          },
+        ],
+        axes: [{ scaleId: "x-1" }, { scaleId: "y-1" }],
+        series: [
+          {
+            xScaleId: "x-1",
+            yScaleId: "y-1",
+            plotter: linePlotter({
+              style: { strokeStyle: "rgba(255,100,100)" },
+            }),
+            x: seriesToShow.map((p) => p.x),
+            y: seriesToShow.map((p) => p.y),
+          },
+          {
+            xScaleId: "x-1",
+            yScaleId: "y-1",
+            plotter: linePlotter({
+              style: { strokeStyle: "rgba(255,100,100,0.4)" },
+            }),
+            x: seriesToFade.map((p) => p.x),
+            y: seriesToFade.map((p) => p.y),
+          },
+          {
+            xScaleId: "x-1",
+            yScaleId: "y-1",
+            plotter: linePlotter({
+              style: { strokeStyle: "blue" },
+            }),
+            x: seriesToMake.map((p) => p.x),
+            y: seriesToMake.map((p) => p.y),
+          },
+        ],
+      };
+    });
+  }, [series]);
 
   return (
     <>
-      <canvas ref={inputCanvasRef} />
-      <canvas ref={outputCanvasRef} />
+      <canvas ref={inputRef} />
+      <button onClick={() => setSeries(x.map((p) => ({ x: p, y: 0 })))}>
+        RESET
+      </button>
     </>
   );
 };

@@ -2,8 +2,8 @@ import { applyStyles } from "../helpers";
 import { Style, Frame } from "../types";
 
 type SpanFacetParams = {
-  x?: { min: number; max: number };
-  y?: { min: number; max: number };
+  x?: { min?: number; max?: number };
+  y?: { min?: number; max?: number };
   style?: Style;
 };
 

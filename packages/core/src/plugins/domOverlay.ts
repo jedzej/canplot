@@ -1,12 +1,11 @@
-import { makePlugin } from "../makePlot";
 import { Frame } from "../types";
 
-const defaultPlaceElement = ({
+export const positionDOMOverlay = ({
   frame,
   element,
 }: {
   frame: Frame;
-  element: HTMLDivElement;
+  element: HTMLElement;
 }) => {
   const width = `${frame.chartArea.width}px`;
   const height = `${frame.chartArea.height}px`;
@@ -24,39 +23,3 @@ const defaultPlaceElement = ({
     element.style.transform = transform;
   }
 };
-
-export const domOverlayPlugin = ({
-  captureCursorEvents = false,
-  className,
-  overlayElement,
-  placeElement,
-}: {
-  captureCursorEvents?: boolean;
-  className?: string;
-  overlayElement?: HTMLDivElement;
-  placeElement?: (params: { frame: Frame; element: HTMLDivElement }) => void;
-}) =>
-  makePlugin()
-    .output<{ element: HTMLDivElement }>()
-    .make(({ ctx }) => {
-      const shouldInitializeOwnElement = !overlayElement;
-      let element = overlayElement ?? document.createElement("div");
-      if (shouldInitializeOwnElement) {
-        element.style.position = "absolute";
-        element.className = className ?? "";
-        if (!captureCursorEvents) {
-          element.style.pointerEvents = "none";
-        }
-
-        ctx.canvas.after(element);
-      }
-
-      return {
-        defaultOutput: {
-          element,
-        },
-        afterDraw({ frame }) {
-          (placeElement ?? defaultPlaceElement)({ frame, element });
-        },
-      };
-    });

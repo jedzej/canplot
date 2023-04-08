@@ -1,4 +1,9 @@
-import { absoluteCrosshairFacet, absoluteSpanFacet, linePlotter } from "./src/main";
+import {
+  absoluteCrosshairFacet,
+  absoluteSpanFacet,
+  linePlotter,
+  positionDOMOverlay,
+} from "./src/main";
 import { Facet } from "./src/types";
 import { makePlot } from "./src/makePlot";
 
@@ -22,13 +27,15 @@ plot.draw(({ cursor }) => {
   const facets: Facet[] = [];
   if (cursor.hover.position) {
     const { position } = cursor.hover;
-    facets.push({
-      layer: "top",
-      plotter: absoluteCrosshairFacet({
-        x: position.canvas.x,
-        y: position.canvas.y,
-      }),
-    });
+    if (cursor.hover.position.constrained === "in-chart") {
+      facets.push({
+        layer: "top",
+        plotter: absoluteCrosshairFacet({
+          x: position.canvas.x,
+          y: position.canvas.y,
+        }),
+      });
+    }
   }
   if (cursor.span.phase === "active") {
     facets.push({
@@ -86,10 +93,13 @@ plot.draw(({ cursor }) => {
       },
     ],
     facets,
-    inputs: {
-      myPlugin: {
-        a: 2,
-      },
+    afterDraw: (frame) => {
+      const element = document.getElementById("overlay")!;
+      element.innerText = JSON.stringify(cursor.hover.position, null, 2);
+      positionDOMOverlay({
+        frame,
+        element,
+      });
     },
   };
 });

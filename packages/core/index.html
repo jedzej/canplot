@@ -7,8 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vite + TS</title>
   <style type="text/css">
-    .bgcyan {
+    #overlay {
       background-color: rgba(0, 255, 255, 0.2);
+      position: absolute;
+      pointer-events: none;
     }
   </style>
   <script type="module" src="./dev.main.ts"></script>
@@ -16,6 +18,7 @@
 
 <body style="display: flex; flex-direction: column; background-color: lightgrey; height: 100vh;">
   <canvas style="background-color: white" id="canvas"> </canvas>
+  <div id="overlay"></div>
 </body>
 
 </html>
