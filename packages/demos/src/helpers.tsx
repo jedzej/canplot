@@ -3,14 +3,9 @@ import { Meta, Story } from "@storybook/react";
 
 export type PlotStoryProps = Omit<PlotStaticConfig, "canvas"> & Scene;
 
-export type UsePlotMeta<
-  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
-> = Meta<ReturnType<Parameters<T>[0]>>;
+export type UsePlotMeta = Meta<Scene>;
 
-export type UsePlotStory<
-  T extends (makeScene: (...args: any[]) => any, ...args: any[]) => any
-> = Story<ReturnType<Parameters<T>[0]>>;
-
+export type UsePlotStory = Story<Scene>;
 
 export const animationLoop = (foo: () => void) => {
   let continueLoop = true;

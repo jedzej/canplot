@@ -1,10 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { linePlotter } from "@canplot/core";
-import { makeUsePlot } from "@canplot/react";
+import { usePlot } from "@canplot/react";
 import { UsePlotMeta, UsePlotStory, animationLoop } from "./helpers";
-
-const usePlot = makeUsePlot();
-
 
 export default {
   title: "Axes",
@@ -51,37 +48,34 @@ export default {
       },
     ],
   },
-} as UsePlotMeta<typeof usePlot>;
+} as UsePlotMeta;
 
-const Template: UsePlotStory<typeof usePlot> = (scene) => {
+const Template: UsePlotStory = (scene) => {
   const ref = useRef<HTMLCanvasElement>(null);
-  const plot = usePlot(() => scene, [], ref);
+  const plot = usePlot(ref, scene);
   useEffect(() => {
     animationLoop(() => {
-      plot.draw(() => {
-        return {
-          ...scene,
-          series: [
-            {
-              xScaleId: "x-1",
-              yScaleId: "y-1",
-              plotter: linePlotter({ style: { strokeStyle: "blue" } }),
-              x: new Array(1000).fill(0).map((_, i) => i / 10),
-              y: new Array(scene.series[0].x.length)
-                .fill(0)
-                .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100)),
-            },
-            {
-              xScaleId: "x-1",
-              yScaleId: "y-1",
-              plotter: linePlotter({ style: { strokeStyle: "red" } }),
-              x: new Array(100).fill(0).map((_, i) => i),
-              y: new Array(scene.series[1].x.length)
-                .fill(0)
-                .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100)),
-            },
-          ],
-        };
+      plot.update((scene) => {
+        scene.series = [
+          {
+            xScaleId: "x-1",
+            yScaleId: "y-1",
+            plotter: linePlotter({ style: { strokeStyle: "blue" } }),
+            x: new Array(1000).fill(0).map((_, i) => i / 10),
+            y: new Array(scene.series[0].x.length)
+              .fill(0)
+              .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100)),
+          },
+          {
+            xScaleId: "x-1",
+            yScaleId: "y-1",
+            plotter: linePlotter({ style: { strokeStyle: "red" } }),
+            x: new Array(100).fill(0).map((_, i) => i),
+            y: new Array(scene.series[1].x.length)
+              .fill(0)
+              .map((_, y) => 2 + Math.cos(y / 10 + performance.now() / 100)),
+          },
+        ];
       });
     });
   }, []);

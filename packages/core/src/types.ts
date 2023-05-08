@@ -116,13 +116,12 @@ export type Facet = {
 };
 
 export type Scene = {
-  dimensions?: Dimensions;
-  padding?: Padding;
-  axes?: PlotAxis[];
+  dimensions: Dimensions;
+  padding: Padding;
+  axes: PlotAxis[];
   scales: SceneScale[];
-  facets?: Facet[];
+  facets: Facet[];
   series: SeriesBase[];
-  afterDraw?: (frame: Frame) => void;
 };
 
 export type Frame = {
@@ -141,10 +140,6 @@ export type Frame = {
   facets: Facet[];
   series: SeriesBase[];
 };
-
-type IfDefined<TCond, TIfDefined, TIfNever = {}> = [TCond] extends [never]
-  ? TIfNever
-  : TIfDefined;
 
 type XY = {
   x: number;
@@ -208,32 +203,7 @@ export type SpanSelectEventData = {
   altKey: boolean;
 };
 
-export type MakeSceneInput<
-  THoverPropagate extends true = never,
-  TSpanPropagate extends true = never
-> = {
-  previousScene?: Scene;
-} & IfDefined<
-  THoverPropagate,
-  {
-    cursor: {
-      hover: HoverState;
-    };
-  }
-> &
-  IfDefined<
-    TSpanPropagate,
-    {
-      cursor: {
-        span: SpanSelectState;
-      };
-    }
-  >;
-
-export type MakeScene<
-  THoverPropagate extends true = never,
-  TSpanPropagate extends true = never
-> = (outputs: MakeSceneInput<THoverPropagate, TSpanPropagate>) => Scene;
+export type SceneUpdater = (mutableScene: Scene) => void;
 
 export type PlotPhase =
   | "not-attached"
@@ -242,11 +212,20 @@ export type PlotPhase =
   | "drawing"
   | "detached";
 
-export type CanPlot<
-  THoverPropagate extends true = never,
-  TSpanPropagate extends true = never
-> = {
-  attach(canvas: HTMLCanvasElement): void;
-  detach(): void;
-  draw(makeScene: MakeScene<THoverPropagate, TSpanPropagate>): void;
+export type PlotEvents = {
+  hover: HoverEventData;
+  "spanSelect": SpanSelectEventData;
+  click: ClickEventData;
+  dblclick: DblClickEventData;
+  "drawEnd": { frame: Frame; scene: Scene };
+};
+
+export type CanPlot = {
+  init(canvas: HTMLCanvasElement, scene: Partial<Scene>): void;
+  deinit(): void;
+  update(sceneUpdater: SceneUpdater): void;
+  on: <K extends keyof PlotEvents>(
+    eventName: K,
+    callback: (data: PlotEvents[K]) => void
+  ) => () => void;
 };

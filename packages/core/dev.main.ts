@@ -4,102 +4,110 @@ import {
   linePlotter,
   positionDOMOverlay,
 } from "./src/main";
-import { Facet } from "./src/types";
 import { makePlot } from "./src/makePlot";
 
+const SPAN_FACET_ID = "span-facet";
+const HOVER_FACET_ID = "hover-facet";
+
+const remove = <T>(array: T[], predicate: (item: T) => boolean) => {
+  const index = array.findIndex(predicate);
+  if (index >= 0) {
+    array.splice(index, 1);
+  }
+};
+
+const domOverlay = document.getElementById("overlay")!;
+
 const plot = makePlot({
-  canvas: document.getElementById("canvas")! as HTMLCanvasElement,
-  logger: false,
-  cursor: {
-    hover: {
-      propagate: true,
-    },
-    span: {
-      propagate: true,
-      onSpan: (data) => {
-        console.log("onSpan:", data);
-      },
-    },
-  },
+  logger: true,
 });
 
-plot.draw(({ cursor }) => {
-  const facets: Facet[] = [];
-  if (cursor.hover.position) {
-    const { position } = cursor.hover;
-    if (cursor.hover.position.constrained === "in-chart") {
-      facets.push({
-        layer: "top",
-        plotter: absoluteCrosshairFacet({
-          x: position.canvas.x,
-          y: position.canvas.y,
-        }),
-      });
+plot.init(document.getElementById("canvas")! as HTMLCanvasElement, {
+  dimensions: { width: "auto", height: 200 },
+  padding: { bottom: 0, left: 0, right: 0, top: 0 },
+  axes: [
+    { scaleId: "x-1" },
+    { scaleId: "x-1", position: "secondary" },
+    { scaleId: "y-1" },
+    { scaleId: "y-1" },
+    { scaleId: "y-1", position: "secondary" },
+  ],
+  scales: [
+    {
+      id: "x-1",
+      makeLimits: () => ({ max: 10, min: 0 }),
+    },
+    {
+      id: "y-1",
+      makeLimits: () => ({ max: 10, min: 0 }),
+    },
+  ],
+  series: [
+    {
+      xScaleId: "x-1",
+      yScaleId: "y-1",
+      x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      y: [1, 2, 1, 2, 1, 2, 1, 2, 1, 5],
+      plotter: linePlotter(),
+    },
+  ],
+});
+
+plot.on("drawEnd", ({ frame }) => {
+  positionDOMOverlay({ element: domOverlay, frame });
+});
+
+plot.on("hover", (data) => {
+  plot.update((scene) => {
+    remove(scene.facets, (facet) => facet.id === HOVER_FACET_ID);
+    if (!data.position) {
+      return;
     }
-  }
-  if (cursor.span.phase === "active") {
-    facets.push({
+    if (data.position.constrained !== "in-chart") {
+      return;
+    }
+    scene.facets.push({
+      id: HOVER_FACET_ID,
+      layer: "top",
+      plotter: absoluteCrosshairFacet({
+        x: data.position.canvas.x,
+        y: data.position.canvas.y,
+      }),
+    });
+  });
+  domOverlay.innerText = JSON.stringify(data.position, null, 2);
+});
+
+plot.on("spanSelect", (data) => {
+  plot.update((scene) => {
+    remove(scene.facets, (facet) => facet.id === SPAN_FACET_ID);
+    if (data.phase !== "move" && data.phase !== "start") {
+      return;
+    }
+    scene.facets.push({
+      id: SPAN_FACET_ID,
       layer: "top",
       plotter: absoluteSpanFacet({
         x:
-          cursor.span.dimension === "x" || cursor.span.dimension === "xy"
+          data.dimension === "x" || data.dimension === "xy"
             ? {
-                min: cursor.span.start.canvas.x,
-                max: cursor.span.end.canvas.x,
+                min: data.start.canvas.x,
+                max: data.end.canvas.x,
               }
             : undefined,
         y:
-          cursor.span.dimension === "y" || cursor.span.dimension === "xy"
+          data.dimension === "y" || data.dimension === "xy"
             ? {
-                min: cursor.span.start.canvas.y,
-                max: cursor.span.end.canvas.y,
+                min: data.start.canvas.y,
+                max: data.end.canvas.y,
               }
             : undefined,
         style: {
-          fillStyle: `rgba(${cursor.span.altKey ? 255 : 0}, ${
-            cursor.span.ctrlKey ? 255 : 0
-          }, ${cursor.span.shiftKey ? 255 : 0}, 0.2)`,
+          fillStyle: `rgba(${data.altKey ? 255 : 0}, ${
+            data.ctrlKey ? 255 : 0
+          }, ${data.shiftKey ? 255 : 0}, 0.2)`,
         },
       }),
     });
-  }
-  return {
-    dimensions: { width: "auto", height: 200 },
-    padding: { bottom: 0, left: 0, right: 0, top: 0 },
-    axes: [
-      { scaleId: "x-1" },
-      { scaleId: "x-1", position: "secondary" },
-      { scaleId: "y-1" },
-      { scaleId: "y-1" },
-      { scaleId: "y-1", position: "secondary" },
-    ],
-    scales: [
-      {
-        id: "x-1",
-        makeLimits: () => ({ max: 10, min: 0 }),
-      },
-      {
-        id: "y-1",
-        makeLimits: () => ({ max: 10, min: 0 }),
-      },
-    ],
-    series: [
-      {
-        xScaleId: "x-1",
-        yScaleId: "y-1",
-        x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        y: [1, 2, 1, 2, 1, 2, 1, 2, 1, 5],
-        plotter: linePlotter(),
-      },
-    ],
-    facets,
-    afterDraw: (frame) => {
-      const element = document.getElementById("overlay")!;
-      element.innerText = JSON.stringify(cursor.hover.position, null, 2);
-      positionDOMOverlay({
-        frame,
-        element,
-      });
-    },
-  };
+  });
 });

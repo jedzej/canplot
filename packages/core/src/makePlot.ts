@@ -4,6 +4,7 @@ import {
   makeHoverManager,
   makeSpanSelectManager,
 } from "./cursor";
+import { makeEventsManager } from "./eventsManager";
 import { sceneToFrame } from "./frame";
 
 import { drawSeries } from "./series";
@@ -15,22 +16,19 @@ import {
   FacetLayer,
   Frame,
   HoverEventData,
-  MakeScene,
-  MakeSceneInput,
+  SceneUpdater,
   PlotPhase,
   Scene,
   SpanSelectEventData,
+  PlotEvents,
 } from "./types";
 
-type PlotState<
-  THoverPropagate extends true = never,
-  TSpanPropagate extends true = never
-> = {
+type PlotState = {
   canvas?: HTMLCanvasElement | undefined;
   phase: PlotPhase;
   drawScheduled: boolean;
-  lastMakeScene?: MakeScene<THoverPropagate, TSpanPropagate>;
-  lastScene?: Scene;
+  lastMakeScene?: SceneUpdater;
+  scene?: Scene;
   lastFrame?: Frame;
   lastHoverEvent?: HoverEventData;
   lastSpanSelectEvent?: SpanSelectEventData;
@@ -40,7 +38,6 @@ export const makePlot = <
   THoverPropagate extends true = never,
   TSpanPropagate extends true = never
 >(staticConfig: {
-  canvas?: HTMLCanvasElement | undefined;
   logger?: boolean | undefined;
   cursor?: {
     hover?: {
@@ -56,46 +53,40 @@ export const makePlot = <
       onDblClick?: (data: DblClickEventData) => void;
     };
   };
-}): CanPlot<THoverPropagate, TSpanPropagate> => {
+}): CanPlot => {
   const logger = staticConfig.logger ? console : undefined;
 
-  const state: PlotState<THoverPropagate, TSpanPropagate> = {
+  const state: PlotState = {
     phase: "not-attached",
     drawScheduled: false,
   };
 
-  const sizeManager = makeSizeManager({ onResize: () => redraw() });
+  const eventsManager = makeEventsManager<PlotEvents>()
+
+  const sizeManager = makeSizeManager({ onResize: () => update() });
   const hoverManager = makeHoverManager({
     getFrame: () => state.lastFrame!,
     onHover: (data) => {
       logger?.log("onHover:", data);
-      staticConfig.cursor?.hover?.onHover?.(data);
-      if (staticConfig.cursor?.hover?.propagate) {
-        state.lastHoverEvent = data;
-        redraw();
-      }
+      eventsManager.dispatchEvent("hover", data);
     },
   });
   const spanSelectManager = makeSpanSelectManager({
     getFrame: () => state.lastFrame!,
     onSpanSelect: (data) => {
       logger?.log("onSpanSelect:", data);
-      staticConfig.cursor?.span?.onSpan?.(data);
-      if (staticConfig.cursor?.span?.propagate) {
-        state.lastSpanSelectEvent = data;
-        redraw();
-      }
+      eventsManager.dispatchEvent("spanSelect", data);
     },
   });
   const clickManager = makeClickManager({
     getFrame: () => state.lastFrame!,
     onClick: (data) => {
       logger?.log("onClick:", data);
-      staticConfig.cursor?.click?.onClick?.(data);
+      eventsManager.dispatchEvent("click", data);
     },
     onDblClick: (data) => {
       logger?.log("onDblClick:", data);
-      staticConfig.cursor?.click?.onDblClick?.(data);
+      eventsManager.dispatchEvent("dblclick", data);
     },
   });
 
@@ -114,7 +105,7 @@ export const makePlot = <
     return ctx;
   };
 
-  const detach = () => {
+  const deinit = () => {
     if (state.phase === "detached") {
       return;
     }
@@ -125,22 +116,24 @@ export const makePlot = <
     clickManager.detach();
   };
 
-  const redraw = () => {
-    logger?.log("redraw:", state.lastMakeScene ? "redraw" : "first draw");
-    if (state.lastMakeScene) {
-      draw(state.lastMakeScene);
-    }
-  };
-
-  const attach = (canvas: HTMLCanvasElement) => {
+  const init = (canvas: HTMLCanvasElement, initialScene: Partial<Scene>) => {
     logger?.log("attach: Attaching to canvas in state", state.phase);
     switch (state.phase) {
       case "not-attached":
         state.canvas = canvas;
         state.phase = "initializing";
+        state.scene = {
+          axes: [],
+          dimensions: { height: "auto", width: "auto" },
+          facets: [],
+          padding: { bottom: 0, left: 0, right: 0, top: 0 },
+          scales: [],
+          series: [],
+          ...initialScene,
+        };
         hoverManager.attach(canvas);
         spanSelectManager.attach(canvas);
-        redraw();
+        update();
         break;
       case "initializing":
       case "idle":
@@ -150,13 +143,9 @@ export const makePlot = <
     }
   };
 
-  if (staticConfig.canvas) {
-    attach(staticConfig.canvas);
-  }
-
-  const draw = (makeScene: MakeScene<THoverPropagate, TSpanPropagate>) => {
-    state.lastMakeScene = makeScene;
-    logger?.info(`draw: begin in ${state.phase}`);
+  const update = (sceneUpdater?: SceneUpdater) => {
+    sceneUpdater?.(state.scene!)
+    logger?.info(`update: begin in ${state.phase}`);
     switch (state.phase) {
       case "not-attached":
         state.drawScheduled = true;
@@ -187,49 +176,26 @@ export const makePlot = <
       state.drawScheduled = false;
       state.phase = "drawing";
       setTimeout(() => {
-        actuallyDraw(makeScene);
+        draw();
         state.phase = "idle";
-        if (state.drawScheduled) {
-          redraw();
-        }
       }, 0);
     }
   };
 
-  const actuallyDraw = (
-    makeScene: MakeScene<THoverPropagate, TSpanPropagate>
-  ) => {
+  const draw = () => {
     const ctx = getCtx();
 
-    const sceneInputs: MakeSceneInput<true, true> = {
-      previousScene: state.lastScene,
-      cursor: {
-        hover: { position: undefined },
-        span: { phase: "idle" },
-      },
-    };
-    if (staticConfig.cursor?.hover?.propagate) {
-      // todo take actual cursor position
-      sceneInputs.cursor.hover.position = state.lastHoverEvent?.position;
-    }
-    if (staticConfig.cursor?.span?.propagate) {
-      // todo take actual cursor position
-      sceneInputs.cursor.span =
-        !state.lastSpanSelectEvent || state.lastSpanSelectEvent?.phase === "end"
-          ? { phase: "idle" }
-          : { ...state.lastSpanSelectEvent, phase: "active" };
-    }
-
     // MAKE SCENE
-    const scene = makeScene(sceneInputs);
-    state.lastScene = scene;
+    if (!state.scene) {
+      throw new Error("No last scene");
+    }
 
     const canvas = getCanvas();
-    sizeManager.applyDimensions(canvas, scene.dimensions);
+    sizeManager.applyDimensions(canvas, state.scene.dimensions);
 
     // MAKE FRAME
     const frame = sceneToFrame({
-      scene,
+      scene: state.scene,
       canvasSize: sizeManager.getCanvasSize(),
       ctx,
       dpr: window.devicePixelRatio || 1,
@@ -267,12 +233,13 @@ export const makePlot = <
       drawFacets(frame, "top");
     }
 
-    scene?.afterDraw?.(frame);
+    eventsManager.dispatchEvent("drawEnd", { frame, scene: state.scene });
   };
 
   return {
-    attach,
-    draw,
-    detach,
+    init,
+    update,
+    deinit,
+    on: eventsManager.addEventListener,
   };
 };
