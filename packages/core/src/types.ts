@@ -115,6 +115,11 @@ export type Facet = {
   plotter: (frame: Frame, id?: string) => void;
 };
 
+export type Zoom = {
+  x: Limits;
+  y: Limits;
+}
+
 export type Scene = {
   dimensions: Dimensions;
   padding: Padding;
@@ -122,6 +127,7 @@ export type Scene = {
   scales: SceneScale[];
   facets: Facet[];
   series: SeriesBase[];
+  zoom: Zoom;
 };
 
 export type Frame = {
@@ -140,6 +146,7 @@ export type Frame = {
   scales: FrameScale[];
   facets: Facet[];
   series: SeriesBase[];
+  zoom: Zoom;
 };
 
 type XY = {
@@ -152,6 +159,7 @@ export type CursorPosition =
       constrained: "in-chart" | "clamped";
       screen: XY;
       canvas: XY;
+      chart: XY;
       scaled: Record<ScaleId, number>;
     }
   | {
@@ -194,7 +202,7 @@ export type SpanSelectState =
     };
 
 export type SpanSelectEventData = {
-  phase: "start" | "move" | "end";
+  phase: "start" | "move" | "end" | "cancel";
   dimension: "x" | "y" | "xy";
   start: CursorPosition;
   end: CursorPosition;

@@ -130,11 +130,12 @@ export const makeSpanSelectManager = ({
     if (!frame) return;
     const position = eventToPositions(e, frame, true);
     if (!position) return;
+    const dimension = positionsToDimension(store.lastEvent.start, position);
     store.lastEvent = {
       ...store.lastEvent,
       frame,
       phase: "move",
-      dimension: positionsToDimension(store.lastEvent.start, position),
+      dimension: dimension ?? "xy",
       end: position,
       altKey: e.altKey,
       shiftKey: e.shiftKey,
@@ -176,10 +177,11 @@ export const makeSpanSelectManager = ({
     if (!frame) return;
     const position = eventToPositions(e, frame, true);
     if (!position) return;
+    const dimension = positionsToDimension(store.lastEvent.start, position);
     onSpanSelect?.({
       ...store.lastEvent,
-      phase: "end",
-      dimension: positionsToDimension(store.lastEvent.start, position),
+      phase: dimension ? "end" : "cancel",
+      dimension: dimension ?? "xy",
       end: position,
       frame,
       ctrlKey: e.ctrlKey,
@@ -218,7 +220,7 @@ const positionsToDimension = (
 ) => {
   const xBelowTolerance = Math.abs(start.canvas.x - end.canvas.x) < tolerance;
   const yBelowTolerance = Math.abs(start.canvas.y - end.canvas.y) < tolerance;
-  if (xBelowTolerance && yBelowTolerance) return "xy";
+  if (xBelowTolerance && yBelowTolerance) return undefined;
   if (xBelowTolerance) return "y";
   if (yBelowTolerance) return "x";
   return "xy";
@@ -261,15 +263,17 @@ const eventToPositions = (
     };
 
   const scaled: Record<ScaleId, number> = {};
+  const chart = { x: canvasX - chartArea.x, y: canvasY - chartArea.y };
   for (const scale of scales) {
     if (scale.id.startsWith("x-")) {
-      scaled[scale.id] = posToVal(frame, canvasX - chartArea.x, scale.id);
+      scaled[scale.id] = posToVal(frame, chart.x, scale.id);
     } else {
-      scaled[scale.id] = posToVal(frame, canvasY - chartArea.y, scale.id);
+      scaled[scale.id] = posToVal(frame, chart.y, scale.id);
     }
   }
   return {
     constrained: outOfChart ? "clamped" : "in-chart",
+    chart,
     screen,
     canvas,
     scaled,

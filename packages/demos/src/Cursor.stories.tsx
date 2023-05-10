@@ -1,65 +1,28 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { Meta, Story } from "@storybook/react";
 import {
   linePlotter,
   absoluteCrosshairFacet,
   absoluteSpanFacet,
-  Scene,
-  PlotEvents,
+  Limits,
+  Zoom,
 } from "@canplot/core";
-import { usePlot, usePlotUpdater } from "@canplot/react";
+import { ReactCanPlot } from "@canplot/react";
 
 export default {
   title: "Cursor",
 } as Meta;
 
-const ReactCanPlot: React.FC<{
-  onHover?: (data: PlotEvents["hover"]) => void;
-  onClick?: (data: PlotEvents["click"]) => void;
-  onDblClick?: (data: PlotEvents["dblclick"]) => void;
-  onSpanSelect?: (data: PlotEvents["spanSelect"]) => void;
-  onFrameDrawFinish?: (data: PlotEvents["frameDrawFinish"]) => void;
-  scene: Partial<Scene>;
-}> = (props) => {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const plot = usePlot(ref, props.scene);
-
-  usePlotUpdater(
-    plot,
-    (scene) => {
-      Object.assign(scene, props.scene);
-    },
-    [props.scene]
-  );
-
-  useEffect(() => {
-    if (!props.onHover) {
-      return;
-    }
-    return plot.on("hover", props.onHover);
-  }, [props.onHover]);
-
-  useEffect(() => {
-    if (!props.onClick) {
-      return;
-    }
-    return plot.on("click", props.onClick);
-  }, [props.onClick]);
-
-  useEffect(() => {
-    if (!props.onDblClick) {
-      return;
-    }
-    return plot.on("dblclick", props.onDblClick);
-  }, [props.onDblClick]);
-
-  useEffect(() => {
-    if (!props.onSpanSelect) {
-      return;
-    }
-    return plot.on("spanSelect", props.onSpanSelect);
-  }, [props.onSpanSelect]);
-  return <canvas ref={ref} />;
+const rezoom = (oldZoom: Limits, overlapZoom: Limits) => {
+  const overlapSpan = Math.abs(overlapZoom.max - overlapZoom.min);
+  const oldZoomSpan = oldZoom.max - oldZoom.min;
+  const newZoomSpan = oldZoomSpan * overlapSpan;
+  const overlapMin = Math.min(overlapZoom.min, overlapZoom.max);
+  const newZoom: Limits = {
+    min: oldZoom.min + overlapMin * oldZoomSpan,
+    max: oldZoom.min + overlapMin * oldZoomSpan + newZoomSpan,
+  };
+  return newZoom;
 };
 
 const Template: Story = () => {
@@ -119,9 +82,14 @@ const Template: Story = () => {
             },
           ],
         }}
-        onDblClick={(data) => {
-          console.log("aaaa")
-          setYLimits({ min: 0, max: 20 })
+        onDblClick={({ frame }) => {
+          console.log("aaaa");
+          frame.plot.update((scene) => {
+            scene.zoom = {
+              x: { min: 0, max: 1 },
+              y: { min: 0, max: 1 },
+            };
+          });
         }}
         onHover={(data) => {
           data.frame.plot.update((scene) => {
@@ -143,22 +111,32 @@ const Template: Story = () => {
             data.frame.plot.update((scene) => {
               scene.facets = scene.facets.filter((f) => f.id !== "SPAN");
             });
-            if (data.dimension === "y") {
-              if (
-                data.start.constrained !== "out-of-chart" &&
-                data.end.constrained !== "out-of-chart"
-              ) {
-                setYLimits({
-                  min: Math.min(
-                    data.start.scaled["y-1"],
-                    data.end.scaled["y-1"]
-                  ),
-                  max: Math.max(
-                    data.start.scaled["y-1"],
-                    data.end.scaled["y-1"]
-                  ),
-                });
-              }
+
+            if (
+              data.start.constrained !== "out-of-chart" &&
+              data.end.constrained !== "out-of-chart"
+            ) {
+              const zoom: Zoom = {
+                x:
+                  data.dimension === "xy" || data.dimension === "x"
+                    ? rezoom(data.frame.zoom.x, {
+                        min: data.start.chart.x / data.frame.chartArea.width,
+                        max: data.end.chart.x / data.frame.chartArea.width,
+                      })
+                    : data.frame.zoom.x,
+                y:
+                  data.dimension === "xy" || data.dimension === "y"
+                    ? rezoom(data.frame.zoom.y, {
+                        min:
+                          1 - data.start.chart.y / data.frame.chartArea.height,
+                        max: 1 - data.end.chart.y / data.frame.chartArea.height,
+                      })
+                    : data.frame.zoom.y,
+              };
+              console.log(data);
+              data.frame.plot.update((scene) => {
+                scene.zoom = zoom;
+              });
             }
           } else {
             data.frame.plot.update((scene) => {

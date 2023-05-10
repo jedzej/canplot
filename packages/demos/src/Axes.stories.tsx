@@ -64,7 +64,7 @@ const Template: UsePlotStory = (scene) => {
             x: new Array(1000).fill(0).map((_, i) => i / 10),
             y: new Array(scene.series[0].x.length)
               .fill(0)
-              .map((_, y) => 5 + Math.sin(y / 10 + performance.now() / 100)),
+              .map((_, y) => 9 + Math.sin(y / 10 + performance.now() / 100)),
           },
           {
             xScaleId: "x-1",
@@ -94,6 +94,15 @@ export const SingleXPrimary = Template.bind({});
 SingleXPrimary.args = {
   ...SingleXPrimary.args,
   axes: [{ scaleId: "x-1" }],
+};
+
+export const Zoomed = Template.bind({});
+Zoomed.args = {
+  ...Zoomed.args,
+  zoom: {
+    x: { min: 0.25, max: 0.75 },
+    y: { min: 0.5, max: 1 },
+  },
 };
 
 export const SingleXSecondary = Template.bind({});

@@ -1,6 +1,6 @@
 import {
   DEFAULT_LOCALE,
-  DEFAULT_SPLIT_SPACE,
+  DEFAULT_X_SPLIT_SPACE,
   DEFAULT_TIMEZONE,
 } from "./defaults";
 import { PlotAxis } from "./types";
@@ -221,7 +221,7 @@ type GenTimeTicksOpts = {
 
 export const genTimeTicks = ({
   timeZone = DEFAULT_TIMEZONE,
-  space = DEFAULT_SPLIT_SPACE,
+  space = DEFAULT_X_SPLIT_SPACE,
 }: GenTimeTicksOpts): PlotAxis["genTicks"] => {
   return ({ frame: frame, scale }) => {
     const { limits } = scale;

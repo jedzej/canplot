@@ -4,8 +4,9 @@ import {
   DEFAULT_LABEL_OFFSET,
   DEFAULT_MULTILINE_GAP,
   DEFAULT_POSITION,
-  DEFAULT_SPLIT_SPACE,
+  DEFAULT_X_SPLIT_SPACE as DEFAULT_X_SPLIT_SPACE,
   DEFAULT_TICK_SIZE,
+  DEFAULT_Y_SPLIT_SPACE,
 } from "./defaults";
 import {
   applyStyles,
@@ -38,12 +39,15 @@ type MakeGenTicksDefaultOpts = {
 };
 
 export const makeGenTicksDefault = ({
-  space = DEFAULT_SPLIT_SPACE,
+  space,
 }: MakeGenTicksDefaultOpts = {}): PlotAxisGenTicks => {
   return ({ frame: frame, scale }) => {
     const limits = getScaleLimits(frame, scale.id);
     const ticks = [];
-    const unnormalizedIncr = pxToValDistance(frame, space, scale.id);
+    const effectiveSpace =
+      space ??
+      (isXScale(scale.id) ? DEFAULT_X_SPLIT_SPACE : DEFAULT_Y_SPLIT_SPACE);
+    const unnormalizedIncr = pxToValDistance(frame, effectiveSpace, scale.id);
     const incr = acceptable.find((a) => a > unnormalizedIncr) ?? 1;
     let curr =
       limits.min % incr < Number.EPSILON
