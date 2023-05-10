@@ -53,7 +53,7 @@ plot.init(document.getElementById("canvas")! as HTMLCanvasElement, {
   ],
 });
 
-plot.on("drawEnd", ({ frame }) => {
+plot.on("frameDrawFinish", ({ frame }) => {
   positionDOMOverlay({ element: domOverlay, frame });
 });
 

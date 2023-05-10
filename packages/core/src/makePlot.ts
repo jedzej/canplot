@@ -133,6 +133,7 @@ export const makePlot = <
         };
         hoverManager.attach(canvas);
         spanSelectManager.attach(canvas);
+        clickManager.attach(canvas);
         update();
         break;
       case "initializing":
@@ -195,6 +196,7 @@ export const makePlot = <
 
     // MAKE FRAME
     const frame = sceneToFrame({
+      plot: plotInstance,
       scene: state.scene,
       canvasSize: sizeManager.getCanvasSize(),
       ctx,
@@ -233,13 +235,14 @@ export const makePlot = <
       drawFacets(frame, "top");
     }
 
-    eventsManager.dispatchEvent("drawEnd", { frame, scene: state.scene });
+    eventsManager.dispatchEvent("frameDrawFinish", { frame, scene: state.scene });
   };
-
-  return {
+  const plotInstance: CanPlot = {
     init,
     update,
     deinit,
     on: eventsManager.addEventListener,
-  };
+  }
+
+  return plotInstance;
 };

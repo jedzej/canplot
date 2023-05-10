@@ -4,7 +4,7 @@ import React, { useLayoutEffect, useRef } from "react";
 
 export const usePlot = (
   canvasRef: React.RefObject<HTMLCanvasElement>,
-  scene: Scene
+  scene: Partial<Scene>
 ): CanPlot => {
   const plotRef = useRef<CanPlot>();
 

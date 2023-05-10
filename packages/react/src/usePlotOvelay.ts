@@ -7,7 +7,7 @@ export const usePlotOverlay = (
   overlayRef: React.RefObject<HTMLElement>
 ) => {
   useEffect(() => {
-    const unlisten = plot.on("drawEnd", ({ frame }) => {
+    const unlisten = plot.on("frameDrawFinish", ({ frame }) => {
       positionDOMOverlay({ element: overlayRef.current!, frame });
     });
     return () => {

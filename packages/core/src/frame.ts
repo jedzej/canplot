@@ -1,13 +1,15 @@
 import { isXScale } from "./helpers";
 import { makeAutoLimits } from "./limits";
-import { Frame, Scene, Size } from "./types";
+import { CanPlot, Frame, Scene, Size } from "./types";
 
 export const sceneToFrame = ({
+  plot,
   canvasSize,
   scene,
   ctx,
   dpr,
 }: {
+  plot: CanPlot;
   canvasSize: Size;
   scene: Scene;
   ctx: CanvasRenderingContext2D;
@@ -42,6 +44,7 @@ export const sceneToFrame = ({
   }
 
   const frameNoScales: Omit<Frame, "scales"> = {
+    plot,
     ctx,
     dpr,
     chartArea: {

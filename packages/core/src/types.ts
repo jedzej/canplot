@@ -125,6 +125,7 @@ export type Scene = {
 };
 
 export type Frame = {
+  plot: CanPlot;
   ctx: CanvasRenderingContext2D;
   dpr: number;
   canvasSize: Size;
@@ -214,10 +215,10 @@ export type PlotPhase =
 
 export type PlotEvents = {
   hover: HoverEventData;
-  "spanSelect": SpanSelectEventData;
+  spanSelect: SpanSelectEventData;
   click: ClickEventData;
   dblclick: DblClickEventData;
-  "drawEnd": { frame: Frame; scene: Scene };
+  frameDrawFinish: { frame: Frame; scene: Scene };
 };
 
 export type CanPlot = {
