@@ -187,22 +187,22 @@ const drawXTicks = (
 
 const drawXLabel = (frame: Frame, axis: PlotAxis, y: number) => {
   if (!axis.label) return;
-  const { ctx } = frame;
+  const { ctx, dpr, chartArea } = frame;
   ctx.save();
   let xPos: number;
   let textAlign: CanvasTextAlign;
   switch (axis.labelAlign ?? DEFAULT_LABEL_ALIGN) {
     case "start":
       textAlign = "left";
-      xPos = frame.chartArea.x;
+      xPos = chartArea.x;
       break;
     case "end":
       textAlign = "right";
-      xPos = frame.chartArea.x + frame.chartArea.width;
+      xPos = chartArea.x + chartArea.width;
       break;
     case "center":
       textAlign = "center";
-      xPos = frame.chartArea.x + frame.chartArea.width / 2;
+      xPos = chartArea.x + chartArea.width / 2;
       break;
   }
   applyStyles(ctx, {
@@ -212,7 +212,7 @@ const drawXLabel = (frame: Frame, axis: PlotAxis, y: number) => {
   });
   const labelOffset = axis.labelOffset ?? DEFAULT_LABEL_OFFSET;
   const yPos = isPrimary(axis) ? y + labelOffset : y - labelOffset;
-  ctx.fillText(axis.label, xPos, yPos);
+  ctx.fillText(axis.label, dpr * xPos, dpr * yPos);
   ctx.restore();
 };
 
@@ -235,22 +235,22 @@ const drawXAxis = (
 
 const drawYLabel = (frame: Frame, axis: PlotAxis, x: number) => {
   if (!axis.label) return;
-  const { ctx } = frame;
+  const { ctx, dpr, chartArea } = frame;
   ctx.save();
   let yPos: number;
   let textBaseline: CanvasTextBaseline;
   switch (axis.labelAlign ?? DEFAULT_LABEL_ALIGN) {
     case "start":
       textBaseline = "bottom";
-      yPos = frame.chartArea.y + frame.chartArea.height;
+      yPos = chartArea.y + chartArea.height;
       break;
     case "end":
       textBaseline = "top";
-      yPos = frame.chartArea.y;
+      yPos = chartArea.y;
       break;
     case "center":
       textBaseline = "middle";
-      yPos = frame.chartArea.y + frame.chartArea.height / 2;
+      yPos = chartArea.y + chartArea.height / 2;
       break;
   }
   applyStyles(ctx, {
@@ -260,7 +260,7 @@ const drawYLabel = (frame: Frame, axis: PlotAxis, x: number) => {
   });
   const labelOffset = axis.labelOffset ?? DEFAULT_LABEL_OFFSET;
   const xPos = isPrimary(axis) ? x - labelOffset : x + labelOffset;
-  ctx.fillText(axis.label, xPos, yPos);
+  ctx.fillText(axis.label, dpr * xPos, dpr * yPos);
   ctx.restore();
 };
 
