@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import type { PlotEvents, Scene } from "@canplot/core";
+import type { CanPlot, PlotEvents, Scene } from "@canplot/core";
 import { usePlot } from "./usePlot";
 import { usePlotUpdater } from "./usePlotUpdater";
 
@@ -9,12 +9,17 @@ export type ReactCanPlotProps = {
   onDblClick?: (data: PlotEvents["dblclick"]) => void;
   onSpanSelect?: (data: PlotEvents["spanSelect"]) => void;
   onFrameDrawFinish?: (data: PlotEvents["frameDrawFinish"]) => void;
+  onInit?: (data: CanPlot) => void;
   scene: Partial<Scene>;
 };
 
 export const ReactCanPlot: React.FC<ReactCanPlotProps> = (props) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const plot = usePlot(ref, props.scene);
+
+  useEffect(() => {
+    props.onInit?.(plot);
+  }, []);
 
   usePlotUpdater(
     plot,

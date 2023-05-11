@@ -47,7 +47,7 @@ export const sceneToFrame = ({
     plot,
     ctx,
     dpr,
-    zoom: scene.zoom,
+    zoomWindow: scene.zoomWindow,
     chartArea: {
       x: leftAxesSize + padding.left,
       y: topAxesSize + padding.top,
@@ -81,11 +81,11 @@ export const sceneToFrame = ({
       const limitsSpan = limits.max - limits.min;
       
       const zoomedLimits = isXScale(scale.id) ? {
-        min: limits.min + scene.zoom.x.min*limitsSpan,
-        max: limits.min + scene.zoom.x.max*limitsSpan,
+        min: limits.min + scene.zoomWindow.x.min*limitsSpan,
+        max: limits.min + scene.zoomWindow.x.max*limitsSpan,
       } : {
-        min: limits.min + scene.zoom.y.min*limitsSpan,
-        max: limits.min + scene.zoom.y.max*limitsSpan,
+        min: limits.min + scene.zoomWindow.y.min*limitsSpan,
+        max: limits.min + scene.zoomWindow.y.max*limitsSpan,
       };
       return {
         id: scale.id,

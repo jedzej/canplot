@@ -1,6 +1,7 @@
 export * from "./types";
 export * from "./makePlot";
 export * as helpers from "./helpers";
+export { makeGenTicksDefault } from "./axes";
 
 export * from "./time";
 export * from "./plotters/line";

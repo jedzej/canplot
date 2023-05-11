@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { linePlotter } from "@canplot/core";
 import { usePlot } from "@canplot/react";
 import { UsePlotMeta, UsePlotStory, animationLoop } from "./helpers";
+import { makeGenTicksDefault } from "@canplot/core";
 
 export default {
   title: "Axes",
@@ -50,9 +51,9 @@ export default {
   },
 } as UsePlotMeta;
 
-const Template: UsePlotStory = (scene) => {
+const Template: UsePlotStory = ({ callbacks, ...scene }) => {
   const ref = useRef<HTMLCanvasElement>(null);
-  const plot = usePlot(ref, scene);
+  const plot = usePlot(ref, scene, callbacks);
   useEffect(() => {
     animationLoop(() => {
       plot.update((scene) => {
@@ -99,7 +100,7 @@ SingleXPrimary.args = {
 export const Zoomed = Template.bind({});
 Zoomed.args = {
   ...Zoomed.args,
-  zoom: {
+  zoomWindow: {
     x: { min: 0.25, max: 0.75 },
     y: { min: 0.5, max: 1 },
   },
@@ -232,7 +233,7 @@ ManyScalesManyLabels.args = {
       scaleId: "y-3",
       label: "Y-3 label end",
       labelAlign: "end",
-      labelOffset: -10,
+      labelOffset: -4,
       labelStyle: {
         textAlign: "left",
       },
@@ -253,12 +254,13 @@ TickFormat.args = {
     {
       scaleId: "x-1",
       tickFormat: ({ ticks }) => ticks.map(() => "ab\nbcc\ncdd\ndeee"),
-      multilineGap: 8,
+      multilineGap: 10,
     },
     {
       scaleId: "y-1",
       tickFormat: ({ ticks }) => ticks.map(() => "aaaa\nc\nddddd"),
-      multilineGap: 16,
+      multilineGap: 8,
+      genTicks: makeGenTicksDefault({ space: 40 }),
     },
   ],
 };

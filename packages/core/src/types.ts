@@ -74,6 +74,7 @@ export type PlotAxis = {
   size?: number;
   tickLabelStyle?: Style;
   tickSize?: number;
+  tickSpace?: number;
   axisStyle?: Style;
   tickStyle?: Style;
   multilineGap?: number;
@@ -115,10 +116,10 @@ export type Facet = {
   plotter: (frame: Frame, id?: string) => void;
 };
 
-export type Zoom = {
+export type ZoomWindow = {
   x: Limits;
   y: Limits;
-}
+};
 
 export type Scene = {
   dimensions: Dimensions;
@@ -127,7 +128,7 @@ export type Scene = {
   scales: SceneScale[];
   facets: Facet[];
   series: SeriesBase[];
-  zoom: Zoom;
+  zoomWindow: ZoomWindow;
 };
 
 export type Frame = {
@@ -146,7 +147,7 @@ export type Frame = {
   scales: FrameScale[];
   facets: Facet[];
   series: SeriesBase[];
-  zoom: Zoom;
+  zoomWindow: ZoomWindow;
 };
 
 type XY = {
@@ -156,14 +157,15 @@ type XY = {
 
 export type CursorPosition =
   | {
-      constrained: "in-chart" | "clamped";
+      isWithinChart: true;
+      isClamped: boolean;
       screen: XY;
       canvas: XY;
       chart: XY;
       scaled: Record<ScaleId, number>;
     }
   | {
-      constrained: "out-of-chart";
+      isWithinChart: false;
       screen: XY;
       canvas: XY;
     };
@@ -187,25 +189,16 @@ export type DblClickEventData = {
   frame: Frame;
 };
 
-export type SpanSelectState =
-  | {
-      phase: "idle";
-    }
-  | {
-      phase: "active";
-      dimension: "x" | "y" | "xy";
-      start: CursorPosition;
-      end: CursorPosition;
-      ctrlKey: boolean;
-      shiftKey: boolean;
-      altKey: boolean;
-    };
+export type SpanDimensions = {
+  x: boolean;
+  y: boolean;
+};
 
 export type SpanSelectEventData = {
   phase: "start" | "move" | "end" | "cancel";
-  dimension: "x" | "y" | "xy";
-  start: CursorPosition;
-  end: CursorPosition;
+  dimensions: SpanDimensions;
+  startPos: CursorPosition;
+  endPos: CursorPosition;
   frame: Frame;
   ctrlKey: boolean;
   shiftKey: boolean;

@@ -63,7 +63,7 @@ plot.on("hover", (data) => {
     if (!data.position) {
       return;
     }
-    if (data.position.constrained !== "in-chart") {
+    if (!data.position.isWithinChart) {
       return;
     }
     scene.facets.push({
@@ -88,20 +88,12 @@ plot.on("spanSelect", (data) => {
       id: SPAN_FACET_ID,
       layer: "top",
       plotter: absoluteSpanFacet({
-        x:
-          data.dimension === "x" || data.dimension === "xy"
-            ? {
-                min: data.start.canvas.x,
-                max: data.end.canvas.x,
-              }
-            : undefined,
-        y:
-          data.dimension === "y" || data.dimension === "xy"
-            ? {
-                min: data.start.canvas.y,
-                max: data.end.canvas.y,
-              }
-            : undefined,
+        x: data.dimensions.x
+          ? { min: data.startPos.canvas.x, max: data.endPos.canvas.x }
+          : undefined,
+        y: data.dimensions.y
+          ? { min: data.startPos.canvas.y, max: data.endPos.canvas.y }
+          : undefined,
         style: {
           fillStyle: `rgba(${data.altKey ? 255 : 0}, ${
             data.ctrlKey ? 255 : 0

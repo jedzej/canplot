@@ -80,8 +80,11 @@ const drawYTicks = (
   const multilineGap = axis.multilineGap ?? DEFAULT_MULTILINE_GAP;
 
   const ticks =
-    (axis.genTicks ?? makeGenTicksDefault())({ frame: frame, scale, axis }) ??
-    [];
+    (axis.genTicks ?? makeGenTicksDefault({ space: axis.tickSpace }))({
+      frame: frame,
+      scale,
+      axis,
+    }) ?? [];
 
   const labels = (axis.tickFormat ?? tickFormat)({
     frame,

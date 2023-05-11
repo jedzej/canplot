@@ -1,11 +1,12 @@
 import { Scene, PlotStaticConfig } from "@canplot/core";
+import { UsePlotCallbacks } from "@canplot/react";
 import { Meta, Story } from "@storybook/react";
 
 export type PlotStoryProps = Omit<PlotStaticConfig, "canvas"> & Scene;
 
-export type UsePlotMeta = Meta<Scene>;
+export type UsePlotMeta = Meta<Scene & { callbacks: UsePlotCallbacks }>;
 
-export type UsePlotStory = Story<Scene>;
+export type UsePlotStory = Story<Scene & { callbacks: UsePlotCallbacks }>;
 
 export const animationLoop = (foo: () => void) => {
   let continueLoop = true;

@@ -1,5 +1,5 @@
 import { CursorPosition } from "./main";
-import { Frame, Style, XScaleId, YScaleId, ScaleId } from "./types";
+import { Frame, Style, XScaleId, YScaleId, ScaleId, Limits } from "./types";
 import { clamp, findClosestIndex } from "./utils";
 
 export const isXScale = (scaleId: string): scaleId is XScaleId =>
@@ -97,7 +97,7 @@ export const findClosestDataPoint = (
     if (series.x.length < 0) {
       return undefined;
     }
-    if (position.constrained === "out-of-chart") {
+    if (!position.isWithinChart) {
       return undefined;
     }
     const idx = findClosestIndex(series.x, position.scaled[series.xScaleId]);
@@ -118,4 +118,16 @@ export const findClosestDataPoint = (
       y: series.y[idx],
     };
   });
+};
+
+export const rezoom = (oldZoomWindow: Limits, additiveZoomWindow: Limits): Limits => {
+  const overlapSpan = Math.abs(additiveZoomWindow.max - additiveZoomWindow.min);
+  const oldZoomSpan = oldZoomWindow.max - oldZoomWindow.min;
+  const newZoomSpan = oldZoomSpan * overlapSpan;
+  const overlapMin = Math.min(additiveZoomWindow.min, additiveZoomWindow.max);
+  const newZoom: Limits = {
+    min: oldZoomWindow.min + overlapMin * oldZoomSpan,
+    max: oldZoomWindow.min + overlapMin * oldZoomSpan + newZoomSpan,
+  };
+  return newZoom;
 };

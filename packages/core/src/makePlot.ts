@@ -129,7 +129,7 @@ export const makePlot = <
           padding: { bottom: 0, left: 0, right: 0, top: 0 },
           scales: [],
           series: [],
-          zoom: { x: { min: 0, max: 1 }, y: { min: 0, max: 1 } },
+          zoomWindow: { x: { min: 0, max: 1 }, y: { min: 0, max: 1 } },
           ...initialScene,
         };
         hoverManager.attach(canvas);

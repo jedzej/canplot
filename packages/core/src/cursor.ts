@@ -110,12 +110,12 @@ export const makeSpanSelectManager = ({
     if (!frame) return;
     const position = eventToPositions(e, frame, false);
     if (!position) return;
-    if (position.constrained === "out-of-chart") return;
+    if (!position.isWithinChart) return;
     store.lastEvent = {
       phase: "start",
-      dimension: "xy",
-      start: position,
-      end: position,
+      dimensions: { x: true, y: true },
+      startPos: position,
+      endPos: position,
       frame,
       ctrlKey: e.ctrlKey,
       shiftKey: e.shiftKey,
@@ -130,13 +130,13 @@ export const makeSpanSelectManager = ({
     if (!frame) return;
     const position = eventToPositions(e, frame, true);
     if (!position) return;
-    const dimension = positionsToDimension(store.lastEvent.start, position);
+    const dimensions = positionsToDimensions(store.lastEvent.startPos, position);
     store.lastEvent = {
       ...store.lastEvent,
       frame,
       phase: "move",
-      dimension: dimension ?? "xy",
-      end: position,
+      dimensions,
+      endPos: position,
       altKey: e.altKey,
       shiftKey: e.shiftKey,
       ctrlKey: e.ctrlKey,
@@ -177,12 +177,12 @@ export const makeSpanSelectManager = ({
     if (!frame) return;
     const position = eventToPositions(e, frame, true);
     if (!position) return;
-    const dimension = positionsToDimension(store.lastEvent.start, position);
+    const dimensions = positionsToDimensions(store.lastEvent.startPos, position);
     onSpanSelect?.({
       ...store.lastEvent,
-      phase: dimension ? "end" : "cancel",
-      dimension: dimension ?? "xy",
-      end: position,
+      phase: dimensions.x || dimensions.y ? "end" : "cancel",
+      dimensions,
+      endPos: position,
       frame,
       ctrlKey: e.ctrlKey,
       shiftKey: e.shiftKey,
@@ -213,17 +213,17 @@ export const makeSpanSelectManager = ({
   };
 };
 
-const positionsToDimension = (
+const positionsToDimensions = (
   start: CursorPosition,
   end: CursorPosition,
   tolerance = 25
 ) => {
   const xBelowTolerance = Math.abs(start.canvas.x - end.canvas.x) < tolerance;
   const yBelowTolerance = Math.abs(start.canvas.y - end.canvas.y) < tolerance;
-  if (xBelowTolerance && yBelowTolerance) return undefined;
-  if (xBelowTolerance) return "y";
-  if (yBelowTolerance) return "x";
-  return "xy";
+  if (xBelowTolerance && yBelowTolerance) return { x: false, y: false };
+  if (xBelowTolerance) return { x: false, y: true };
+  if (yBelowTolerance) return { x: true, y: false };
+  return { x: true, y: true };
 };
 
 const eventToPositions = (
@@ -257,7 +257,7 @@ const eventToPositions = (
 
   if (outOfChart && !clampToChartArea)
     return {
-      constrained: "out-of-chart",
+      isWithinChart: false,
       canvas,
       screen,
     };
@@ -272,7 +272,8 @@ const eventToPositions = (
     }
   }
   return {
-    constrained: outOfChart ? "clamped" : "in-chart",
+    isWithinChart: true,
+    isClamped: outOfChart,
     chart,
     screen,
     canvas,
