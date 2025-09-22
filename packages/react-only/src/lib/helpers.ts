@@ -1,0 +1,76 @@
+import type { PlotDrawFrame, Style } from "./types";
+import { clamp } from "./utils";
+
+export const pxToValDistance = (
+  frame: PlotDrawFrame,
+  pxDistance: number,
+  scaleId: string
+) => {
+  const [min, max] = getScaleLimits(frame, scaleId);
+  const chartArea = frame.chartArea;
+  const factor =
+    (isXScale(frame, scaleId) ? chartArea.width : chartArea.height) /
+    (max - min);
+  return pxDistance / factor;
+};
+
+export const getScaleLimits = (frame: PlotDrawFrame, scaleId: string) => {
+  const scale = frame.scales.find((a) => a.id === scaleId);
+  if (!scale) {
+    throw new Error(`Scale ${scaleId} not found`);
+  }
+  return scale.minmax;
+};
+
+export const isXScale = (frame: PlotDrawFrame, scaleId: string) =>
+  frame.scales.find((s) => s.id === scaleId)?.origin === "x";
+
+export const isYScale = (frame: PlotDrawFrame, scaleId: string) =>
+  frame.scales.find((s) => s.id === scaleId)?.origin === "y";
+
+export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.lineCap = style?.lineCap ?? "butt";
+  ctx.lineDashOffset = dpr * (style?.lineDashOffset ?? 0);
+  ctx.lineJoin = style?.lineJoin ?? "miter";
+  ctx.lineWidth = dpr * (style?.lineWidth ?? 1);
+  ctx.miterLimit = dpr * (style?.miterLimit ?? 10);
+  ctx.strokeStyle = style?.strokeStyle ?? "black";
+  ctx.fillStyle = style?.fillStyle ?? ctx.strokeStyle;
+  ctx.font = style?.font ?? `${dpr * 10}px sans-serif`;
+  ctx.textAlign = style?.textAlign ?? "start";
+  ctx.direction = style?.direction ?? "inherit";
+  ctx.textBaseline = style?.textBaseline ?? "alphabetic";
+  ctx.fontKerning = style?.fontKerning ?? "auto";
+};
+
+export const valToPxDistance = (
+  frame: PlotDrawFrame,
+  val: number,
+  scaleId: string
+) => {
+  const chartArea = frame.chartArea;
+  const  [min, max]  = getScaleLimits(frame, scaleId);
+  const factor =
+    (isXScale(frame, scaleId) ? chartArea.width : chartArea.height) / (max - min);
+  return val * factor;
+};
+
+export const valToPos = (frame: PlotDrawFrame, val: number, scaleId: string) => {
+  const [min] = getScaleLimits(frame, scaleId);
+  const chartArea = frame.chartArea;
+  const relativePosition = valToPxDistance(frame, val - min, scaleId);
+  if (isXScale(frame, scaleId)) {
+    return clamp(
+      chartArea.x + relativePosition,
+      chartArea.x - 10 * chartArea.width,
+      chartArea.x + 11 * chartArea.width
+    );
+  } else {
+    return clamp(
+      chartArea.y + chartArea.height - relativePosition,
+      chartArea.y - 10 * chartArea.height,
+      chartArea.y + 11 * chartArea.height
+    );
+  }
+};
