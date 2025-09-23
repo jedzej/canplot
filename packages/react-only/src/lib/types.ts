@@ -32,6 +32,7 @@ export type PlotState = {
   width: number;
   height: number;
   configuration: PlotConfiguration;
+  dpr: number;
 };
 
 export type PlotDrawFrame = {
@@ -53,3 +54,31 @@ export type Style = {
   >
 > &
   Partial<CanvasTextDrawingStyles>;
+
+export type SeriesData = Record<string, (number|null|boolean)[]>;
+
+export type Data = Record<string, SeriesData>;
+
+
+type TimeSeriesData = {
+  t: (number | null)[];
+  y: (number | null | boolean)[];
+  boundYMin?: number[];
+  boundYMax?: number[];
+}
+
+type CorrelationGraphData = {
+  x: (number | null)[];
+  y: (number | null)[];
+  z?: (number | null)[];
+}
+
+
+const a: SeriesData = {
+  t: [1, 2, 3],
+  y: [4, 5, 6],
+} satisfies TimeSeriesData;
+const b: SeriesData = {
+  x: [1, 2, 3],
+  y: [4, 5, 6],
+} satisfies CorrelationGraphData;

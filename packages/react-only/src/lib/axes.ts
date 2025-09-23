@@ -30,16 +30,19 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  let currentLeftOffset = plotDrawFrame.padding.left;
+  const dpr = window.devicePixelRatio || 1;
+
+  let currentLeftOffset = plotDrawFrame.padding.left * dpr;
   let currentRightOffset =
-    plotDrawFrame.canvasSize.width - plotDrawFrame.padding.right;
+    (plotDrawFrame.canvasSize.width - plotDrawFrame.padding.right) * dpr;
   let currentBottomOffset =
-    plotDrawFrame.canvasSize.height - plotDrawFrame.padding.bottom;
-  let currentTopOffset = plotDrawFrame.padding.top;
+    (plotDrawFrame.canvasSize.height - plotDrawFrame.padding.bottom) * dpr;
+  let currentTopOffset = plotDrawFrame.padding.top * dpr;
   for (const scale of scales) {
     if (!scale.axis) continue;
     if (scale.origin === "x") {
       if (scale.axis.position === "bottom") {
+        currentBottomOffset -= scale.axis.size * dpr;
         // Draw x axis at bottom
         ctx.beginPath();
         ctx.moveTo(chartArea.x, chartArea.y + chartArea.height);
@@ -48,44 +51,20 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
           chartArea.y + chartArea.height
         );
         ctx.stroke();
-        // Draw ticks
-        const [min, max] = scale.minmax;
-        const range = max - min;
-        const numTicks = 10;
-        for (let i = 0; i <= numTicks; i++) {
-          const value = min + (i * range) / numTicks;
-          const x = chartArea.x + (i * chartArea.width) / numTicks;
-          const y = chartArea.y + chartArea.height;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x, y + 5);
-          ctx.stroke();
-          ctx.fillText(value.toFixed(0), x, y + 15);
-        }
+        drawXTicks(plotDrawFrame, scale.id, currentBottomOffset);
       } else if (scale.axis.position === "top") {
+        currentTopOffset += scale.axis.size * dpr;
         // Draw x axis at top
         ctx.beginPath();
         ctx.moveTo(chartArea.x, chartArea.y);
         ctx.lineTo(chartArea.x + chartArea.width, chartArea.y);
         ctx.stroke();
         // Draw ticks
-        const [min, max] = scale.minmax;
-        const range = max - min;
-        const numTicks = 10;
-        for (let i = 0; i <= numTicks; i++) {
-          const value = min + (i * range) / numTicks;
-          const x = chartArea.x + (i * chartArea.width) / numTicks;
-          const y = chartArea.y;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x, y - 5);
-          ctx.stroke();
-          ctx.fillText(value.toFixed(0), x, y - 15);
-        }
+        drawXTicks(plotDrawFrame, scale.id, currentTopOffset);
       }
     } else {
       if (scale.axis.position === "left") {
-        currentLeftOffset += scale.axis.size;
+        currentLeftOffset += scale.axis.size * dpr;
         // Draw y axis at left
         ctx.beginPath();
         ctx.moveTo(currentLeftOffset, chartArea.y);
@@ -93,7 +72,7 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
         ctx.stroke();
         drawYTicks(plotDrawFrame, scale.id, currentLeftOffset);
       } else if (scale.axis.position === "right") {
-        currentRightOffset -= scale.axis.size;
+        currentRightOffset -= scale.axis.size * dpr;
         // Draw y axis at right
         ctx.beginPath();
         ctx.moveTo(currentRightOffset, chartArea.y);
@@ -108,7 +87,7 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
 };
 
 const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
-  const { ctx, dpr } = frame;
+  const { ctx } = frame;
   const axis = frame.scales.find((s) => s.id === scaleId)?.axis;
   if (!axis) return;
   const tickSize = DEFAULT_TICK_SIZE;
@@ -126,13 +105,14 @@ const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
 
   // draw ticks
   ctx.save();
+  ctx.fontKerning = "auto";
   applyStyles(ctx, {});
   ctx.beginPath();
 
   for (let i = 0; i < ticks.length; i++) {
     const y = valToPos(frame, ticks[i], scaleId);
-    ctx.moveTo(dpr * x0, dpr * y);
-    ctx.lineTo(dpr * x1, dpr * y);
+    ctx.moveTo(x0, y);
+    ctx.lineTo(x1, y);
   }
   ctx.stroke();
   ctx.restore();
@@ -149,7 +129,57 @@ const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
     const y = valToPos(frame, ticks[i], scaleId);
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
-      ctx.fillText(labelLines[j], dpr * x1, dpr * (y + j * multilineGap));
+      ctx.fillText(` ${labelLines[j]} `, x1, y + j * multilineGap);
+    }
+  }
+  ctx.restore();
+};
+
+const drawXTicks = (frame: PlotDrawFrame, scaleId: string, y: number) => {
+  const { ctx } = frame;
+  const axis = frame.scales.find((s) => s.id === scaleId)?.axis;
+  if (!axis) return;
+  const dpr = window.devicePixelRatio || 1;
+  const tickSize = DEFAULT_TICK_SIZE;
+  const y0 = y;
+  const y1 = axis.position === "top" ? y - tickSize : y + tickSize;
+  const multilineGap = DEFAULT_MULTILINE_GAP;
+
+  const ticks = makeGenTicksDefault()({ frame, scaleId }) ?? [];
+
+  const labels = tickFormat({
+    frame,
+    scaleId,
+    ticks,
+  });
+
+  // draw ticks
+  ctx.save();
+  ctx.fontKerning = "auto";
+  applyStyles(ctx, {});
+  ctx.beginPath();
+
+  for (let i = 0; i < ticks.length; i++) {
+    const x = valToPos(frame, ticks[i], scaleId);
+    ctx.moveTo(x, y0);
+    ctx.lineTo(x, y1);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // draw tick labels
+  ctx.save();
+  applyStyles(ctx, {
+    textBaseline: axis.position === "top" ? "bottom" : "top",
+    textAlign: "center",
+    // ...axis.axisStyle,
+    // ...axis.tickLabelStyle,
+  });
+  for (let i = 0; i < ticks.length; i++) {
+    const x = valToPos(frame, ticks[i], scaleId);
+    const labelLines = labels[i].split("\n");
+    for (let j = 0; j < labelLines.length; j++) {
+      ctx.fillText(labelLines[j], x, y1 + dpr * 2 + j * multilineGap);
     }
   }
   ctx.restore();
@@ -175,11 +205,12 @@ export const makeGenTicksDefault = ({
   return ({ frame: frame, scaleId }) => {
     const [scaleMin, scaleMax] = getScaleLimits(frame, scaleId);
     const ticks = [];
+    const dpr = window.devicePixelRatio || 1;
     const effectiveSpace =
-      space ??
-      (isXScale(frame, scaleId)
-        ? DEFAULT_X_SPLIT_SPACE
-        : DEFAULT_Y_SPLIT_SPACE);
+      (space ??
+        (isXScale(frame, scaleId)
+          ? DEFAULT_X_SPLIT_SPACE
+          : DEFAULT_Y_SPLIT_SPACE)) * dpr;
     const unnormalizedIncr = pxToValDistance(frame, effectiveSpace, scaleId);
     const incr = acceptable_tick_values.find((a) => a > unnormalizedIncr) ?? 1;
     let curr =

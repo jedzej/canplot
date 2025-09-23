@@ -1,4 +1,9 @@
-import React, { useEffect, useLayoutEffect } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  type ReactNode,
+} from "react";
 import type { PlotConfiguration, PlotDrawFrame, PlotState } from "./lib/types";
 import { drawAxes } from "./lib/axes";
 
@@ -34,7 +39,22 @@ function App() {
               origin: "y",
               minmax: [0, 100],
             },
+            {
+              id: "y2",
+              axis: {
+                position: "right",
+                size: 20,
+                type: "linear",
+              },
+              origin: "y",
+              minmax: [-1000, 1000],
+            },
           ],
+        }}
+        renderOver={({ frame }) => {
+          return (
+            <div style={{ position: "absolute", bottom: 0, left: 0 }}>Over</div>
+          );
         }}
       />
     </>
@@ -43,17 +63,19 @@ function App() {
 
 export default App;
 
-
-const CanPlot: React.FC<{ configuration: PlotConfiguration }> = ({
-  configuration,
-}) => {
+const CanPlot: React.FC<{
+  configuration: PlotConfiguration;
+  renderOver?: (params: { frame: PlotDrawFrame }) => ReactNode;
+}> = ({ configuration, renderOver }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const overRef = React.useRef<HTMLDivElement>(null);
 
   const [plotState, setPlotState] = React.useState<PlotState>({
     width: 0,
     height: 0,
     configuration: configuration,
+    dpr: window.devicePixelRatio || 1,
   });
 
   const [resizeObserver] = React.useState(
@@ -74,18 +96,12 @@ const CanPlot: React.FC<{ configuration: PlotConfiguration }> = ({
     return () => resizeObserver.disconnect();
   }, [resizeObserver]);
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    console.log("Redraw");
-    const ctx = canvasRef.current.getContext("2d");
-    if (!ctx) return;
+  const plotDrawFrame = useMemo<PlotDrawFrame | null>(() => {
+    if (plotState.width === 0 || plotState.height === 0) return null;
     const dpr = window.devicePixelRatio || 1;
-    const canvasWidth = plotState.width;
-    const canvasHeight = plotState.height;
-    console.log("Canvas size", canvasWidth, canvasHeight, dpr);
-    const plotDrawFrame: PlotDrawFrame = {
-      canvasSize: { width: canvasWidth, height: canvasHeight },
-      ctx,
+    const result: PlotDrawFrame = {
+      canvasSize: { width: plotState.width, height: plotState.height },
+      ctx: canvasRef.current!.getContext("2d")!,
       dpr,
       padding: configuration.padding,
       scales: configuration.scales.map((scale) => {
@@ -96,41 +112,78 @@ const CanPlot: React.FC<{ configuration: PlotConfiguration }> = ({
         return { ...scaleRest, minmax: [0, 1] };
       }),
       chartArea: {
-        x: configuration.padding.left,
-        y: configuration.padding.top,
+        x: configuration.padding.left * dpr,
+        y: configuration.padding.top * dpr,
         width:
-          canvasWidth -
-          configuration.padding.left -
-          configuration.padding.right,
+          (plotState.width -
+            configuration.padding.left -
+            configuration.padding.right) *
+          dpr,
         height:
-          canvasHeight -
-          configuration.padding.top -
-          configuration.padding.bottom,
+          (plotState.height -
+            configuration.padding.top -
+            configuration.padding.bottom) *
+          dpr,
       },
     };
-
     for (const scale of configuration.scales) {
       if (!scale.axis) continue;
       if (scale.origin === "x") {
         if (scale.axis.position === "bottom" || scale.axis.position === "top") {
-          plotDrawFrame.chartArea.height = Math.max(0, plotDrawFrame.chartArea.height - scale.axis.size);
+          result.chartArea.height = Math.max(
+            0,
+            result.chartArea.height - scale.axis.size * dpr
+          );
           if (scale.axis.position === "top") {
-            plotDrawFrame.chartArea.y += scale.axis.size;
+            result.chartArea.y += scale.axis.size * dpr;
           }
         }
       } else {
         if (scale.axis.position === "left" || scale.axis.position === "right") {
-          plotDrawFrame.chartArea.width = Math.max(0, plotDrawFrame.chartArea.width - scale.axis.size);
+          result.chartArea.width = Math.max(
+            0,
+            result.chartArea.width - scale.axis.size * dpr
+          );
           if (scale.axis.position === "left") {
-            plotDrawFrame.chartArea.x += scale.axis.size;
+            result.chartArea.x += scale.axis.size * dpr;
           }
         }
       }
     }
-    console.log(plotDrawFrame.chartArea)
+    return result;
+  }, [plotState, configuration]);
+
+  useLayoutEffect(() => {
+    if (!plotDrawFrame) return;
+    console.log("Redraw");
+    const ctx = plotDrawFrame.ctx;
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const canvasWidth = plotState.width;
+    const canvasHeight = plotState.height;
+    console.log("Canvas size", canvasWidth, canvasHeight, dpr);
+
+    console.log(plotDrawFrame.chartArea);
+
+    overRef.current?.style.setProperty(
+      "width",
+      `${plotDrawFrame.chartArea.width / dpr}px`
+    );
+    overRef.current?.style.setProperty(
+      "height",
+      `${plotDrawFrame.chartArea.height / dpr}px`
+    );
+    overRef.current?.style.setProperty(
+      "top",
+      `${plotDrawFrame.chartArea.y / dpr}px`
+    );
+    overRef.current?.style.setProperty(
+      "left",
+      `${plotDrawFrame.chartArea.x / dpr}px`
+    );
 
     // Clear the canvas
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     console.log("Drawing chart area", plotDrawFrame.chartArea);
 
@@ -155,27 +208,46 @@ const CanPlot: React.FC<{ configuration: PlotConfiguration }> = ({
     ctx.font = "20px Arial";
     ctx.fillText("Hello Canvas", 350, 50);
     drawAxes(plotDrawFrame);
-  }, [resizeObserver, plotState, configuration]);
+  }, [resizeObserver, plotState, configuration, plotDrawFrame]);
+
+  const dpr = window.devicePixelRatio || 1;
 
   return (
-    <div
-      ref={rootRef}
-      style={{
-        width: "75vw",
-        height: "50vh",
-        position: "relative",
-        overflow: "hidden",
-        border: "1px red solid",
-        ...configuration.style,
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        width={plotState.width}
-        height={plotState.height}
-        style={{ border: "1px solid black", inset: 0, position: "absolute" }}
-      />
-    </div>
+    <>
+      <span style={{ position: "absolute", left: 0, top: 0, color: "black" }}>
+        {dpr}
+      </span>
+      <div
+        ref={rootRef}
+        style={{
+          width: "75vw",
+          height: "50vh",
+          position: "relative",
+          overflow: "hidden",
+          border: "1px red solid",
+          ...configuration.style,
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          width={plotState.width * dpr}
+          height={plotState.height * dpr}
+          style={{
+            border: "1px solid black",
+            inset: 0,
+            position: "absolute",
+            width: `${plotState.width}px`,
+            height: `${plotState.height}px`,
+          }}
+        />
+        <div
+          ref={overRef}
+          style={{ position: "absolute", backgroundColor: "#ff000022" }}
+        >
+          {renderOver && plotDrawFrame ? renderOver({ frame: plotDrawFrame }) : null}
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -208,4 +280,3 @@ const makeEventsManager = <T extends Record<string, unknown>>() => {
     },
   };
 };
-

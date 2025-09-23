@@ -37,7 +37,7 @@ export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
   ctx.miterLimit = dpr * (style?.miterLimit ?? 10);
   ctx.strokeStyle = style?.strokeStyle ?? "black";
   ctx.fillStyle = style?.fillStyle ?? ctx.strokeStyle;
-  ctx.font = style?.font ?? `${dpr * 10}px sans-serif`;
+  ctx.font = style?.font ?? `${10 * dpr}px sans-serif`;
   ctx.textAlign = style?.textAlign ?? "start";
   ctx.direction = style?.direction ?? "inherit";
   ctx.textBaseline = style?.textBaseline ?? "alphabetic";
@@ -50,13 +50,18 @@ export const valToPxDistance = (
   scaleId: string
 ) => {
   const chartArea = frame.chartArea;
-  const  [min, max]  = getScaleLimits(frame, scaleId);
+  const [min, max] = getScaleLimits(frame, scaleId);
   const factor =
-    (isXScale(frame, scaleId) ? chartArea.width : chartArea.height) / (max - min);
+    (isXScale(frame, scaleId) ? chartArea.width : chartArea.height) /
+    (max - min);
   return val * factor;
 };
 
-export const valToPos = (frame: PlotDrawFrame, val: number, scaleId: string) => {
+export const valToPos = (
+  frame: PlotDrawFrame,
+  val: number,
+  scaleId: string
+) => {
   const [min] = getScaleLimits(frame, scaleId);
   const chartArea = frame.chartArea;
   const relativePosition = valToPxDistance(frame, val - min, scaleId);
