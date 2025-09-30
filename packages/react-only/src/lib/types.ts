@@ -39,7 +39,8 @@ export type PlotDrawFrame = {
   ctx: CanvasRenderingContext2D;
   dpr: number;
   canvasSize: { width: number; height: number };
-  chartArea: { x: number; y: number; width: number; height: number };
+  chartAreaCanvasPX: { x: number; y: number; width: number; height: number };
+  chartAreaCSS: { x: number; y: number; width: number; height: number };
   padding: PlotPadding;
   scales: PlotScaleDrawConfig[];
 };
@@ -55,24 +56,22 @@ export type Style = {
 > &
   Partial<CanvasTextDrawingStyles>;
 
-export type SeriesData = Record<string, (number|null|boolean)[]>;
+export type SeriesData = Record<string, (number | null | boolean)[]>;
 
 export type Data = Record<string, SeriesData>;
-
 
 type TimeSeriesData = {
   t: (number | null)[];
   y: (number | null | boolean)[];
   boundYMin?: number[];
   boundYMax?: number[];
-}
+};
 
 type CorrelationGraphData = {
   x: (number | null)[];
   y: (number | null)[];
   z?: (number | null)[];
-}
-
+};
 
 const a: SeriesData = {
   t: [1, 2, 3],

@@ -1,13 +1,42 @@
-import React, {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  type ReactNode,
-} from "react";
-import type { PlotConfiguration, PlotDrawFrame, PlotState } from "./lib/types";
-import { drawAxes } from "./lib/axes";
+import React, { useEffect, useState } from "react";
+import type { PlotDrawFrame, PlotScaleConfig } from "./lib/types";
+import type { EventEmitter } from "./lib/eventEmitter";
+import { CanPlot } from "./lib/CanPlot";
 
 function App() {
+  const [scales, setScales] = useState<PlotScaleConfig[]>(() => [
+    {
+      id: "x",
+      axis: {
+        position: "bottom",
+        size: 20,
+        type: "linear",
+      },
+      origin: "x",
+      minmax: [0, 100],
+    },
+    {
+      id: "y",
+      axis: {
+        position: "left",
+        size: 20,
+        type: "linear",
+      },
+      origin: "y",
+      minmax: [0, 100],
+    },
+    {
+      id: "y2",
+      axis: {
+        position: "right",
+        size: 20,
+        type: "linear",
+      },
+      origin: "y",
+      minmax: [-1000, 1000],
+    },
+  ]);
+
   return (
     <>
       <CanPlot
@@ -18,265 +47,178 @@ function App() {
             right: 20,
             top: 20,
           },
-          scales: [
-            {
-              id: "x",
-              axis: {
-                position: "bottom",
-                size: 20,
-                type: "linear",
-              },
-              origin: "x",
-              minmax: [0, 100],
-            },
-            {
-              id: "y",
-              axis: {
-                position: "left",
-                size: 20,
-                type: "linear",
-              },
-              origin: "y",
-              minmax: [0, 100],
-            },
-            {
-              id: "y2",
-              axis: {
-                position: "right",
-                size: 20,
-                type: "linear",
-              },
-              origin: "y",
-              minmax: [-1000, 1000],
-            },
-          ],
+          scales,
         }}
-        renderOver={({ frame }) => {
+        renderOver={({ frame, eventEmitter }) => {
           return (
-            <div style={{ position: "absolute", bottom: 0, left: 0 }}>Over</div>
+            <>
+              <Plugin frame={frame} eventEmitter={eventEmitter} />
+              <Crosshair eventEmitter={eventEmitter} />
+              <SpanSelect
+                eventEmitter={eventEmitter}
+                onSelect={(selectState) => {
+                  console.log("Select", selectState);
+                }}
+              />
+              <div style={{ position: "absolute", bottom: 0, left: 0 }}>
+                Over
+              </div>
+            </>
           );
         }}
       />
+      <button
+        type="button"
+        onClick={() => {
+          setScales((prev) => {
+            const newScales = [...prev];
+            newScales[2] = {
+              ...newScales[2],
+              minmax: (newScales[2].minmax = [
+                Math.random() * -1000,
+                Math.random() * 1000,
+              ]),
+            };
+            return newScales;
+          });
+        }}
+      >
+        YScale
+      </button>
     </>
   );
 }
 
-export default App;
-
-const CanPlot: React.FC<{
-  configuration: PlotConfiguration;
-  renderOver?: (params: { frame: PlotDrawFrame }) => ReactNode;
-}> = ({ configuration, renderOver }) => {
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const rootRef = React.useRef<HTMLDivElement>(null);
-  const overRef = React.useRef<HTMLDivElement>(null);
-
-  const [plotState, setPlotState] = React.useState<PlotState>({
-    width: 0,
-    height: 0,
-    configuration: configuration,
-    dpr: window.devicePixelRatio || 1,
-  });
-
-  const [resizeObserver] = React.useState(
-    () =>
-      new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect;
-          setPlotState((prev) => ({ ...prev, width, height }));
-        }
-      })
+const Plugin: React.FC<{
+  frame: PlotDrawFrame;
+  eventEmitter: EventEmitter;
+}> = ({ frame, eventEmitter }) => {
+  const [clickState, setClickState] = useState<{ x: number; y: number } | null>(
+    null
   );
 
-  const [eventManager] = React.useState(() => makeEventsManager());
+  useEffect(() => {
+    eventEmitter.addEventListener("click", (payload) => {
+      setClickState({ x: payload.data.x, y: payload.data.y });
+    });
+  }, [eventEmitter]);
+  return (
+    <div>
+      <p>{JSON.stringify(frame.scales)}</p>
+      <p>{JSON.stringify(clickState)}</p>
+    </div>
+  );
+};
 
-  useLayoutEffect(() => {
-    if (!rootRef.current) return;
-    resizeObserver.observe(rootRef.current);
-    return () => resizeObserver.disconnect();
-  }, [resizeObserver]);
+const Crosshair: React.FC<{
+  eventEmitter: EventEmitter;
+}> = ({ eventEmitter }) => {
+  const [moveState, setMoveState] = useState<{ x: number; y: number } | null>(
+    null
+  );
 
-  const plotDrawFrame = useMemo<PlotDrawFrame | null>(() => {
-    if (plotState.width === 0 || plotState.height === 0) return null;
-    const dpr = window.devicePixelRatio || 1;
-    const result: PlotDrawFrame = {
-      canvasSize: { width: plotState.width, height: plotState.height },
-      ctx: canvasRef.current!.getContext("2d")!,
-      dpr,
-      padding: configuration.padding,
-      scales: configuration.scales.map((scale) => {
-        const { minmax, ...scaleRest } = scale;
-        if (minmax !== "auto") {
-          return { ...scaleRest, minmax };
-        }
-        return { ...scaleRest, minmax: [0, 1] };
-      }),
-      chartArea: {
-        x: configuration.padding.left * dpr,
-        y: configuration.padding.top * dpr,
-        width:
-          (plotState.width -
-            configuration.padding.left -
-            configuration.padding.right) *
-          dpr,
-        height:
-          (plotState.height -
-            configuration.padding.top -
-            configuration.padding.bottom) *
-          dpr,
-      },
-    };
-    for (const scale of configuration.scales) {
-      if (!scale.axis) continue;
-      if (scale.origin === "x") {
-        if (scale.axis.position === "bottom" || scale.axis.position === "top") {
-          result.chartArea.height = Math.max(
-            0,
-            result.chartArea.height - scale.axis.size * dpr
-          );
-          if (scale.axis.position === "top") {
-            result.chartArea.y += scale.axis.size * dpr;
-          }
-        }
-      } else {
-        if (scale.axis.position === "left" || scale.axis.position === "right") {
-          result.chartArea.width = Math.max(
-            0,
-            result.chartArea.width - scale.axis.size * dpr
-          );
-          if (scale.axis.position === "left") {
-            result.chartArea.x += scale.axis.size * dpr;
-          }
-        }
-      }
-    }
-    return result;
-  }, [plotState, configuration]);
-
-  useLayoutEffect(() => {
-    if (!plotDrawFrame) return;
-    console.log("Redraw");
-    const ctx = plotDrawFrame.ctx;
-    if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    const canvasWidth = plotState.width;
-    const canvasHeight = plotState.height;
-    console.log("Canvas size", canvasWidth, canvasHeight, dpr);
-
-    console.log(plotDrawFrame.chartArea);
-
-    overRef.current?.style.setProperty(
-      "width",
-      `${plotDrawFrame.chartArea.width / dpr}px`
-    );
-    overRef.current?.style.setProperty(
-      "height",
-      `${plotDrawFrame.chartArea.height / dpr}px`
-    );
-    overRef.current?.style.setProperty(
-      "top",
-      `${plotDrawFrame.chartArea.y / dpr}px`
-    );
-    overRef.current?.style.setProperty(
-      "left",
-      `${plotDrawFrame.chartArea.x / dpr}px`
-    );
-
-    // Clear the canvas
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    console.log("Drawing chart area", plotDrawFrame.chartArea);
-
-    // Draw a rectangle
-    ctx.fillStyle = "lightblue";
-    ctx.fillRect(
-      plotDrawFrame.chartArea.x,
-      plotDrawFrame.chartArea.y,
-      plotDrawFrame.chartArea.width,
-      plotDrawFrame.chartArea.height
-    );
-
-    // Draw a circle
-    ctx.beginPath();
-    ctx.arc(400, 300, 50, 0, Math.PI * 2);
-    ctx.fillStyle = "lightgreen";
-    ctx.fill();
-    ctx.closePath();
-
-    // Draw some text
-    ctx.fillStyle = "black";
-    ctx.font = "20px Arial";
-    ctx.fillText("Hello Canvas", 350, 50);
-    drawAxes(plotDrawFrame);
-  }, [resizeObserver, plotState, configuration, plotDrawFrame]);
-
-  const dpr = window.devicePixelRatio || 1;
+  useEffect(() => {
+    eventEmitter.addEventListener("move", (payload) => {
+      setMoveState(payload?.data ?? null);
+    });
+  }, [eventEmitter]);
 
   return (
-    <>
-      <span style={{ position: "absolute", left: 0, top: 0, color: "black" }}>
-        {dpr}
-      </span>
+    <div>
       <div
-        ref={rootRef}
         style={{
-          width: "75vw",
-          height: "50vh",
-          position: "relative",
-          overflow: "hidden",
-          border: "1px red solid",
-          ...configuration.style,
+          position: "absolute",
+          left: 0,
+          border: "solid 1px red",
+          top: 0,
+          bottom: 0,
+          opacity: moveState ? 1 : 0,
+          pointerEvents: "none",
+          transform: `translateX(${moveState ? moveState.x : 0}px)`,
         }}
-      >
-        <canvas
-          ref={canvasRef}
-          width={plotState.width * dpr}
-          height={plotState.height * dpr}
-          style={{
-            border: "1px solid black",
-            inset: 0,
-            position: "absolute",
-            width: `${plotState.width}px`,
-            height: `${plotState.height}px`,
-          }}
-        />
-        <div
-          ref={overRef}
-          style={{ position: "absolute", backgroundColor: "#ff000022" }}
-        >
-          {renderOver && plotDrawFrame ? renderOver({ frame: plotDrawFrame }) : null}
-        </div>
-      </div>
-    </>
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          border: "solid 1px red",
+          left: 0,
+          right: 0,
+          opacity: moveState ? 1 : 0,
+          pointerEvents: "none",
+          transform: `translateY(${moveState ? moveState.y : 0}px)`,
+        }}
+      />
+    </div>
   );
 };
 
-export { CanPlot };
+const SpanSelect: React.FC<{
+  eventEmitter: EventEmitter;
+  onSelect: (params: {
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+  }) => void;
+}> = ({ eventEmitter, onSelect }) => {
+  const [selectState, setSelectState] = useState<{
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+  } | null>(null);
 
-const makeEventsManager = <T extends Record<string, unknown>>() => {
-  const listeners: {
-    eventName: keyof T;
-    callback: (data: T[any]) => void;
-  }[] = [];
-  return {
-    addEventListener: <K extends keyof T>(
-      eventName: K,
-      callback: (data: T[K]) => void
-    ) => {
-      listeners.push({ eventName, callback });
-      return () => {
-        const index = listeners.findIndex((l) => l.callback === callback);
-        if (index !== -1) {
-          listeners.splice(index, 1);
-        }
-      };
-    },
-    dispatchEvent: <K extends keyof T>(eventName: K, data: T[K]) => {
-      for (const listener of listeners) {
-        if (listener.eventName === eventName) {
-          listener.callback(data);
-        }
+  const selectStateRef = React.useRef(selectState);
+  selectStateRef.current = selectState;
+
+  const onSelectRef = React.useRef(onSelect);
+  onSelectRef.current = onSelect;
+
+  useEffect(() => {
+    const unsubscribeDown = eventEmitter.addEventListener(
+      "mousedown",
+      (payload) => {
+        setSelectState({
+          start: payload.data,
+          end: payload.data,
+        });
       }
-    },
-  };
+    );
+    const unsubscribeUp = eventEmitter.addEventListener("mouseup", () => {
+      if (selectStateRef.current) {
+        setSelectState(null);
+        onSelectRef.current(selectStateRef.current);
+      }
+    });
+    const unsubscribeMove = eventEmitter.addEventListener("move", (payload) => {
+      if (selectStateRef.current && payload) {
+        setSelectState({
+          start: selectStateRef.current.start,
+          end: payload.data,
+        });
+      }
+    });
+    return () => {
+      unsubscribeMove();
+      unsubscribeDown();
+      unsubscribeUp();
+    };
+  }, [eventEmitter, setSelectState]);
+
+  return (
+    <div>
+      {selectState && (
+        <div
+          style={{
+            position: "absolute",
+            backgroundColor: "#0000ff22",
+            left: `${Math.min(selectState.start.x, selectState.end.x)}px`,
+            top: `${Math.min(selectState.start.y, selectState.end.y)}px`,
+            width: `${Math.abs(selectState.end.x - selectState.start.x)}px`,
+            height: `${Math.abs(selectState.end.y - selectState.start.y)}px`,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+    </div>
+  );
 };
+
+export default App;

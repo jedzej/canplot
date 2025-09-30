@@ -11,7 +11,7 @@ import {
   pxToValDistance,
   valToPos,
 } from "./helpers";
-import type { PlotAxis, PlotDrawFrame, PlotScaleDrawConfig } from "./types";
+import type { PlotDrawFrame } from "./types";
 
 const acceptable_tick_values: number[] = [];
 for (let i = -12; i <= 12; i++) {
@@ -21,7 +21,7 @@ for (let i = -12; i <= 12; i++) {
 }
 
 export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
-  const { ctx, chartArea, scales } = plotDrawFrame;
+  const { ctx, chartAreaCanvasPX: chartArea, scales } = plotDrawFrame;
   ctx.save();
   ctx.strokeStyle = "black";
   ctx.fillStyle = "black";
@@ -110,7 +110,7 @@ const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
   ctx.beginPath();
 
   for (let i = 0; i < ticks.length; i++) {
-    const y = valToPos(frame, ticks[i], scaleId);
+    const y = valToPos(frame, ticks[i], scaleId, "canvas");
     ctx.moveTo(x0, y);
     ctx.lineTo(x1, y);
   }
@@ -126,7 +126,7 @@ const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
     // ...axis.tickLabelStyle,
   });
   for (let i = 0; i < ticks.length; i++) {
-    const y = valToPos(frame, ticks[i], scaleId);
+    const y = valToPos(frame, ticks[i], scaleId, "canvas");
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
       ctx.fillText(` ${labelLines[j]} `, x1, y + j * multilineGap);
@@ -160,7 +160,7 @@ const drawXTicks = (frame: PlotDrawFrame, scaleId: string, y: number) => {
   ctx.beginPath();
 
   for (let i = 0; i < ticks.length; i++) {
-    const x = valToPos(frame, ticks[i], scaleId);
+    const x = valToPos(frame, ticks[i], scaleId, "canvas");
     ctx.moveTo(x, y0);
     ctx.lineTo(x, y1);
   }
@@ -176,7 +176,7 @@ const drawXTicks = (frame: PlotDrawFrame, scaleId: string, y: number) => {
     // ...axis.tickLabelStyle,
   });
   for (let i = 0; i < ticks.length; i++) {
-    const x = valToPos(frame, ticks[i], scaleId);
+    const x = valToPos(frame, ticks[i], scaleId, "canvas");
     const labelLines = labels[i].split("\n");
     for (let j = 0; j < labelLines.length; j++) {
       ctx.fillText(labelLines[j], x, y1 + dpr * 2 + j * multilineGap);
@@ -211,7 +211,7 @@ export const makeGenTicksDefault = ({
         (isXScale(frame, scaleId)
           ? DEFAULT_X_SPLIT_SPACE
           : DEFAULT_Y_SPLIT_SPACE)) * dpr;
-    const unnormalizedIncr = pxToValDistance(frame, effectiveSpace, scaleId);
+    const unnormalizedIncr = pxToValDistance(frame, effectiveSpace, scaleId, "canvas");
     const incr = acceptable_tick_values.find((a) => a > unnormalizedIncr) ?? 1;
     let curr =
       scaleMin % incr < Number.EPSILON

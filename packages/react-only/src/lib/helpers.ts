@@ -4,10 +4,12 @@ import { clamp } from "./utils";
 export const pxToValDistance = (
   frame: PlotDrawFrame,
   pxDistance: number,
-  scaleId: string
+  scaleId: string,
+  space: "css" | "canvas"
 ) => {
   const [min, max] = getScaleLimits(frame, scaleId);
-  const chartArea = frame.chartArea;
+  const chartArea =
+    space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   const factor =
     (isXScale(frame, scaleId) ? chartArea.width : chartArea.height) /
     (max - min);
@@ -47,9 +49,11 @@ export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
 export const valToPxDistance = (
   frame: PlotDrawFrame,
   val: number,
-  scaleId: string
+  scaleId: string,
+  space: "css" | "canvas"
 ) => {
-  const chartArea = frame.chartArea;
+  const chartArea =
+    space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   const [min, max] = getScaleLimits(frame, scaleId);
   const factor =
     (isXScale(frame, scaleId) ? chartArea.width : chartArea.height) /
@@ -60,11 +64,13 @@ export const valToPxDistance = (
 export const valToPos = (
   frame: PlotDrawFrame,
   val: number,
-  scaleId: string
+  scaleId: string,
+  space: "css" | "canvas"
 ) => {
   const [min] = getScaleLimits(frame, scaleId);
-  const chartArea = frame.chartArea;
-  const relativePosition = valToPxDistance(frame, val - min, scaleId);
+  const chartArea =
+    space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
+  const relativePosition = valToPxDistance(frame, val - min, scaleId, space);
   if (isXScale(frame, scaleId)) {
     return clamp(
       chartArea.x + relativePosition,
