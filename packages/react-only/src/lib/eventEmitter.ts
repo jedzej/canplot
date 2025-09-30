@@ -1,4 +1,12 @@
 export type CanPlotEvents = {
+  dblclick: {
+    event: React.MouseEvent<HTMLElement, MouseEvent>;
+    data: {
+      x: number;
+      y: number;
+      scaled: Record<string, number>;
+    };
+  };
   click: {
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {

@@ -245,6 +245,17 @@ export const CanPlot: React.FC<{
             },
           });
         }}
+        onDoubleClick={(event) => {
+          if (!plotDrawFrame) return;
+          eventEmitter.dispatchEvent("dblclick", {
+            event,
+            data: {
+              x: event.clientX - plotDrawFrame.chartAreaCSS.x,
+              y: event.clientY - plotDrawFrame.chartAreaCSS.y,
+              scaled: {},
+            },
+          });
+        }}
       >
         {renderOver && plotDrawFrame
           ? renderOver({ frame: plotDrawFrame, eventEmitter })
