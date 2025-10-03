@@ -6,16 +6,17 @@ import {
   type ReactNode,
 } from "react";
 import { makeEventEmitter, type EventEmitter } from "./eventEmitter";
-import type { PlotConfiguration, PlotDrawFrame, PlotState } from "./types";
+import type { PlotConfiguration, PlotDrawFrame, PlotState, Data } from "./types";
 import { drawAxes } from "./axes";
 
 export const CanPlot: React.FC<{
   configuration: PlotConfiguration;
+  data: Data;
   renderOver?: (params: {
     frame: PlotDrawFrame;
     eventEmitter: EventEmitter;
   }) => ReactNode;
-}> = ({ configuration, renderOver }) => {
+}> = ({ configuration, renderOver, data }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const overRef = useRef<HTMLDivElement>(null);
@@ -27,21 +28,33 @@ export const CanPlot: React.FC<{
     dpr: window.devicePixelRatio || 1,
   });
 
-  const [resizeObserver] = useState(
-    () =>
-      new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          const { width, height } = entry.contentRect;
-          setPlotState((prev) => ({ ...prev, width, height }));
-        }
-      })
-  );
+  const [resizeObserver] = useState(() => {
+    return new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = Math.round(entry.contentRect.width);
+        const height = Math.round(entry.contentRect.height);
+
+        setPlotState((prev) =>
+          prev.width !== width || prev.height !== height
+            ? { ...prev, width, height }
+            : prev
+        );
+      }
+    });
+  });
 
   const [eventEmitter] = useState(() => makeEventEmitter());
 
   useLayoutEffect(() => {
     if (!rootRef.current) return;
-    resizeObserver.observe(rootRef.current);
+    const width = rootRef.current.clientWidth;
+    const height = rootRef.current.clientHeight;
+    setPlotState((prev) =>
+      prev.width !== width || prev.height !== height
+        ? { ...prev, width, height }
+        : prev
+    );
+    resizeObserver.observe(rootRef.current, { box: "border-box" });
     return () => resizeObserver.disconnect();
   }, [resizeObserver]);
 
@@ -109,10 +122,12 @@ export const CanPlot: React.FC<{
       }),
       chartAreaCSS,
       chartAreaCanvasPX,
+      data,
+      series: configuration.series,
     };
 
     return result;
-  }, [plotState, configuration]);
+  }, [plotState, configuration, data]);
 
   useLayoutEffect(() => {
     if (!plotDrawFrame) return;
@@ -146,27 +161,8 @@ export const CanPlot: React.FC<{
 
     console.log("Drawing chart area", plotDrawFrame.chartAreaCanvasPX);
 
-    // Draw a rectangle
-    ctx.fillStyle = "lightblue";
-    ctx.fillRect(
-      plotDrawFrame.chartAreaCanvasPX.x,
-      plotDrawFrame.chartAreaCanvasPX.y,
-      plotDrawFrame.chartAreaCanvasPX.width,
-      plotDrawFrame.chartAreaCanvasPX.height
-    );
-
-    // Draw a circle
-    ctx.beginPath();
-    ctx.arc(400, 300, 50, 0, Math.PI * 2);
-    ctx.fillStyle = "lightgreen";
-    ctx.fill();
-    ctx.closePath();
-
-    // Draw some text
-    ctx.fillStyle = "black";
-    ctx.font = "20px Arial";
-    ctx.fillText("Hello Canvas", 350, 50);
     drawAxes(plotDrawFrame);
+    
   }, [resizeObserver, plotState, configuration, plotDrawFrame]);
 
   const dpr = window.devicePixelRatio || 1;
@@ -179,10 +175,11 @@ export const CanPlot: React.FC<{
         height: "50vh",
         position: "relative",
         overflow: "hidden",
-        border: "1px red solid",
+        border: "4px red solid",
         ...configuration.style,
       }}
     >
+      <span style={{ color: "red" }}>{plotState.width}</span>
       <canvas
         ref={canvasRef}
         width={plotState.width * dpr}

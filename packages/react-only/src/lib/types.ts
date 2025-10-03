@@ -1,7 +1,8 @@
-export type PlotConfiguration = {
+export type PlotConfiguration<PS extends PlotSeries<any>[]> = {
   style?: React.CSSProperties;
   padding: PlotPadding;
   scales: PlotScaleConfig[];
+  series: PS;
 };
 
 export type PlotPadding = {
@@ -27,6 +28,21 @@ export type PlotAxis = {
   size: number;
   type: "time" | "linear";
 };
+
+export type PlotSeries<SD extends SeriesData> = {
+  id: string;
+  xScaleId: string;
+  yScaleId: string;
+  plotter: Plotter<SD>;
+  data: NoInfer<SD>;
+};
+
+export type Plotter<SD extends SeriesData> = (
+  frame: PlotDrawFrame,
+  series: PlotSeries<SD>,
+  xScale: PlotScaleDrawConfig,
+  yScale: PlotScaleDrawConfig
+) => void;
 
 export type PlotState = {
   width: number;

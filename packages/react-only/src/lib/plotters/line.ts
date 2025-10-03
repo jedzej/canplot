@@ -1,19 +1,12 @@
 import { applyStyles, valToPos, valToPxDistance } from "../helpers";
-import { Frame, Plotter, FrameScale, SeriesBase, Style } from "../types";
+import { type PlotDrawFrame, type PlotScaleDrawConfig, type PlotSeries, type Style } from "../types";
 
 export type LinePlotterShowDistinctOpts = {
-  frame: Frame;
+  frame: PlotDrawFrame;
   idx: number;
-  series: SeriesBase;
-  scale: FrameScale;
+  series: PlotSeries;
+  scale: PlotScaleDrawConfig;
   distinctDistance: number;
-};
-
-export type TimeSeriesData = {
-  t: (number | null)[];
-  y: (number | null | boolean)[];
-  boundYMin?: number[];
-  boundYMax?: number[];
 };
 
 export type LinePlotterOpts = {
@@ -31,12 +24,12 @@ const showDistinctDefault: LinePlotterOpts["showDistinct"] = ({
   scale,
   distinctDistance,
 }) => {
-  const pointDistance = valToPxDistance(frame, series.x[idx], scale.id);
+  const pointDistance = valToPxDistance(frame, frame.data[series.id]?.[idx], scale.id, "canvas");
   for (let i = 1; i < 100; i++) {
     const leftValCandidate = series.x[idx - i];
     if (leftValCandidate !== undefined) {
       const distance = Math.abs(
-        valToPxDistance(frame, leftValCandidate, scale.id) - pointDistance
+        valToPxDistance(frame, leftValCandidate, scale.id, "canvas") - pointDistance
       );
       if (distance <= distinctDistance) {
         return false;
@@ -45,7 +38,7 @@ const showDistinctDefault: LinePlotterOpts["showDistinct"] = ({
     const rightValCandidate = series.x[idx + i];
     if (rightValCandidate !== undefined) {
       const distance = Math.abs(
-        valToPxDistance(frame, rightValCandidate, scale.id) - pointDistance
+        valToPxDistance(frame, rightValCandidate, scale.id, "canvas") - pointDistance
       );
       if (distance <= distinctDistance) {
         return false;
@@ -63,7 +56,7 @@ export const linePlotter = ({
   gapDistance = Infinity,
 }: LinePlotterOpts = {}): Plotter => {
   return function linePlotterImpl(frame, series, xScale, yScale) {
-    const { ctx, dpr, chartArea } = frame;
+    const { ctx, dpr, chartAreaCanvasPX } = frame;
     const length = Math.min(series.x.length, series.y.length);
     const x0 = valToPos(frame, series.x[0]!, xScale.id);
     const y0 = valToPos(frame, series.y[0]!, yScale.id);
