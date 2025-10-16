@@ -1,8 +1,18 @@
-export type PlotConfiguration<PS extends PlotSeries<any>[]> = {
-  style?: React.CSSProperties;
+export type PlotConfiguration = {
   padding: PlotPadding;
   scales: PlotScaleConfig[];
-  series: PS;
+  series: PlotSeries<SeriesData>[];
+};
+
+export type PlotDrawFrame = {
+  ctx: CanvasRenderingContext2D;
+  dpr: number;
+  chartAreaCanvasPX: { x: number; y: number; width: number; height: number };
+  chartAreaCSS: { x: number; y: number; width: number; height: number };
+  padding: PlotPadding;
+  scales: PlotScaleDrawConfig[];
+  series: PlotSeries<SeriesData>[];
+  overElement: HTMLElement;
 };
 
 export type PlotPadding = {
@@ -44,21 +54,9 @@ export type Plotter<SD extends SeriesData> = (
   yScale: PlotScaleDrawConfig
 ) => void;
 
-export type PlotState = {
+export type PlotSize = {
   width: number;
   height: number;
-  configuration: PlotConfiguration;
-  dpr: number;
-};
-
-export type PlotDrawFrame = {
-  ctx: CanvasRenderingContext2D;
-  dpr: number;
-  canvasSize: { width: number; height: number };
-  chartAreaCanvasPX: { x: number; y: number; width: number; height: number };
-  chartAreaCSS: { x: number; y: number; width: number; height: number };
-  padding: PlotPadding;
-  scales: PlotScaleDrawConfig[];
 };
 
 export type Style = {

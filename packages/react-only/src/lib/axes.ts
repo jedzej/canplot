@@ -34,9 +34,9 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
 
   let currentLeftOffset = plotDrawFrame.padding.left * dpr;
   let currentRightOffset =
-    (plotDrawFrame.canvasSize.width - plotDrawFrame.padding.right) * dpr;
+    plotDrawFrame.ctx.canvas.width - plotDrawFrame.padding.right * dpr;
   let currentBottomOffset =
-    (plotDrawFrame.canvasSize.height - plotDrawFrame.padding.bottom) * dpr;
+    plotDrawFrame.ctx.canvas.height - plotDrawFrame.padding.bottom * dpr;
   let currentTopOffset = plotDrawFrame.padding.top * dpr;
   for (const scale of scales) {
     if (!scale.axis) continue;

@@ -1,5 +1,8 @@
+import type { PlotDrawFrame } from "./types";
+
 export type CanPlotEvents = {
   dblclick: {
+    frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
       x: number;
@@ -8,6 +11,7 @@ export type CanPlotEvents = {
     };
   };
   click: {
+    frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
       x: number;
@@ -16,6 +20,7 @@ export type CanPlotEvents = {
     };
   };
   move: {
+    frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
       x: number;
@@ -24,6 +29,7 @@ export type CanPlotEvents = {
     };
   } | null;
   mousedown: {
+    frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
       x: number;
@@ -32,6 +38,7 @@ export type CanPlotEvents = {
     };
   };
   mouseup: {
+    frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
       x: number;
