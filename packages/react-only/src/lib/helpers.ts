@@ -85,3 +85,18 @@ export const valToPos = (
     );
   }
 };
+
+export const posToVal = (
+  frame: PlotDrawFrame,
+  pos: number,
+  scaleId: string,
+  space: "css" | "canvas",
+) => {
+  const [min, max] = getScaleLimits(frame, scaleId);
+  const chartArea =
+    space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
+  const relativePosition = isXScale(frame, scaleId)
+    ? pos / chartArea.width
+    : (chartArea.height - pos) / chartArea.height;
+  return min + relativePosition * (max - min);
+};

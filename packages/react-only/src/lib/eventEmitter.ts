@@ -5,8 +5,8 @@ export type CanPlotEvents = {
     frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
-      x: number;
-      y: number;
+      cssX: number;
+      cssY: number;
       scaled: Record<string, number>;
     };
   };
@@ -14,8 +14,8 @@ export type CanPlotEvents = {
     frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
-      x: number;
-      y: number;
+      cssX: number;
+      cssY: number;
       scaled: Record<string, number>;
     };
   };
@@ -23,8 +23,8 @@ export type CanPlotEvents = {
     frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
-      x: number;
-      y: number;
+      cssX: number;
+      cssY: number;
       scaled: Record<string, number>;
     };
   } | null;
@@ -32,8 +32,8 @@ export type CanPlotEvents = {
     frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
-      x: number;
-      y: number;
+      cssX: number;
+      cssY: number;
       scaled: Record<string, number>;
     };
   };
@@ -41,10 +41,14 @@ export type CanPlotEvents = {
     frame: PlotDrawFrame;
     event: React.MouseEvent<HTMLElement, MouseEvent>;
     data: {
-      x: number;
-      y: number;
+      cssX: number;
+      cssY: number;
       scaled: Record<string, number>;
     };
+  };
+  documentmouseup: {
+    frame: PlotDrawFrame;
+    event: MouseEvent;
   };
 };
 
@@ -60,7 +64,9 @@ export const makeEventEmitter = () => {
     ) => {
       listeners.push({
         eventName,
-        callback: callback as (data: CanPlotEvents[keyof CanPlotEvents]) => void,
+        callback: callback as (
+          data: CanPlotEvents[keyof CanPlotEvents]
+        ) => void,
       });
       return () => {
         const index = listeners.findIndex((l) => l.callback === callback);
@@ -69,7 +75,10 @@ export const makeEventEmitter = () => {
         }
       };
     },
-    dispatchEvent: <K extends keyof CanPlotEvents>(eventName: K, data: CanPlotEvents[K]) => {
+    dispatchEvent: <K extends keyof CanPlotEvents>(
+      eventName: K,
+      data: CanPlotEvents[K]
+    ) => {
       for (const listener of listeners) {
         if (listener.eventName === eventName) {
           listener.callback(data);

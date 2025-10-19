@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
-import type { PlotDrawFrame, PlotScaleConfig } from "./lib/types";
-import type { EventEmitter } from "./lib/eventEmitter";
+import React, { useEffect, useMemo, useState } from "react";
+import type { PlotScaleConfig } from "./lib/types";
+import { makeEventEmitter, type EventEmitter } from "./lib/eventEmitter";
 import { CanPlot } from "./lib/CanPlot";
+import { useFrame } from "./lib/frameContext";
+import { posToVal, valToPos } from "./lib/helpers";
 
 function App() {
   const [scales, setScales] = useState<PlotScaleConfig[]>(() => [
@@ -37,11 +39,19 @@ function App() {
     },
   ]);
 
+  const [eventEmitter] = useState<EventEmitter>(() => {
+    return makeEventEmitter();
+  });
+
   return (
     <>
       <CanPlot
         configuration={{
           padding: {
+            // bottom: 0,
+            // left: 0,
+            // right: 0,
+            // top: 0,
             bottom: 20,
             left: 40,
             right: 20,
@@ -50,29 +60,19 @@ function App() {
           scales,
           series: [],
         }}
-        renderOver={({ frame, eventEmitter }) => {
-          return (
-            <>
-              <Crosshair eventEmitter={eventEmitter} frame={frame} />
-              <SpanSelect
-                eventEmitter={eventEmitter}
-                onSelect={(selectState) => {
-                  console.log("Select", selectState);
-                }}
-                frame={frame}
-              />
-              <ChartAreaInteractions
-                eventEmitter={eventEmitter}
-                frame={frame}
-              />
-              {/* <AxesOverlay frame={frame} eventEmitter={eventEmitter} /> */}
-              <div style={{ position: "absolute", bottom: 0, left: 0 }}>
-                Over
-              </div>
-            </>
-          );
-        }}
-      />
+      >
+        <Crosshair eventEmitter={eventEmitter} />
+        <SpanSelect
+          eventEmitter={eventEmitter}
+          onSelect={(selectState) => {
+            console.log("Select", selectState);
+          }}
+        />
+        <ChartAreaInteractions eventEmitter={eventEmitter} />
+        {/* <AxesOverlay frame={frame} eventEmitter={eventEmitter} /> */}
+        <Rect />
+      </CanPlot>
+
       <button
         type="button"
         onClick={() => {
@@ -95,16 +95,57 @@ function App() {
   );
 }
 
+const Rect = () => {
+  useFrame((frame) => {
+    const y1 = valToPos(frame, 10, "y2", "canvas");
+    const y2 = valToPos(frame, 20, "y2", "canvas");
+    const x1 = valToPos(frame, 10, "x", "canvas");
+    const x2 = valToPos(frame, 20, "x", "canvas");
+    frame.ctx.fillStyle = "rgba(0,255,0,0.5)";
+    frame.ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+  });
+  return null;
+};
+
 const ChartAreaInteractions: React.FC<{
   eventEmitter: EventEmitter;
-  frame: PlotDrawFrame;
-}> = ({ eventEmitter, frame }) => {
+}> = ({ eventEmitter }) => {
   const interactionsAreaRef = React.useRef<HTMLDivElement>(null);
+
+  const frame = useFrame();
 
   const getRect = () => {
     return interactionsAreaRef.current?.getBoundingClientRect();
   };
 
+  useEffect(() => {
+    const listener = (event: MouseEvent) => {
+      eventEmitter.dispatchEvent("documentmouseup", { frame, event });
+    };
+    document.addEventListener("mouseup", listener);
+    return () => {
+      document.removeEventListener("mouseup", listener);
+    };
+  }, [eventEmitter, frame]);
+
+  const makePositions = (event: Pick<MouseEvent, "clientX" | "clientY">) => {
+    const rect = getRect();
+    if (!rect) return;
+    return {
+      cssX: event.clientX - rect.left,
+      cssY: event.clientY - rect.top,
+      scaled: Object.fromEntries(
+        frame.scales.map((scale) => {
+          const pos =
+            scale.origin === "y"
+              ? event.clientY - rect.top
+              : event.clientX - rect.left;
+
+          return [scale.id, posToVal(frame, pos, scale.id, "canvas")];
+        })
+      ),
+    };
+  };
 
   return (
     <div
@@ -121,71 +162,51 @@ const ChartAreaInteractions: React.FC<{
         cursor: "crosshair",
       }}
       onClick={(event) => {
-        const rect = getRect();
-        if (!rect) return;
+        const positions = makePositions(event);
+        if (!positions) return;
         eventEmitter.dispatchEvent("click", {
           frame,
           event,
-          data: {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-            scaled: {},
-          },
+          data: positions,
         });
       }}
       onMouseLeave={() => {
         eventEmitter.dispatchEvent("move", null);
       }}
       onMouseMove={(event) => {
-        const rect = getRect();
-        if (!rect) return;
+        const positions = makePositions(event);
+        if (!positions) return;
         eventEmitter.dispatchEvent("move", {
           frame,
           event,
-          data: {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-            scaled: {},
-          },
+          data: positions,
         });
       }}
       onMouseDown={(event) => {
-        const rect = getRect();
-        if (!rect) return;
+        const positions = makePositions(event);
+        if (!positions) return;
         eventEmitter.dispatchEvent("mousedown", {
           frame,
           event,
-          data: {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-            scaled: {},
-          },
+          data: positions,
         });
       }}
       onMouseUp={(event) => {
-        const rect = getRect();
-        if (!rect) return;
+        const positions = makePositions(event);
+        if (!positions) return;
         eventEmitter.dispatchEvent("mouseup", {
           frame,
           event,
-          data: {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-            scaled: {},
-          },
+          data: positions,
         });
       }}
       onDoubleClick={(event) => {
-        const rect = getRect();
-        if (!rect) return;
+        const positions = makePositions(event);
+        if (!positions) return;
         eventEmitter.dispatchEvent("dblclick", {
           frame,
           event,
-          data: {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-            scaled: {},
-          },
+          data: positions,
         });
       }}
     />
@@ -194,11 +215,11 @@ const ChartAreaInteractions: React.FC<{
 
 const Crosshair: React.FC<{
   eventEmitter: EventEmitter;
-  frame: PlotDrawFrame;
-}> = ({ eventEmitter, frame }) => {
-  const [moveState, setMoveState] = useState<{ x: number; y: number } | null>(
-    null
-  );
+}> = ({ eventEmitter }) => {
+  const [moveState, setMoveState] = useState<{
+    cssX: number;
+    cssY: number;
+  } | null>(null);
 
   useEffect(() => {
     eventEmitter.addEventListener("move", (payload) => {
@@ -206,8 +227,11 @@ const Crosshair: React.FC<{
     });
   }, [eventEmitter]);
 
+  const frame = useFrame();
+
   return (
     <div>
+      {JSON.stringify(moveState)}
       <div
         style={{
           position: "absolute",
@@ -218,7 +242,7 @@ const Crosshair: React.FC<{
           opacity: moveState ? 1 : 0,
           pointerEvents: "none",
           transform: `translateX(${
-            moveState ? moveState.x + frame.chartAreaCSS.x : 0
+            moveState ? moveState.cssX + frame.chartAreaCSS.x : 0
           }px)`,
         }}
       />
@@ -232,7 +256,7 @@ const Crosshair: React.FC<{
           width: frame.chartAreaCSS.width,
           opacity: moveState ? 1 : 0,
           pointerEvents: "none",
-          transform: `translateY(${moveState ? moveState.y : 0}px)`,
+          transform: `translateY(${moveState ? moveState.cssY : 0}px)`,
         }}
       />
     </div>
@@ -242,21 +266,82 @@ const Crosshair: React.FC<{
 const SpanSelect: React.FC<{
   eventEmitter: EventEmitter;
   onSelect: (params: {
-    start: { x: number; y: number };
-    end: { x: number; y: number };
+    mode: "x" | "y" | "box";
+    positions: Record<
+      string,
+      {
+        from: number;
+        to: number;
+      }
+    >;
   }) => void;
-  frame: PlotDrawFrame;
-}> = ({ eventEmitter, onSelect, frame }) => {
+}> = ({ eventEmitter, onSelect }) => {
   const [selectState, setSelectState] = useState<{
-    start: { x: number; y: number };
-    end: { x: number; y: number };
+    start: { cssX: number; cssY: number };
+    end: { cssX: number; cssY: number };
   } | null>(null);
+
+  const frame = useFrame();
 
   const selectStateRef = React.useRef(selectState);
   selectStateRef.current = selectState;
 
   const onSelectRef = React.useRef(onSelect);
   onSelectRef.current = onSelect;
+
+  const positions = useMemo(() => {
+    const mode = (() => {
+      if (!selectState) return "none";
+
+      const dY = Math.abs(selectState.start.cssY - selectState.end.cssY);
+      const dX = Math.abs(selectState.start.cssX - selectState.end.cssX);
+
+      if (dY < 10 && dX < 10) return "none";
+
+      if (dY > 30 && dX > 30) return "box";
+      return dX > dY ? "x" : "y";
+    })();
+
+    const left = (() => {
+      if (!selectState || mode === "none") return 0;
+      if (mode === "x" || mode === "box") {
+        return Math.min(selectState.start.cssX, selectState.end.cssX);
+      }
+      return 0;
+    })();
+
+    const top = (() => {
+      if (!selectState || mode === "none") return 0;
+      if (mode === "y" || mode === "box") {
+        return Math.min(selectState.start.cssY, selectState.end.cssY);
+      }
+      return 0;
+    })();
+
+    const width = (() => {
+      if (!selectState || mode === "none") return 0;
+      if (mode === "x" || mode === "box") {
+        return Math.abs(selectState.start.cssX - selectState.end.cssX);
+      }
+      return frame.chartAreaCSS.width;
+    })();
+
+    const height = (() => {
+      if (!selectState || mode === "none") return 0;
+      if (mode === "y" || mode === "box") {
+        return Math.abs(selectState.start.cssY - selectState.end.cssY);
+      }
+      return frame.chartAreaCSS.height;
+    })();
+
+    return { mode, left, top, width, height };
+  }, [selectState, frame.chartAreaCSS.height, frame.chartAreaCSS.width]);
+
+  const modeRef = React.useRef(positions);
+  modeRef.current = positions;
+
+  const frameRef = React.useRef(frame);
+  frameRef.current = frame;
 
   useEffect(() => {
     const unsubscribeDown = eventEmitter.addEventListener(
@@ -269,9 +354,36 @@ const SpanSelect: React.FC<{
       }
     );
     const unsubscribeUp = eventEmitter.addEventListener("mouseup", () => {
-      if (selectStateRef.current) {
-        setSelectState(null);
-        onSelectRef.current(selectStateRef.current);
+      setSelectState(null);
+      if (!selectStateRef.current) return;
+      const frame = frameRef.current;
+      if (!frame) return;
+
+      switch (modeRef.current.mode) {
+        case "none":
+          break;
+        case "x":
+        case "y":
+        case "box":
+          onSelectRef.current({
+            mode: modeRef.current.mode,
+            positions: Object.fromEntries(
+              frame.scales.map((scale) => {
+                const fromPos =
+                  scale.origin === "x"
+                    ? modeRef.current.left
+                    : modeRef.current.top;
+                const toPos =
+                  scale.origin === "x"
+                    ? modeRef.current.left + modeRef.current.width
+                    : modeRef.current.top + modeRef.current.height;
+                const fromVal = posToVal(frame, fromPos, scale.id, "css");
+                const toVal = posToVal(frame, toPos, scale.id, "css");
+                return [scale.id, { from: fromVal, to: toVal }];
+              })
+            ),
+          });
+          break;
       }
     });
     const unsubscribeMove = eventEmitter.addEventListener("move", (payload) => {
@@ -287,55 +399,14 @@ const SpanSelect: React.FC<{
       unsubscribeDown();
       unsubscribeUp();
     };
-  }, [eventEmitter, setSelectState]);
-
-  const mode = (() => {
-    if (!selectState) return "none";
-    if (Math.abs(selectState.start.x - selectState.end.x) < 30) return "y";
-    if (Math.abs(selectState.start.y - selectState.end.y) < 30) return "x";
-    return "box";
-  })();
-
-  const left = (() => {
-    if (!selectState || mode === "none") return 0;
-    if (mode === "x" || mode === "box") {
-      return Math.min(selectState.start.x, selectState.end.x);
-    }
-    return 0;
-  })();
-
-  const top = (() => {
-    if (!selectState || mode === "none") return 0;
-    if (mode === "y" || mode === "box") {
-      return Math.min(selectState.start.y, selectState.end.y);
-    }
-    return 0;
-  })();
-
-  const width = (() => {
-    if (!selectState || mode === "none") return 0;
-    if (mode === "x" || mode === "box") {
-      return Math.abs(selectState.start.x - selectState.end.x);
-    }
-    return frame.chartAreaCSS.width;
-  })();
-
-  const height = (() => {
-    if (!selectState || mode === "none") return 0;
-    if (mode === "y" || mode === "box") {
-      return Math.abs(selectState.start.y - selectState.end.y);
-    }
-    return frame.chartAreaCSS.height;
-  })();
+  }, [eventEmitter, setSelectState, frameRef, modeRef, onSelectRef]);
 
   return (
     <div
       style={{
-        backgroundColor: "#0000ff11",
         zIndex: 10,
         inset: 0,
         position: "absolute",
-        // pointerEvents: selectState ? "auto" : "none",
       }}
     >
       {selectState && (
@@ -343,10 +414,10 @@ const SpanSelect: React.FC<{
           style={{
             position: "absolute",
             backgroundColor: "#0000ff22",
-            left:  `${left + frame.chartAreaCSS.x}px`,
-            top: `${top + frame.chartAreaCSS.y}px`,
-            width: `${width}px`,
-            height: `${height}px`,
+            left: `${modeRef.current.left + frame.chartAreaCSS.x}px`,
+            top: `${modeRef.current.top + frame.chartAreaCSS.y}px`,
+            width: `${modeRef.current.width}px`,
+            height: `${modeRef.current.height}px`,
             pointerEvents: "none",
           }}
         />

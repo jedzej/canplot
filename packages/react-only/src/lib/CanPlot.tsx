@@ -1,16 +1,15 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { makeEventEmitter, type EventEmitter } from "./eventEmitter";
 import type { PlotConfiguration, PlotDrawFrame, PlotSize } from "./types";
 import { drawAxes } from "./axes";
+import { FrameContext } from "./frameContext";
 
 const makeFrame = (
   configuration: PlotConfiguration,
   size: PlotSize,
-  canvas: HTMLCanvasElement | undefined | null,
-  overElement: HTMLElement | undefined | null
+  canvas: HTMLCanvasElement | undefined | null
 ): PlotDrawFrame | null => {
   const ctx = canvas?.getContext("2d");
-  if (!ctx || !overElement) return null;
+  if (!ctx) return null;
 
   const dpr = window.devicePixelRatio || 1;
 
@@ -68,28 +67,13 @@ const makeFrame = (
     chartAreaCSS,
     chartAreaCanvasPX,
     series: configuration.series,
-    overElement,
   };
 
   return result;
 };
 
 const drawFrame = (frame: PlotDrawFrame) => {
-  frame.overElement.style.setProperty("width", `${frame.chartAreaCSS.width}px`);
-  frame.overElement.style.setProperty(
-    "height",
-    `${frame.chartAreaCSS.height}px`
-  );
-  frame.overElement.style.setProperty("top", `${frame.chartAreaCSS.y}px`);
-  frame.overElement.style.setProperty("left", `${frame.chartAreaCSS.x}px`);
-
-  // Clear the canvas
-  frame.ctx.clearRect(
-    0,
-    0,
-    frame.ctx.canvas.width,
-    frame.ctx.canvas.height
-  );
+  frame.ctx.clearRect(0, 0, frame.ctx.canvas.width, frame.ctx.canvas.height);
 
   console.log("Drawing chart area", frame.chartAreaCanvasPX);
 
@@ -98,24 +82,18 @@ const drawFrame = (frame: PlotDrawFrame) => {
 
 export const CanPlot: React.FC<{
   configuration: PlotConfiguration;
-  renderOver?: (params: {
-    frame: PlotDrawFrame;
-    eventEmitter: EventEmitter;
-  }) => ReactNode;
-}> = ({ configuration, renderOver }) => {
+  children?: ReactNode;
+}> = ({ configuration, children }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const overRef = useRef<HTMLDivElement>(null);
 
   const plotSize = useSize(rootRef);
-
-  const [eventEmitter] = useState(() => makeEventEmitter());
 
   const [frame, setFrame] = useState<PlotDrawFrame | null>(null);
 
   useLayoutEffect(() => {
     setFrame(
-      makeFrame(configuration, plotSize, canvasRef.current, overRef.current)
+      makeFrame(configuration, plotSize, canvasRef.current)
     );
   }, [configuration, plotSize]);
 
@@ -153,9 +131,9 @@ export const CanPlot: React.FC<{
           height: `${plotSize.height}px`,
         }}
       />
-      <div ref={overRef}>
-        {renderOver && frame ? renderOver({ frame, eventEmitter }) : null}
-      </div>
+      {frame && (
+        <FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
+      )}
     </div>
   );
 };

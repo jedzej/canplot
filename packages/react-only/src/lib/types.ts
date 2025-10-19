@@ -12,7 +12,6 @@ export type PlotDrawFrame = {
   padding: PlotPadding;
   scales: PlotScaleDrawConfig[];
   series: PlotSeries<SeriesData>[];
-  overElement: HTMLElement;
 };
 
 export type PlotPadding = {
