@@ -71,26 +71,25 @@ export const valToPos = (
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   const relativePosition = valToPxDistance(frame, val - min, scaleId, space);
-  if (isXScale(frame, scaleId)) {
-    return clamp(
-      chartArea.x + relativePosition,
-      chartArea.x - 10 * chartArea.width,
-      chartArea.x + 11 * chartArea.width
-    );
-  } else {
-    return clamp(
-      chartArea.y + chartArea.height - relativePosition,
-      chartArea.y - 10 * chartArea.height,
-      chartArea.y + 11 * chartArea.height
-    );
-  }
+  const result = isXScale(frame, scaleId)
+    ? clamp(
+        chartArea.x + relativePosition,
+        chartArea.x - 10 * chartArea.width,
+        chartArea.x + 11 * chartArea.width
+      )
+    : clamp(
+        chartArea.y + chartArea.height - relativePosition,
+        chartArea.y - 10 * chartArea.height,
+        chartArea.y + 11 * chartArea.height
+      );
+  return result;
 };
 
 export const posToVal = (
   frame: PlotDrawFrame,
   pos: number,
   scaleId: string,
-  space: "css" | "canvas",
+  space: "css" | "canvas"
 ) => {
   const [min, max] = getScaleLimits(frame, scaleId);
   const chartArea =

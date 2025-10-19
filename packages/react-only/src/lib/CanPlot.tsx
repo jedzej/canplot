@@ -13,7 +13,9 @@ const makeFrame = (
 
   const dpr = window.devicePixelRatio || 1;
 
-  console.log("size", size);
+  if( size.width === 0 || size.height === 0 ) {
+    return null;
+  }
 
   const chartAreaCSS: PlotDrawFrame["chartAreaCSS"] = {
     x: configuration.padding.left,

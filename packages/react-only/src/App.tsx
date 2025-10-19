@@ -71,6 +71,7 @@ function App() {
         <ChartAreaInteractions eventEmitter={eventEmitter} />
         {/* <AxesOverlay frame={frame} eventEmitter={eventEmitter} /> */}
         <Rect />
+        <Plot />
       </CanPlot>
 
       <button
@@ -103,6 +104,26 @@ const Rect = () => {
     const x2 = valToPos(frame, 20, "x", "canvas");
     frame.ctx.fillStyle = "rgba(0,255,0,0.5)";
     frame.ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+  });
+  return null;
+};
+
+const Plot = () => {
+  useFrame((frame) => {
+    const data = Array.from({ length: 10 }, (_, i) => ({
+      x: i + 1,
+      y: (i + 1) * 10,
+    }));
+    frame.ctx.save();
+    frame.ctx.beginPath();
+    for (const point of data) {
+      const x = valToPos(frame, point.x, "x", "canvas");
+      const y = valToPos(frame, point.y, "y2", "canvas");
+      frame.ctx.fillStyle = "rgba(255,0,0,0.5)";
+      frame.ctx.arc(x, y, 5, 0, Math.PI * 2);
+    }
+    frame.ctx.fill();
+    frame.ctx.restore()
   });
   return null;
 };
