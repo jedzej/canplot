@@ -59,16 +59,9 @@ const makeFrame = (
     ctx,
     dpr,
     padding: configuration.padding,
-    scales: configuration.scales.map((scale) => {
-      const { minmax, ...scaleRest } = scale;
-      if (minmax === "auto") {
-        return { ...scaleRest, minmax: [0, 1] };
-      }
-      return { ...scaleRest, minmax };
-    }),
+    scales: configuration.scales,
     chartAreaCSS,
     chartAreaCanvasPX,
-    series: configuration.series,
   };
 
   return result;

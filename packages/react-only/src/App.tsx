@@ -8,17 +8,29 @@ import { posToVal, valToPos } from "./lib/helpers";
 function App() {
   const [scales, setScales] = useState<PlotScaleConfig[]>(() => [
     {
+      id: "t",
+      type: "time",
+      timeZone: "UTC",
+      axis: {
+        position: "bottom",
+        size: 40,
+      },
+      origin: "x",
+      minmax: [Date.now() - 1000 * 60 * 60 * 24, Date.now()],
+    },
+    {
       id: "x",
+      type: "linear",
       axis: {
         position: "bottom",
         size: 20,
-        type: "linear",
       },
       origin: "x",
       minmax: [0, 100],
     },
     {
       id: "y",
+      type: "linear",
       axis: {
         position: "left",
         size: 20,
@@ -26,9 +38,13 @@ function App() {
       },
       origin: "y",
       minmax: [0, 100],
+      format: {
+        type: "linear",
+      },
     },
     {
       id: "y2",
+      type: "linear",
       axis: {
         position: "right",
         size: 20,
@@ -36,6 +52,9 @@ function App() {
       },
       origin: "y",
       minmax: [-1000, 1000],
+      format: {
+        type: "linear",
+      },
     },
   ]);
 
@@ -58,7 +77,6 @@ function App() {
             top: 20,
           },
           scales,
-          series: [],
         }}
       >
         <Crosshair eventEmitter={eventEmitter} />
@@ -123,7 +141,7 @@ const Plot = () => {
       frame.ctx.arc(x, y, 5, 0, Math.PI * 2);
     }
     frame.ctx.fill();
-    frame.ctx.restore()
+    frame.ctx.restore();
   });
   return null;
 };

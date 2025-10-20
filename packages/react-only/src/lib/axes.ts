@@ -11,6 +11,7 @@ import {
   pxToValDistance,
   valToPos,
 } from "./helpers";
+import { genTimeTicks, makeTimeTickFormat } from "./time";
 import type { PlotDrawFrame } from "./types";
 
 const acceptable_tick_values: number[] = [];
@@ -40,45 +41,84 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
   let currentTopOffset = plotDrawFrame.padding.top * dpr;
   for (const scale of scales) {
     if (!scale.axis) continue;
+    const genTicks: PlotAxisGenTicks =
+      scale.type === "time"
+        ? genTimeTicks({
+            space: scale.axis.tickSpace,
+            timeZone: scale.timeZone,
+          })
+        : makeGenTicksDefault({ space: scale.axis.tickSpace });
+    const formatTicks: PlotAxisTickFormat =
+      scale.type === "time"
+        ? makeTimeTickFormat({
+            timeZone: scale.timeZone,
+            showTimezone: scale.axis.showTimezone,
+            locale: scale.locale,
+          })
+        : formatTicksDefault;
     if (scale.origin === "x") {
       if (scale.axis.position === "bottom") {
         currentBottomOffset -= scale.axis.size * dpr;
         // Draw x axis at bottom
         ctx.beginPath();
-        ctx.moveTo(chartArea.x, chartArea.y + chartArea.height);
+        ctx.moveTo(chartArea.x, currentBottomOffset);
         ctx.lineTo(
           chartArea.x + chartArea.width,
-          chartArea.y + chartArea.height
+          currentBottomOffset
         );
         ctx.stroke();
-        drawXTicks(plotDrawFrame, scale.id, currentBottomOffset);
+        drawXTicks(
+          plotDrawFrame,
+          scale.id,
+          currentBottomOffset,
+          genTicks,
+          formatTicks
+        );
       } else if (scale.axis.position === "top") {
         currentTopOffset += scale.axis.size * dpr;
         // Draw x axis at top
         ctx.beginPath();
-        ctx.moveTo(chartArea.x, chartArea.y);
-        ctx.lineTo(chartArea.x + chartArea.width, chartArea.y);
+        ctx.moveTo(chartArea.x, currentTopOffset);
+        ctx.lineTo(chartArea.x + chartArea.width, currentTopOffset);
         ctx.stroke();
         // Draw ticks
-        drawXTicks(plotDrawFrame, scale.id, currentTopOffset);
+        drawXTicks(
+          plotDrawFrame,
+          scale.id,
+          currentTopOffset,
+          genTicks,
+          formatTicks
+        );
       }
     } else {
       if (scale.axis.position === "left") {
         currentLeftOffset += scale.axis.size * dpr;
-        // Draw y axis at left
+        // Draw y axis on left
         ctx.beginPath();
         ctx.moveTo(currentLeftOffset, chartArea.y);
         ctx.lineTo(currentLeftOffset, chartArea.y + chartArea.height);
         ctx.stroke();
-        drawYTicks(plotDrawFrame, scale.id, currentLeftOffset);
+        drawYTicks(
+          plotDrawFrame,
+          scale.id,
+          currentLeftOffset,
+          genTicks,
+          formatTicks
+        );
       } else if (scale.axis.position === "right") {
         currentRightOffset -= scale.axis.size * dpr;
-        // Draw y axis at right
+        // Draw y axis on right
         ctx.beginPath();
         ctx.moveTo(currentRightOffset, chartArea.y);
         ctx.lineTo(currentRightOffset, chartArea.y + chartArea.height);
         ctx.stroke();
-        drawYTicks(plotDrawFrame, scale.id, currentRightOffset);
+        drawYTicks(
+          plotDrawFrame,
+          scale.id,
+          currentRightOffset,
+          genTicks,
+          formatTicks
+        );
       }
     }
   }
@@ -86,7 +126,13 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
   ctx.restore();
 };
 
-const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
+const drawYTicks = (
+  frame: PlotDrawFrame,
+  scaleId: string,
+  x: number,
+  genTicks: PlotAxisGenTicks,
+  formatTicks: PlotAxisTickFormat
+) => {
   const { ctx } = frame;
   const axis = frame.scales.find((s) => s.id === scaleId)?.axis;
   if (!axis) return;
@@ -95,9 +141,9 @@ const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
   const x1 = axis.position === "left" ? x - tickSize : x + tickSize;
   const multilineGap = DEFAULT_MULTILINE_GAP;
 
-  const ticks = makeGenTicksDefault()({ frame, scaleId }) ?? [];
+  const ticks = genTicks({ frame, scaleId }) ?? [];
 
-  const labels = tickFormat({
+  const labels = formatTicks({
     frame,
     scaleId,
     ticks,
@@ -135,7 +181,13 @@ const drawYTicks = (frame: PlotDrawFrame, scaleId: string, x: number) => {
   ctx.restore();
 };
 
-const drawXTicks = (frame: PlotDrawFrame, scaleId: string, y: number) => {
+const drawXTicks = (
+  frame: PlotDrawFrame,
+  scaleId: string,
+  y: number,
+  genTicks: PlotAxisGenTicks,
+  formatTicks: PlotAxisTickFormat
+) => {
   const { ctx } = frame;
   const axis = frame.scales.find((s) => s.id === scaleId)?.axis;
   if (!axis) return;
@@ -145,13 +197,9 @@ const drawXTicks = (frame: PlotDrawFrame, scaleId: string, y: number) => {
   const y1 = axis.position === "top" ? y - tickSize : y + tickSize;
   const multilineGap = DEFAULT_MULTILINE_GAP;
 
-  const ticks = makeGenTicksDefault()({ frame, scaleId }) ?? [];
+  const ticks = genTicks({ frame, scaleId }) ?? [];
 
-  const labels = tickFormat({
-    frame,
-    scaleId,
-    ticks,
-  });
+  const labels = formatTicks({ frame, scaleId, ticks });
 
   // draw ticks
   ctx.save();
@@ -211,7 +259,12 @@ export const makeGenTicksDefault = ({
         (isXScale(frame, scaleId)
           ? DEFAULT_X_SPLIT_SPACE
           : DEFAULT_Y_SPLIT_SPACE)) * dpr;
-    const unnormalizedIncr = pxToValDistance(frame, effectiveSpace, scaleId, "canvas");
+    const unnormalizedIncr = pxToValDistance(
+      frame,
+      effectiveSpace,
+      scaleId,
+      "canvas"
+    );
     const incr = acceptable_tick_values.find((a) => a > unnormalizedIncr) ?? 1;
     let curr =
       scaleMin % incr < Number.EPSILON
@@ -226,7 +279,7 @@ export const makeGenTicksDefault = ({
   };
 };
 
-const tickFormat: PlotAxisTickFormat = ({ ticks }) => {
+export const formatTicksDefault: PlotAxisTickFormat = ({ ticks }) => {
   const span = Math.max(0, Math.ceil(-Math.log10(ticks[1] - ticks[0])));
   return ticks.map((tick) => tick.toFixed(span));
 };
