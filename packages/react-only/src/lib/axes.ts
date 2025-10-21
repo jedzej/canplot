@@ -22,7 +22,7 @@ for (let i = -12; i <= 12; i++) {
 }
 
 export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
-  const { ctx, chartAreaCanvasPX: chartArea, scales } = plotDrawFrame;
+  const { ctx, scales } = plotDrawFrame;
   ctx.save();
   ctx.strokeStyle = "black";
   ctx.fillStyle = "black";
@@ -31,14 +31,6 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const dpr = window.devicePixelRatio || 1;
-
-  let currentLeftOffset = plotDrawFrame.padding.left * dpr;
-  let currentRightOffset =
-    plotDrawFrame.ctx.canvas.width - plotDrawFrame.padding.right * dpr;
-  let currentBottomOffset =
-    plotDrawFrame.ctx.canvas.height - plotDrawFrame.padding.bottom * dpr;
-  let currentTopOffset = plotDrawFrame.padding.top * dpr;
   for (const scale of scales) {
     if (!scale.axis) continue;
     const genTicks: PlotAxisGenTicks =
@@ -56,69 +48,36 @@ export const drawAxes = (plotDrawFrame: PlotDrawFrame) => {
             locale: scale.locale,
           })
         : formatTicksDefault;
+    const rect = scale.axis.canvasRect;
     if (scale.origin === "x") {
       if (scale.axis.position === "bottom") {
-        currentBottomOffset -= scale.axis.size * dpr;
-        // Draw x axis at bottom
         ctx.beginPath();
-        ctx.moveTo(chartArea.x, currentBottomOffset);
-        ctx.lineTo(
-          chartArea.x + chartArea.width,
-          currentBottomOffset
-        );
+        ctx.moveTo(rect.x, rect.y);
+        ctx.lineTo(rect.x + rect.width, rect.y);
         ctx.stroke();
-        drawXTicks(
-          plotDrawFrame,
-          scale.id,
-          currentBottomOffset,
-          genTicks,
-          formatTicks
-        );
+        drawXTicks(plotDrawFrame, scale.id, rect.y, genTicks, formatTicks);
       } else if (scale.axis.position === "top") {
-        currentTopOffset += scale.axis.size * dpr;
-        // Draw x axis at top
+        const y = rect.y + rect.height;
         ctx.beginPath();
-        ctx.moveTo(chartArea.x, currentTopOffset);
-        ctx.lineTo(chartArea.x + chartArea.width, currentTopOffset);
+        ctx.moveTo(rect.x, y);
+        ctx.lineTo(rect.x + rect.width, y);
         ctx.stroke();
-        // Draw ticks
-        drawXTicks(
-          plotDrawFrame,
-          scale.id,
-          currentTopOffset,
-          genTicks,
-          formatTicks
-        );
+        drawXTicks(plotDrawFrame, scale.id, y, genTicks, formatTicks);
       }
     } else {
       if (scale.axis.position === "left") {
-        currentLeftOffset += scale.axis.size * dpr;
-        // Draw y axis on left
+        const x = rect.x + rect.width;
         ctx.beginPath();
-        ctx.moveTo(currentLeftOffset, chartArea.y);
-        ctx.lineTo(currentLeftOffset, chartArea.y + chartArea.height);
+        ctx.moveTo(x, rect.y);
+        ctx.lineTo(x, rect.y + rect.height);
         ctx.stroke();
-        drawYTicks(
-          plotDrawFrame,
-          scale.id,
-          currentLeftOffset,
-          genTicks,
-          formatTicks
-        );
+        drawYTicks(plotDrawFrame, scale.id, x, genTicks, formatTicks);
       } else if (scale.axis.position === "right") {
-        currentRightOffset -= scale.axis.size * dpr;
-        // Draw y axis on right
         ctx.beginPath();
-        ctx.moveTo(currentRightOffset, chartArea.y);
-        ctx.lineTo(currentRightOffset, chartArea.y + chartArea.height);
+        ctx.moveTo(rect.x, rect.y);
+        ctx.lineTo(rect.x, rect.y + rect.height);
         ctx.stroke();
-        drawYTicks(
-          plotDrawFrame,
-          scale.id,
-          currentRightOffset,
-          genTicks,
-          formatTicks
-        );
+        drawYTicks(plotDrawFrame, scale.id, rect.x, genTicks, formatTicks);
       }
     }
   }
@@ -136,10 +95,11 @@ const drawYTicks = (
   const { ctx } = frame;
   const axis = frame.scales.find((s) => s.id === scaleId)?.axis;
   if (!axis) return;
+  const dpr = window.devicePixelRatio || 1;
   const tickSize = DEFAULT_TICK_SIZE;
   const x0 = x;
   const x1 = axis.position === "left" ? x - tickSize : x + tickSize;
-  const multilineGap = DEFAULT_MULTILINE_GAP;
+  const multilineGap = DEFAULT_MULTILINE_GAP * dpr;
 
   const ticks = genTicks({ frame, scaleId }) ?? [];
 
@@ -195,7 +155,7 @@ const drawXTicks = (
   const tickSize = DEFAULT_TICK_SIZE;
   const y0 = y;
   const y1 = axis.position === "top" ? y - tickSize : y + tickSize;
-  const multilineGap = DEFAULT_MULTILINE_GAP;
+  const multilineGap = DEFAULT_MULTILINE_GAP * dpr;
 
   const ticks = genTicks({ frame, scaleId }) ?? [];
 

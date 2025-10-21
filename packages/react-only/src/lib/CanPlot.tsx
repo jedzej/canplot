@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import type { PlotConfiguration, PlotDrawFrame, PlotSize } from "./types";
+import type { PlotConfiguration, PlotDrawFrame, PlotSize, Rect } from "./types";
 import { drawAxes } from "./axes";
 import { FrameContext } from "./frameContext";
 
@@ -13,7 +13,7 @@ const makeFrame = (
 
   const dpr = window.devicePixelRatio || 1;
 
-  if( size.width === 0 || size.height === 0 ) {
+  if (size.width === 0 || size.height === 0) {
     return null;
   }
 
@@ -55,11 +55,90 @@ const makeFrame = (
     height: chartAreaCSS.height * dpr,
   };
 
+  const scales: PlotDrawFrame["scales"] = [];
+
+  let currentLeftOffset = configuration.padding.left * dpr;
+  let currentRightOffset = ctx.canvas.width - configuration.padding.right * dpr;
+  let currentBottomOffset =
+    ctx.canvas.height - configuration.padding.bottom * dpr;
+  let currentTopOffset = configuration.padding.top * dpr;
+
+  for (const scale of configuration.scales) {
+    if (!scale.axis) {
+      scales.push({ ...scale, axis: null });
+      continue;
+    }
+    let cssRect: Rect;
+    if (scale.origin === "x") {
+      switch (scale.axis.position) {
+        case "bottom":
+          currentBottomOffset -= scale.axis.size * dpr;
+          cssRect = {
+            x: chartAreaCSS.x,
+            y: currentBottomOffset / dpr,
+            width: chartAreaCSS.width,
+            height: scale.axis.size,
+          };
+          break;
+        case "top":
+          currentTopOffset += scale.axis.size * dpr;
+          cssRect = {
+            x: chartAreaCSS.x,
+            y: currentTopOffset / dpr - scale.axis.size,
+            width: chartAreaCSS.width,
+            height: scale.axis.size,
+          };
+          break;
+        case "left":
+        case "right":
+          throw new Error("Invalid axis position for x origin");
+      }
+    } else {
+      switch (scale.axis.position) {
+        case "left":
+          currentLeftOffset += scale.axis.size * dpr;
+          cssRect = {
+            x: currentLeftOffset / dpr - scale.axis.size,
+            y: chartAreaCSS.y,
+            width: scale.axis.size,
+            height: chartAreaCSS.height,
+          };
+          break;
+        case "right":
+          currentRightOffset -= scale.axis.size * dpr;
+          cssRect = {
+            x: currentRightOffset / dpr,
+            y: chartAreaCSS.y,
+            width: scale.axis.size,
+            height: chartAreaCSS.height,
+          };
+          break;
+        case "top":
+        case "bottom":
+          throw new Error("Invalid axis position for y origin");
+      }
+    }
+    const canvasRect: Rect = {
+      x: cssRect.x * dpr,
+      y: cssRect.y * dpr,
+      width: cssRect.width * dpr,
+      height: cssRect.height * dpr,
+    };
+    scales.push({
+      ...scale,
+      axis: {
+        ...scale.axis,
+        cssRect,
+        canvasRect,
+      },
+    });
+  }
+
   const result: PlotDrawFrame = {
     ctx,
     dpr,
     padding: configuration.padding,
-    scales: configuration.scales,
+    scales,
     chartAreaCSS,
     chartAreaCanvasPX,
   };
@@ -69,9 +148,6 @@ const makeFrame = (
 
 const drawFrame = (frame: PlotDrawFrame) => {
   frame.ctx.clearRect(0, 0, frame.ctx.canvas.width, frame.ctx.canvas.height);
-
-  console.log("Drawing chart area", frame.chartAreaCanvasPX);
-
   drawAxes(frame);
 };
 
@@ -87,9 +163,7 @@ export const CanPlot: React.FC<{
   const [frame, setFrame] = useState<PlotDrawFrame | null>(null);
 
   useLayoutEffect(() => {
-    setFrame(
-      makeFrame(configuration, plotSize, canvasRef.current)
-    );
+    setFrame(makeFrame(configuration, plotSize, canvasRef.current));
   }, [configuration, plotSize]);
 
   useLayoutEffect(() => {

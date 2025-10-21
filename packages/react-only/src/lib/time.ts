@@ -186,14 +186,14 @@ const makeFirstTick = (
       break;
     case "minutes":
       result.setUTCMinutes(
-        Math.ceil(result.getUTCMinutes() / incrValue) * incrValue,
+        Math.ceil((result.getTime() % hour) / minute / incrValue) * incrValue,
         0,
         0
       );
       break;
     case "hours":
       result.setUTCHours(
-        Math.ceil(result.getUTCHours() / incrValue) * incrValue,
+        Math.ceil((result.getTime() % day) / hour / incrValue) * incrValue,
         0,
         0,
         0
@@ -226,7 +226,7 @@ export const genTimeTicks = ({
   space = DEFAULT_X_SPLIT_SPACE,
 }: GenTimeTicksOpts): PlotAxisGenTicks => {
   return ({ frame, scaleId }) => {
-      const [scaleMin, scaleMax] = getScaleLimits(frame, scaleId);
+    const [scaleMin, scaleMax] = getScaleLimits(frame, scaleId);
     const splitsCount = Math.floor(frame.chartAreaCanvasPX.width / space) + 1;
     const range = scaleMax - scaleMin;
     const splitDistance = range / splitsCount;
@@ -234,11 +234,7 @@ export const genTimeTicks = ({
       (a) => durationToMilliseconds(a) >= splitDistance
     ) ?? [1, "milliseconds"];
 
-    const firstTick = makeFirstTick(
-      scaleMin,
-      [incrValue, incrUnit],
-      timeZone
-    );
+    const firstTick = makeFirstTick(scaleMin, [incrValue, incrUnit], timeZone);
     const firstTickOffset = getTimezoneOffsetHours(firstTick, timeZone);
 
     const splits: number[] = [firstTick];

@@ -1,13 +1,16 @@
-export type Style = {
-  fillStyle?: CanvasFillStrokeStyles["fillStyle"];
-  strokeStyle?: CanvasFillStrokeStyles["strokeStyle"];
-} & Partial<
-  Pick<
+export type PathStyle = Partial<
+  {
+    fillStyle: CanvasFillStrokeStyles["fillStyle"];
+    strokeStyle: CanvasFillStrokeStyles["strokeStyle"];
+  } & Pick<
     CanvasPathDrawingStyles,
     "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
   >
-> &
-  Partial<CanvasTextDrawingStyles>;
+>;
+
+export type TextStyle = Partial<CanvasTextDrawingStyles>;
+
+export type Style = PathStyle & TextStyle;
 
 export type Size = {
   width: number;

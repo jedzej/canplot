@@ -85,6 +85,24 @@ export const valToPos = (
   return result;
 };
 
+export const clampUnfit = (
+  frame: PlotDrawFrame,
+  value: number,
+  scaleId: string
+) => {
+  const [min, max] = getScaleLimits(frame, scaleId);
+  return clamp(value, min, max);
+};
+
+export const pointsFit = (
+  frame: PlotDrawFrame,
+  value: number,
+  scaleId: string
+): boolean => {
+  const [min, max] = getScaleLimits(frame, scaleId);
+  return value >= min && value <= max;
+};
+
 export const posToVal = (
   frame: PlotDrawFrame,
   pos: number,

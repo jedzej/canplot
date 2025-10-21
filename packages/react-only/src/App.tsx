@@ -1,62 +1,74 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { PlotScaleConfig } from "./lib/types";
-import { makeEventEmitter, type EventEmitter } from "./lib/eventEmitter";
+import { makeEventEmitter, type EventEmitter } from "./eventEmitter";
 import { CanPlot } from "./lib/CanPlot";
 import { useFrame } from "./lib/frameContext";
-import { posToVal, valToPos } from "./lib/helpers";
+import { applyStyles, pointsFit, posToVal, valToPos } from "./lib/helpers";
 
 function App() {
-  const [scales, setScales] = useState<PlotScaleConfig[]>(() => [
-    {
-      id: "t",
-      type: "time",
-      timeZone: "UTC",
-      axis: {
-        position: "bottom",
-        size: 40,
+  const [refPoint, setRefPoint] = useState(Date.parse("2025-10-26T12:00:00Z"));
+
+  const scales = useMemo<PlotScaleConfig[]>(
+    () => [
+      {
+        id: "t",
+        type: "time",
+        timeZone: "Europe/Warsaw",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        minmax: [refPoint - 1000 * 60 * 60 * 60, refPoint],
       },
-      origin: "x",
-      minmax: [Date.now() - 1000 * 60 * 60 * 24, Date.now()],
-    },
-    {
-      id: "x",
-      type: "linear",
-      axis: {
-        position: "bottom",
-        size: 20,
-      },
-      origin: "x",
-      minmax: [0, 100],
-    },
-    {
-      id: "y",
-      type: "linear",
-      axis: {
-        position: "left",
-        size: 20,
+      {
+        id: "x",
         type: "linear",
+        axis: {
+          position: "bottom",
+          size: 20,
+        },
+        origin: "x",
+        minmax: [0, 100],
       },
-      origin: "y",
-      minmax: [0, 100],
-      format: {
+      {
+        id: "y",
         type: "linear",
+        axis: {
+          position: "left",
+          size: 20,
+          type: "linear",
+        },
+        origin: "y",
+        minmax: [0, 100],
+        format: {
+          type: "linear",
+        },
       },
-    },
-    {
-      id: "y2",
-      type: "linear",
-      axis: {
-        position: "right",
-        size: 20,
+      {
+        id: "y2",
         type: "linear",
+        axis: {
+          position: "right",
+          size: 20,
+          type: "linear",
+        },
+        origin: "y",
+        minmax: [-1000, 1000],
+        format: {
+          type: "linear",
+        },
       },
-      origin: "y",
-      minmax: [-1000, 1000],
-      format: {
-        type: "linear",
-      },
-    },
-  ]);
+    ],
+    [refPoint]
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefPoint((prev) => prev - 100 * 60 * 60);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
 
   const [eventEmitter] = useState<EventEmitter>(() => {
     return makeEventEmitter();
@@ -67,10 +79,6 @@ function App() {
       <CanPlot
         configuration={{
           padding: {
-            // bottom: 0,
-            // left: 0,
-            // right: 0,
-            // top: 0,
             bottom: 20,
             left: 40,
             right: 20,
@@ -89,23 +97,35 @@ function App() {
         <ChartAreaInteractions eventEmitter={eventEmitter} />
         {/* <AxesOverlay frame={frame} eventEmitter={eventEmitter} /> */}
         <Rect />
-        <Plot />
+        <ScatterPlot
+          data={Array.from({ length: 10 }, (_, i) => ({
+            x: i,
+            y: (i + 1) * 10,
+          }))}
+          xScaleId="x"
+          yScaleId="y"
+          style={{
+            fillStyle: "pink",
+            strokeStyle: "red",
+            lineWidth: 2,
+          }}
+        />
       </CanPlot>
 
       <button
         type="button"
         onClick={() => {
-          setScales((prev) => {
-            const newScales = [...prev];
-            newScales[2] = {
-              ...newScales[2],
-              minmax: (newScales[2].minmax = [
-                Math.random() * -1000,
-                Math.random() * 1000,
-              ]),
-            };
-            return newScales;
-          });
+          // setScales((prev) => {
+          //   const newScales = [...prev];
+          //   newScales[2] = {
+          //     ...newScales[2],
+          //     minmax: (newScales[2].minmax = [
+          //       Math.random() * -1000,
+          //       Math.random() * 1000,
+          //     ]),
+          //   };
+          //   return newScales;
+          // });
         }}
       >
         YScale
@@ -126,20 +146,37 @@ const Rect = () => {
   return null;
 };
 
-const Plot = () => {
+const ScatterPlot: React.FC<{
+  data: Array<{ x: number; y: number }>;
+  xScaleId: string;
+  yScaleId: string;
+  radius?: number;
+  style?: Partial<
+    {
+      fillStyle: CanvasFillStrokeStyles["fillStyle"];
+      strokeStyle: CanvasFillStrokeStyles["strokeStyle"];
+    } & Pick<
+      CanvasPathDrawingStyles,
+      "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
+    >
+  >;
+}> = ({ data, xScaleId, yScaleId, radius = 5, style }) => {
   useFrame((frame) => {
-    const data = Array.from({ length: 10 }, (_, i) => ({
-      x: i + 1,
-      y: (i + 1) * 10,
-    }));
     frame.ctx.save();
     frame.ctx.beginPath();
+    applyStyles(frame.ctx, style);
     for (const point of data) {
-      const x = valToPos(frame, point.x, "x", "canvas");
-      const y = valToPos(frame, point.y, "y2", "canvas");
-      frame.ctx.fillStyle = "rgba(255,0,0,0.5)";
-      frame.ctx.arc(x, y, 5, 0, Math.PI * 2);
+      if (
+        !pointsFit(frame, point.x, xScaleId) ||
+        !pointsFit(frame, point.y, yScaleId)
+      )
+        continue;
+      const x = valToPos(frame, point.x, xScaleId, "canvas");
+      const y = valToPos(frame, point.y, yScaleId, "canvas");
+      frame.ctx.moveTo(x + radius, y);
+      frame.ctx.arc(x, y, radius, 0, Math.PI * 2);
     }
+    frame.ctx.stroke();
     frame.ctx.fill();
     frame.ctx.restore();
   });
@@ -269,8 +306,7 @@ const Crosshair: React.FC<{
   const frame = useFrame();
 
   return (
-    <div>
-      {JSON.stringify(moveState)}
+    <>
       <div
         style={{
           position: "absolute",
@@ -298,7 +334,7 @@ const Crosshair: React.FC<{
           transform: `translateY(${moveState ? moveState.cssY : 0}px)`,
         }}
       />
-    </div>
+    </>
   );
 };
 

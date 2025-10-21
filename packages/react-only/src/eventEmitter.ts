@@ -1,4 +1,4 @@
-import type { PlotDrawFrame } from "./types";
+import type { PlotDrawFrame } from "./lib/types";
 
 export type CanPlotEvents = {
   dblclick: {
