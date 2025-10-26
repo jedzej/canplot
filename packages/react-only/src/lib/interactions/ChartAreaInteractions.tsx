@@ -131,9 +131,38 @@ const ChartAreaInteractionsImpl: React.FC<{
         },
       });
     };
+    const keyListener = (event: KeyboardEvent) => {
+      const newKeys = {
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+        metaKey: event.metaKey,
+      };
+      const lastSpan = lastSpanSelectSyncEventRef.current;
+      if (
+        lastSpan &&
+        Object.entries(newKeys).some(
+          ([key, value]) => lastSpan.keys[key as keyof typeof newKeys] !== value
+        )
+      ) {
+        event.stopPropagation();
+        event.preventDefault();
+        const newSpanEvent = { ...lastSpan, keys: newKeys };
+        lastSpanSelectSyncEventRef.current = newSpanEvent;
+        InteractionsBus.sync_spanselect.dispatchEvent(
+          effectiveSyncKey,
+          newSpanEvent
+        );
+      }
+    };
+
     document.addEventListener("mouseup", listener);
+    document.addEventListener("keydown", keyListener);
+    document.addEventListener("keyup", keyListener);
     return () => {
       document.removeEventListener("mouseup", listener);
+      document.removeEventListener("keydown", keyListener);
+      document.removeEventListener("keyup", keyListener);
     };
   }, [frameRef, effectiveSyncKey]);
 

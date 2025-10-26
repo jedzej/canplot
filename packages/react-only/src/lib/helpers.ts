@@ -94,6 +94,28 @@ export const clampUnfit = (
   return clamp(value, min, max);
 };
 
+export const clampXPosToChartArea = (
+  frame: PlotDrawFrame,
+  value: number,
+  space: "css" | "canvas"
+) => {
+  const chartArea =
+    space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
+
+  console.log(value, chartArea)
+  return clamp(value, chartArea.x, chartArea.x + chartArea.width);
+};
+
+export const clampYPosToChartArea = (
+  frame: PlotDrawFrame,
+  value: number,
+  space: "css" | "canvas"
+) => {
+  const chartArea =
+    space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
+  return clamp(value, chartArea.y, chartArea.y + chartArea.height);
+};
+
 export const pointsFit = (
   frame: PlotDrawFrame,
   value: number,

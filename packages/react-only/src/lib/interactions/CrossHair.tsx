@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useInteractionsEvent } from "./interactionsBus";
 import type { MoveEvent } from "./types";
+import { clampXPosToChartArea, clampYPosToChartArea } from "../helpers";
 
 export const Crosshair: React.FC<{
   xStyle?: React.CSSProperties;
@@ -21,9 +22,22 @@ export const Crosshair: React.FC<{
 
   const { frame, pointer } = moveState;
 
+  const clampedX = clampXPosToChartArea(
+    frame,
+    pointer ? pointer.cssX + frame.chartAreaCSS.x : 0,
+    "css"
+  ) - frame.chartAreaCSS.x;
+
+  const clampedY = clampYPosToChartArea(
+    frame,
+    pointer ? pointer.cssY + frame.chartAreaCSS.y : 0,
+    "css"
+  ) - frame.chartAreaCSS.y;
+
   return (
     <>
       <div
+        data-show={!!pointer}
         className={xClassName}
         style={{
           position: "absolute",
@@ -32,12 +46,14 @@ export const Crosshair: React.FC<{
           height: frame.chartAreaCSS.height,
           borderLeft: "solid 1px red",
           pointerEvents: "none",
-          transform: `translateX(${pointer ? pointer.cssX : 0}px)`,
+          opacity: pointer ? 1 : 0,
+          transform: `translateX(${clampedX}px)`,
           ...xStyle,
         }}
       />
       <div
         className={yClassName}
+        data-show={!!pointer}
         style={{
           position: "absolute",
           top: frame.chartAreaCSS.y,
@@ -46,7 +62,8 @@ export const Crosshair: React.FC<{
           left: frame.chartAreaCSS.x,
           width: frame.chartAreaCSS.width,
           pointerEvents: "none",
-          transform: `translateY(${pointer ? pointer.cssY : 0}px)`,
+          opacity: pointer ? 1 : 0,
+          transform: `translateY(${clampedY}px)`,
           ...yStyle,
         }}
       />

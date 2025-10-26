@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useInteractionsEvent } from "./interactionsBus";
 import type { SpanSelectEvent } from "./types";
+import {
+  clampXPosToChartArea,
+  clampYPosToChartArea,
+} from "../helpers";
 
 export const SelectBox: React.FC<{
   className?: string;
@@ -16,10 +20,31 @@ export const SelectBox: React.FC<{
     return null;
   }
 
-  const leftPx = Math.min(selectState.x.fromCSS, selectState.x.toCSS);
-  const topPx = Math.min(selectState.y.fromCSS, selectState.y.toCSS);
-  const widthPx = Math.abs(selectState.x.toCSS - selectState.x.fromCSS);
-  const heightPx = Math.abs(selectState.y.toCSS - selectState.y.fromCSS);
+  const clampedFromX = clampXPosToChartArea(
+    selectState.frame,
+    selectState.x.fromCSS,
+    "css"
+  );
+  const clampedToX = clampXPosToChartArea(
+    selectState.frame,
+    selectState.x.toCSS,
+    "css"
+  );
+  const clampedFromY = clampYPosToChartArea(
+    selectState.frame,
+    selectState.y.fromCSS,
+    "css"
+  );
+  const clampedToY = clampYPosToChartArea(
+    selectState.frame,
+    selectState.y.toCSS,
+    "css"
+  );
+
+  const leftPx = Math.min(clampedFromX, clampedToX);
+  const topPx = Math.min(clampedFromY, clampedToY);
+  const widthPx = Math.abs(clampedToX - clampedFromX);
+  const heightPx = Math.abs(clampedToY - clampedFromY);
 
   return (
     <div

@@ -70,6 +70,64 @@ function App() {
     ],
     [refPoint]
   );
+  const scales2 = useMemo<PlotScaleConfig[]>(
+    () => [
+      {
+        id: "t",
+        type: "time",
+        timeZone: "Europe/Warsaw",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: refPoint - 1000 * 60 * 60 * 60,
+        max: refPoint,
+      },
+      {
+        id: "x",
+        type: "linear",
+        axis: {
+          position: "bottom",
+          size: 20,
+        },
+        origin: "x",
+        min: 0,
+        max: 300,
+      },
+      {
+        id: "y",
+        type: "linear",
+        axis: {
+          position: "left",
+          size: 20,
+          type: "linear",
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+        format: {
+          type: "linear",
+        },
+      },
+      {
+        id: "y2",
+        type: "linear",
+        axis: {
+          position: "right",
+          size: 20,
+          type: "linear",
+        },
+        origin: "y",
+        min: -1000,
+        max: 1000,
+        format: {
+          type: "linear",
+        },
+      },
+    ],
+    [refPoint]
+  );
 
   // useEffect(() => {
   //   const interval = setInterval(() => {
@@ -102,8 +160,8 @@ function App() {
             yViaScaleId: "y",
           }}
         >
-          <Crosshair  />
-          <SelectBox style={{backgroundColor: "#44992244"}} />
+          <Crosshair />
+          <SelectBox style={{ backgroundColor: "#44992244" }} />
         </ChartAreaInteractions>
 
         {/* <AxesOverlay frame={frame} eventEmitter={eventEmitter} /> */}
@@ -122,25 +180,28 @@ function App() {
         />
       </CanPlot>
 
-      {/* <CanPlot
+      <CanPlot
         configuration={{
           padding: {
-            bottom: 20,
-            left: 40,
+            bottom: 60,
+            left: 20,
             right: 20,
-            top: 20,
+            top: 60,
           },
-          scales,
+          scales: scales2,
         }}
       >
-        <ChartAreaInteractions withSpanSelect sync={{
-          key: "x",
-          xViaScaleId: "x",
-          yViaScaleId: "y",
-        }} />
-        <Crosshair eventEmitter={eventEmitter} />
+        <ChartAreaInteractions
+          sync={{
+            key: "x",
+            xViaScaleId: "x",
+            yViaScaleId: "y",
+          }}
+        >
+          <Crosshair />
+          <SelectBox />
+        </ChartAreaInteractions>
 
-        <Rect />
         <ScatterPlot
           data={Array.from({ length: 10 }, (_, i) => ({
             x: i,
@@ -154,7 +215,7 @@ function App() {
             lineWidth: 2,
           }}
         />
-      </CanPlot> */}
+      </CanPlot>
 
       <button
         type="button"
