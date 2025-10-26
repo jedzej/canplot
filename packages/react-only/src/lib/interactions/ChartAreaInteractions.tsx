@@ -1,89 +1,134 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { posToVal, valToPos, valToPxDistance } from "../helpers";
+import { useContext, useEffect, useId, useRef } from "react";
+import { getScale, posToVal } from "../helpers";
 import { useFrame } from "../frameContext";
-import { InteractionsBus, useInteractionsEvent } from "./interactionsBus";
+import {
+  InteractionsBus,
+  InteractionsIdContext,
+  useGenericInteractionsEvent,
+} from "./interactionsBus";
 import type {
   ClickEvent,
   DblClickEvent,
   DocumentMouseUpEvent,
-  InteractionsEvent,
-  InteractionsEventPointerPosition,
   MouseDownEvent,
   MouseUpEvent,
   MoveEvent,
   PointerSyncPosition,
   SpanSelectEvent,
+  SyncEvent_SpanSelect,
 } from "./types";
+import {
+  extrapolateScaledSelectionRange,
+  makePointerSyncPosition,
+  pointerSyncPositionToInteractionsPosition,
+} from "./positioning";
 
 type ChartAreaInteractionsProps = {
-  children: React.ReactNode;
   onDblClick?: (event: DblClickEvent) => void;
   onClick?: (event: ClickEvent) => void;
   onMouseMove?: (event: MoveEvent) => void;
-  onMouseLeave?: (event: InteractionsEvent) => void;
-  onMouseEnter?: (event: InteractionsEvent) => void;
   onMouseDown?: (event: MouseDownEvent) => void;
   onMouseUp?: (event: MouseUpEvent) => void;
   onDocumentMouseUp?: (event: DocumentMouseUpEvent) => void;
   onSpanSelect?: (event: SpanSelectEvent) => void;
-  withCrosshair?: boolean;
-  withSpanSelect?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  id?: string;
   sync?: {
     key: string;
     xViaScaleId?: string;
     yViaScaleId?: string;
   };
+  children?: React.ReactNode;
 };
 
 export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
-  children,
-  ...props
-}) => {
-  return <ChartAreaInteractionsImpl {...props} />;
-};
-
-const ChartAreaInteractionsImpl: React.FC<
-  Omit<ChartAreaInteractionsProps, "children">
-> = ({
-  onDblClick,
+  id,
   onClick,
+  onDblClick,
   onMouseMove,
   onMouseDown,
   onMouseUp,
-  onMouseEnter,
-  onMouseLeave,
   onDocumentMouseUp,
   onSpanSelect,
   className,
-  withSpanSelect,
   style,
   sync,
+  children,
 }) => {
+  const fallbackInteractionsId = useId();
+  const interactionsId = id || fallbackInteractionsId;
+
+  useGenericInteractionsEvent("dblclick", interactionsId, (event) => {
+    onDblClick?.(event);
+  });
+  useGenericInteractionsEvent("click", interactionsId, (event) => {
+    onClick?.(event);
+  });
+  useGenericInteractionsEvent("move", interactionsId, (event) => {
+    onMouseMove?.(event);
+  });
+  useGenericInteractionsEvent("mousedown", interactionsId, (event) => {
+    onMouseDown?.(event);
+  });
+  useGenericInteractionsEvent("mouseup", interactionsId, (event) => {
+    onMouseUp?.(event);
+  });
+  useGenericInteractionsEvent("documentmouseup", interactionsId, (event) => {
+    onDocumentMouseUp?.(event);
+  });
+  useGenericInteractionsEvent("spanselect", interactionsId, (event) => {
+    onSpanSelect?.(event);
+  });
+  return (
+    <InteractionsIdContext value={interactionsId}>
+      <ChartAreaInteractionsImpl
+        className={className}
+        style={style}
+        sync={sync}
+      />
+      {children}
+    </InteractionsIdContext>
+  );
+};
+
+const ChartAreaInteractionsImpl: React.FC<{
+  className?: string;
+  style?: React.CSSProperties;
+  sync?: ChartAreaInteractionsProps["sync"];
+}> = ({ className, style, sync }) => {
   const interactionsAreaRef = useRef<HTMLDivElement>(null);
 
   const _frame = useFrame();
-  const effectiveXSyncViaScaleId =
-    sync?.xViaScaleId ?? _frame.scales.find((s) => s.origin === "x")?.id;
-  const effectiveYSyncViaScaleId =
-    sync?.yViaScaleId ?? _frame.scales.find((s) => s.origin === "y")?.id;
 
   const frameRef = useRef(_frame);
   frameRef.current = _frame;
 
-  const id = useId();
+  const interactionsId = useContext(InteractionsIdContext);
 
-  const effectiveSyncKey = sync?.key || id;
+  const effectiveSyncKey = sync?.key || interactionsId;
+
+  const selectStateRef = useRef<{
+    xRangeCss: { start: number; end: number };
+    yRangeCss: { start: number; end: number };
+  } | null>(null);
+
+  const lastSpanSelectSyncEventRef = useRef<SyncEvent_SpanSelect | null>(null);
 
   const getRect = () => {
     return interactionsAreaRef.current?.getBoundingClientRect();
   };
 
   useEffect(() => {
-    const listener = () => {
+    const listener = (event: MouseEvent) => {
       InteractionsBus.documentmouseup.dispatchEvent(effectiveSyncKey, {
         frame: frameRef.current,
+        keys: {
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey,
+          shiftKey: event.shiftKey,
+          metaKey: event.metaKey,
+        },
       });
     };
     document.addEventListener("mouseup", listener);
@@ -92,312 +137,142 @@ const ChartAreaInteractionsImpl: React.FC<
     };
   }, [frameRef, effectiveSyncKey]);
 
-  const pointerSyncPositionToInteractionsPosition = (
-    pointerSyncPosition: PointerSyncPosition
-  ): InteractionsEventPointerPosition | undefined => {
-    const frame = frameRef.current;
-    const cssX = pointerSyncPosition.x
-      ? valToPos(
-          frame,
-          pointerSyncPosition.x.value,
-          pointerSyncPosition.x.scaleId,
-          "css"
-        ) - frame.chartAreaCSS.x
-      : 0;
-    const cssY = pointerSyncPosition.y
-      ? valToPos(
-          frame,
-          pointerSyncPosition.y.value,
-          pointerSyncPosition.y.scaleId,
-          "css"
-        ) - frame.chartAreaCSS.y
-      : 0;
-    return {
-      cssX,
-      cssY,
-      scaled: Object.fromEntries(
-        frame.scales.map((scale) => {
-          const pos = scale.origin === "y" ? cssX : cssY;
+  // SYNC EVENTS
+  useGenericInteractionsEvent("sync_dblclick", effectiveSyncKey, (event) => {
+    const positions = pointerSyncPositionToInteractionsPosition(
+      event.positions,
+      frameRef.current
+    );
+    if (!positions) return;
+    InteractionsBus.dblclick.dispatchEvent(interactionsId, {
+      frame: frameRef.current,
+      pointer: positions,
+      keys: event.keys,
+    });
+  });
 
-          return [scale.id, posToVal(frame, pos, scale.id, "css")];
-        })
-      ),
-    };
-  };
+  useGenericInteractionsEvent("sync_click", effectiveSyncKey, (event) => {
+    const positions = pointerSyncPositionToInteractionsPosition(
+      event.positions,
+      frameRef.current
+    );
+    if (!positions) return;
+    InteractionsBus.click.dispatchEvent(interactionsId, {
+      frame: frameRef.current,
+      pointer: positions,
+      keys: event.keys,
+    });
+  });
 
-  const makePointerSyncPosition = (
-    event: Pick<MouseEvent, "clientX" | "clientY">
-  ): PointerSyncPosition | undefined => {
-    const rect = getRect();
-    const frame = frameRef.current;
-    if (!rect) return;
-    let x: PointerSyncPosition["x"] | null = null;
-    let y: PointerSyncPosition["y"] | null = null;
-    if (effectiveXSyncViaScaleId) {
-      const cssX = event.clientX - rect.left;
-      console.log("cssX", cssX, event.clientX, rect.left, frame.chartAreaCSS.x);
-      x = {
-        scaleId: effectiveXSyncViaScaleId,
-        value: posToVal(frame, cssX, effectiveXSyncViaScaleId, "css"),
-      };
+  useGenericInteractionsEvent("sync_move", effectiveSyncKey, (event) => {
+    const positions = event.positions
+      ? pointerSyncPositionToInteractionsPosition(
+          event.positions,
+          frameRef.current
+        )
+      : null;
+
+    InteractionsBus.move.dispatchEvent(interactionsId, {
+      frame: frameRef.current,
+      pointer: positions ?? null,
+      keys: event.keys,
+    });
+  });
+
+  useGenericInteractionsEvent("sync_mousedown", effectiveSyncKey, (event) => {
+    const positions = pointerSyncPositionToInteractionsPosition(
+      event.positions,
+      frameRef.current
+    );
+    if (!positions) return;
+
+    InteractionsBus.mousedown.dispatchEvent(interactionsId, {
+      frame: frameRef.current,
+      pointer: positions,
+      keys: event.keys,
+    });
+  });
+
+  useGenericInteractionsEvent("sync_mouseup", effectiveSyncKey, (event) => {
+    const positions = pointerSyncPositionToInteractionsPosition(
+      event.positions,
+      frameRef.current
+    );
+    if (!positions) return;
+    InteractionsBus.mouseup.dispatchEvent(interactionsId, {
+      frame: frameRef.current,
+      pointer: positions,
+      keys: event.keys,
+    });
+  });
+
+  useGenericInteractionsEvent("sync_spanselect", effectiveSyncKey, (event) => {
+    const xMappedRange = extrapolateScaledSelectionRange(
+      "x",
+      event.xRange,
+      frameRef.current
+    );
+    const yMappedRange = extrapolateScaledSelectionRange(
+      "y",
+      event.yRange,
+      frameRef.current
+    );
+
+    const xRanges = xMappedRange.scaled;
+    const yRanges = yMappedRange.scaled;
+
+    if (event.completed) {
+      selectStateRef.current = null;
     }
-    if (effectiveYSyncViaScaleId) {
-      const cssY = event.clientY - rect.top;
-      console.log("cssY", cssY, event.clientY, rect.top, frame.chartAreaCSS.y);
-      y = {
-        scaleId: effectiveYSyncViaScaleId,
-        value: posToVal(frame, cssY, effectiveYSyncViaScaleId, "css"),
-      };
-    }
-    if (x === undefined && y === undefined) {
-      return undefined;
-    }
-    return { x, y };
-  };
 
-  const [crosshairPosition, setCrosshairPosition] = useState<{
-    cssX: number;
-    cssY: number;
-  } | null>(null);
-
-  const [selectState, setSelectState] = useState<{
-    xRangeRe: {
-      start: number;
-      end: number;
-    };
-    yRangeCss: {
-      start: number;
-      end: number;
-    };
-  } | null>(null);
-
-  useInteractionsEvent("dblclick", id, (event) => {
-    console.log("DblClick Event", event);
-    onDblClick?.(event);
-  });
-  useInteractionsEvent("click", id, (event) => {
-    console.log("Click Event", event);
-    onClick?.(event);
-  });
-  useInteractionsEvent("move", id, (event) => {
-    setCrosshairPosition(event.pointer);
-    console.log("Move Event", JSON.stringify(event.pointer));
-    onMouseMove?.(event);
-  });
-  useInteractionsEvent("mousedown", id, (event) => {
-    onMouseDown?.(event);
-  });
-  useInteractionsEvent("mouseup", id, (event) => {
-    onMouseUp?.(event);
-  });
-  useInteractionsEvent("documentmouseup", id, (event) => {
-    onDocumentMouseUp?.(event);
-  });
-  useInteractionsEvent("spanselect", id, (event) => {
-    onSpanSelect?.(event);
+    InteractionsBus.spanselect.dispatchEvent(interactionsId, {
+      mode: event.mode,
+      frame: frameRef.current,
+      xRanges,
+      yRanges,
+      completed: event.completed,
+      x: { fromCSS: xMappedRange.fromCSS, toCSS: xMappedRange.toCSS },
+      y: { fromCSS: yMappedRange.fromCSS, toCSS: yMappedRange.toCSS },
+      keys: event.keys,
+    });
   });
 
-  useInteractionsEvent("sync_dblclick", effectiveSyncKey, (event) => {
-    console.log("DblClick sync event", event);
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions
+  const withPointerPosition = (
+    event: Pick<
+      MouseEvent,
+      "clientX" | "clientY" | "ctrlKey" | "altKey" | "shiftKey" | "metaKey"
+    >,
+    foo: (
+      pointerSyncPosition: PointerSyncPosition,
+      css: { cssX: number; cssY: number },
+      keys: {
+        ctrlKey: boolean;
+        altKey: boolean;
+        shiftKey: boolean;
+        metaKey: boolean;
+      }
+    ) => void
+  ) => {
+    const positions = makePointerSyncPosition(
+      event,
+      getRect(),
+      _frame,
+      sync?.xViaScaleId,
+      sync?.yViaScaleId
     );
-    if (!positions) return;
-    InteractionsBus.dblclick.dispatchEvent(id, {
-      frame: frameRef.current,
-      pointer: positions,
-    });
-  });
-  useInteractionsEvent("sync_click", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions
-    );
-    if (!positions) return;
-    InteractionsBus.click.dispatchEvent(id, {
-      frame: frameRef.current,
-      pointer: positions,
-    });
-  });
-  useInteractionsEvent("sync_move", effectiveSyncKey, (event) => {
-    const positions =
-      event.positions &&
-      pointerSyncPositionToInteractionsPosition(event.positions);
-
-    console.log("move", JSON.stringify(positions));
-    if (!positions) return;
-    InteractionsBus.move.dispatchEvent(id, {
-      frame: frameRef.current,
-      pointer: positions,
-    });
-  });
-  useInteractionsEvent("sync_mousedown", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions
-    );
-    if (!positions) return;
-    InteractionsBus.mousedown.dispatchEvent(id, {
-      frame: frameRef.current,
-      pointer: positions,
-    });
-  });
-  useInteractionsEvent("sync_mouseup", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions
-    );
-    if (!positions) return;
-    InteractionsBus.mouseup.dispatchEvent(id, {
-      frame: frameRef.current,
-      pointer: positions,
-    });
-  });
-  useInteractionsEvent("sync_spanselect", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(event.xRange);
-    if (!positions) return;
-
-    InteractionsBus.spanselect.dispatchEvent(id, {
-      frame: frameRef.current,
-      pointer: positions,
-    });
-  });
-
-  console.log("SELECT", selectState);
-
-  const selectStateRef = useRef(selectState);
-  selectStateRef.current = selectState;
-
-  const onSelectRef = useRef(onSpanSelect);
-  onSelectRef.current = onSpanSelect;
-
-  const spanSelectPositions = useMemo(() => {
-    const mode: "none" | "x" | "y" | "box" = (() => {
-      if (!selectState) return "none";
-
-      const dY = valToPxDistance(
-        _frame,
-        Math.abs(selectState.y.start - selectState.y.end),
-        selectState.y.scaleId,
-        "css"
+    if (positions) {
+      foo(
+        positions.pointerSyncPosition,
+        { cssX: positions.cssX, cssY: positions.cssY },
+        {
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey,
+          shiftKey: event.shiftKey,
+          metaKey: event.metaKey,
+        }
       );
-      const dX = valToPxDistance(
-        _frame,
-        Math.abs(selectState.x.start - selectState.x.end),
-        selectState.x.scaleId,
-        "css"
-      );
-
-      if (dY < 10 && dX < 10) return "none";
-
-      if (dY > 30 && dX > 30) return "box";
-      return dX > dY ? "x" : "y";
-    })();
-
-    const left = (() => {
-      if (!selectState || mode === "none") return 0;
-      if (mode === "x" || mode === "box") {
-        return valToPos(
-          _frame,
-          Math.min(selectState.x.start, selectState.x.end),
-          selectState.x.scaleId,
-          "css"
-        );
-      }
-      return 0;
-    })();
-
-    const top = (() => {
-      if (!selectState || mode === "none") return 0;
-      if (mode === "y" || mode === "box") {
-        return valToPos(
-          _frame,
-          Math.min(selectState.y.start, selectState.y.end),
-          selectState.y.scaleId,
-          "css"
-        );
-      }
-      return 0;
-    })();
-
-    const width = (() => {
-      if (!selectState || mode === "none") return 0;
-      if (mode === "x" || mode === "box") {
-        return valToPos(
-          _frame,
-          Math.abs(selectState.x.start - selectState.x.end),
-          selectState.x.scaleId,
-          "css"
-        );
-      }
-      return _frame.chartAreaCSS.width;
-    })();
-
-    const height = (() => {
-      if (!selectState || mode === "none") return 0;
-      if (mode === "y" || mode === "box") {
-        return valToPos(
-          _frame,
-          Math.abs(selectState.y.start - selectState.y.end),
-          selectState.y.scaleId,
-          "css"
-        );
-      }
-      return _frame.chartAreaCSS.height;
-    })();
-
-    return { mode, left, top, width, height };
-  }, [selectState, _frame]);
-
-  // const spanSelectEventHandlers = withSpanSelect
-  //   ? {
-  //       onMouseDown: (position: PointerSyncPosition) => {
-  //         console.log("Mouse Down", position);
-  //         setSelectState({ start: position, end: position });
-  //         console.log("Mouse Down", position);
-  //       },
-  //       onMouseUp: () => {
-  //         setSelectState(null);
-  //         if (!selectStateRef.current) return;
-  //         const frame = frameRef.current;
-  //         if (!frame) return;
-
-  //         switch (spanSelectPositionsRef.current.mode) {
-  //           case "none":
-  //             break;
-  //           case "x":
-  //           case "y":
-  //           case "box":
-  //             onSpanSelect?.({
-  //               mode: spanSelectPositionsRef.current.mode,
-  //               positions: Object.fromEntries(
-  //                 frame.scales.map((scale) => {
-  //                   const fromPos =
-  //                     scale.origin === "x"
-  //                       ? spanSelectPositionsRef.current.left
-  //                       : spanSelectPositionsRef.current.top;
-  //                   const toPos =
-  //                     scale.origin === "x"
-  //                       ? spanSelectPositionsRef.current.left +
-  //                         spanSelectPositionsRef.current.width
-  //                       : spanSelectPositionsRef.current.top +
-  //                         spanSelectPositionsRef.current.height;
-  //                   const fromVal = posToVal(frame, fromPos, scale.id, "css");
-  //                   const toVal = posToVal(frame, toPos, scale.id, "css");
-  //                   return [scale.id, { from: fromVal, to: toVal }];
-  //                 })
-  //               ),
-  //             });
-  //             break;
-  //         }
-  //       },
-  //       onMouseMove: (position: PointerPosition) => {
-  //         setSelectState((prev) =>
-  //           prev ? { start: prev.start, end: position } : null
-  //         );
-  //       },
-  //     }
-  //   : undefined;
-
-  const spanSelectPositionsRef = useRef(spanSelectPositions);
-  spanSelectPositionsRef.current = spanSelectPositions;
+    }
+  };
 
   return (
     <div
@@ -416,99 +291,133 @@ const ChartAreaInteractionsImpl: React.FC<
         ...style,
       }}
       onClick={(event) => {
-        const positions = makePointerSyncPosition(event);
-        if (positions) {
+        withPointerPosition(event, (positions, _, keys) => {
           InteractionsBus.sync_click.dispatchEvent(effectiveSyncKey, {
             positions,
+            keys,
           });
-        }
+        });
       }}
-      onMouseLeave={() => {
-        InteractionsBus.sync_move.dispatchEvent(effectiveSyncKey, {
-          positions: null,
+      onMouseLeave={(event) => {
+        withPointerPosition(event, (_, __, keys) => {
+          InteractionsBus.sync_move.dispatchEvent(effectiveSyncKey, {
+            positions: null,
+            keys,
+          });
         });
       }}
       onMouseMove={(event) => {
-        const positions = makePointerSyncPosition(event);
-        if (positions) {
+        withPointerPosition(event, (positions, { cssX, cssY }, keys) => {
           InteractionsBus.sync_move.dispatchEvent(effectiveSyncKey, {
             positions,
+            keys,
           });
-        }
+          const selectState = selectStateRef.current;
+          if (!selectState) return;
+          if (!positions.x || !positions.y) return;
+          const frame = frameRef.current;
+          const startCSSX = selectState.xRangeCss.start;
+          const endCSSX = cssX;
+          const startCSSY = selectState.yRangeCss.start;
+          const endCSSY = cssY;
+          const xScale = getScale(frame, positions.x.scaleId);
+          const yScale = getScale(frame, positions.y.scaleId);
+          selectStateRef.current = {
+            xRangeCss: { start: startCSSX, end: endCSSX },
+            yRangeCss: { start: startCSSY, end: endCSSY },
+          };
+
+          let mode: "none" | "x" | "y" | "box" = "none";
+          const dY = Math.abs(startCSSY - endCSSY);
+          const dX = Math.abs(startCSSX - endCSSX);
+
+          if (dY < 10 && dX < 10) {
+            mode = "none";
+          } else if (dY > 30 && dX > 30) {
+            mode = "box";
+          } else if (dY > dX) {
+            mode = "y";
+          } else {
+            mode = "x";
+          }
+
+          const xRange: SyncEvent_SpanSelect["xRange"] =
+            mode === "x" || mode === "box"
+              ? {
+                  scaleId: xScale.id,
+                  from: posToVal(frame, startCSSX, xScale.id, "css"),
+                  to: posToVal(frame, endCSSX, xScale.id, "css"),
+                }
+              : undefined;
+
+          const yRange: SyncEvent_SpanSelect["yRange"] =
+            mode === "y" || mode === "box"
+              ? {
+                  scaleId: yScale.id,
+                  from: posToVal(frame, startCSSY, yScale.id, "css"),
+                  to: posToVal(frame, endCSSY, yScale.id, "css"),
+                }
+              : undefined;
+
+          const spanSelectSyncEvent: SyncEvent_SpanSelect = {
+            mode,
+            xRange,
+            yRange,
+            completed: false,
+            keys,
+          };
+          lastSpanSelectSyncEventRef.current = spanSelectSyncEvent;
+
+          InteractionsBus.sync_spanselect.dispatchEvent(
+            effectiveSyncKey,
+            spanSelectSyncEvent
+          );
+        });
       }}
       onMouseDown={(event) => {
-        const positions = makePointerSyncPosition(event);
-        if (positions) {
+        withPointerPosition(event, (positions, { cssX, cssY }, keys) => {
           InteractionsBus.sync_mousedown.dispatchEvent(effectiveSyncKey, {
             positions,
+            keys,
           });
-        }
+          lastSpanSelectSyncEventRef.current = null;
+          selectStateRef.current = {
+            xRangeCss: { start: cssX, end: cssX },
+            yRangeCss: { start: cssY, end: cssY },
+          };
+        });
       }}
       onMouseUp={(event) => {
-        const positions = makePointerSyncPosition(event);
-        if (positions) {
+        withPointerPosition(event, (positions, _, keys) => {
           InteractionsBus.sync_mouseup.dispatchEvent(effectiveSyncKey, {
             positions,
+            keys,
           });
-        }
+          const lastSpanSelectEvent = lastSpanSelectSyncEventRef.current;
+          lastSpanSelectSyncEventRef.current = null;
+          const selectState = selectStateRef.current;
+          selectStateRef.current = null;
+          if (selectState && lastSpanSelectEvent) {
+            const spanSelectEvent = {
+              ...lastSpanSelectEvent,
+              keys,
+              completed: true,
+            };
+            InteractionsBus.sync_spanselect.dispatchEvent(
+              effectiveSyncKey,
+              spanSelectEvent
+            );
+          }
+        });
       }}
       onDoubleClick={(event) => {
-        const positions = makePointerSyncPosition(event);
-        if (positions) {
+        withPointerPosition(event, (positions, _, keys) => {
           InteractionsBus.sync_dblclick.dispatchEvent(effectiveSyncKey, {
             positions,
+            keys,
           });
-        }
+        });
       }}
-    >
-      {
-        <>
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              borderLeft: "solid 1px red",
-              top: 0,
-              height: _frame.chartAreaCSS.height,
-              opacity: crosshairPosition ? 1 : 0,
-              pointerEvents: "none",
-              transform: `translateX(${
-                crosshairPosition
-                  ? crosshairPosition.cssX
-                  : 0
-              }px)`,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              height: 0,
-              borderTop: "solid 1px red",
-              left: 0,
-              width: _frame.chartAreaCSS.width,
-              opacity: crosshairPosition ? 1 : 0,
-              pointerEvents: "none",
-              transform: `translateY(${
-                crosshairPosition ? crosshairPosition.cssY : 0
-              }px)`,
-            }}
-          />
-        </>
-      }
-      {selectState && (
-        <div
-          style={{
-            position: "absolute",
-            backgroundColor: "#0000ff22",
-            left: `${spanSelectPositions.left}px`,
-            top: `${spanSelectPositions.top}px`,
-            width: `${spanSelectPositions.width}px`,
-            height: `${spanSelectPositions.height}px`,
-            pointerEvents: "none",
-          }}
-        />
-      )}
-    </div>
+    />
   );
 };

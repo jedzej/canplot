@@ -6,6 +6,8 @@ import { useFrame } from "./lib/frameContext";
 import { applyStyles, pointsFit, posToVal, valToPos } from "./lib/helpers";
 import { ScatterPlot } from "./lib/plot/ScatterPlot";
 import { ChartAreaInteractions } from "./lib/interactions/ChartAreaInteractions";
+import { Crosshair } from "./lib/interactions/CrossHair";
+import { SelectBox } from "./lib/interactions/SelectBox";
 
 function App() {
   const [refPoint, setRefPoint] = useState(Date.parse("2025-10-26T12:00:00Z"));
@@ -21,7 +23,8 @@ function App() {
           size: 40,
         },
         origin: "x",
-        minmax: [refPoint - 1000 * 60 * 60 * 60, refPoint],
+        min: refPoint - 1000 * 60 * 60 * 60,
+        max: refPoint,
       },
       {
         id: "x",
@@ -31,7 +34,8 @@ function App() {
           size: 20,
         },
         origin: "x",
-        minmax: [0, 100],
+        min: 0,
+        max: 100,
       },
       {
         id: "y",
@@ -42,7 +46,8 @@ function App() {
           type: "linear",
         },
         origin: "y",
-        minmax: [0, 100],
+        min: 0,
+        max: 100,
         format: {
           type: "linear",
         },
@@ -56,7 +61,8 @@ function App() {
           type: "linear",
         },
         origin: "y",
-        minmax: [-1000, 1000],
+        min: -1000,
+        max: 1000,
         format: {
           type: "linear",
         },
@@ -89,11 +95,18 @@ function App() {
           scales,
         }}
       >
-        <ChartAreaInteractions withSpanSelect />
-        <Crosshair eventEmitter={eventEmitter} />
-        
+        <ChartAreaInteractions
+          sync={{
+            key: "x",
+            xViaScaleId: "x",
+            yViaScaleId: "y",
+          }}
+        >
+          <Crosshair  />
+          <SelectBox style={{backgroundColor: "#44992244"}} />
+        </ChartAreaInteractions>
+
         {/* <AxesOverlay frame={frame} eventEmitter={eventEmitter} /> */}
-        <Rect />
         <ScatterPlot
           data={Array.from({ length: 10 }, (_, i) => ({
             x: i,
@@ -108,6 +121,40 @@ function App() {
           }}
         />
       </CanPlot>
+
+      {/* <CanPlot
+        configuration={{
+          padding: {
+            bottom: 20,
+            left: 40,
+            right: 20,
+            top: 20,
+          },
+          scales,
+        }}
+      >
+        <ChartAreaInteractions withSpanSelect sync={{
+          key: "x",
+          xViaScaleId: "x",
+          yViaScaleId: "y",
+        }} />
+        <Crosshair eventEmitter={eventEmitter} />
+
+        <Rect />
+        <ScatterPlot
+          data={Array.from({ length: 10 }, (_, i) => ({
+            x: i,
+            y: (i + 1) * 10,
+          }))}
+          xScaleId="x"
+          yScaleId="y"
+          style={{
+            fillStyle: "pink",
+            strokeStyle: "red",
+            lineWidth: 2,
+          }}
+        />
+      </CanPlot> */}
 
       <button
         type="button"
@@ -131,68 +178,4 @@ function App() {
   );
 }
 
-const Rect = () => {
-  useFrame((frame) => {
-    const y1 = valToPos(frame, 10, "y2", "canvas");
-    const y2 = valToPos(frame, 20, "y2", "canvas");
-    const x1 = valToPos(frame, 10, "x", "canvas");
-    const x2 = valToPos(frame, 20, "x", "canvas");
-    frame.ctx.fillStyle = "rgba(0,255,0,0.5)";
-    frame.ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-  });
-  return null;
-};
-
-
-const Crosshair: React.FC<{
-  eventEmitter: EventEmitter;
-}> = ({ eventEmitter }) => {
-  const [moveState, setMoveState] = useState<{
-    cssX: number;
-    cssY: number;
-  } | null>(null);
-
-  useEffect(() => {
-    eventEmitter.addEventListener("move", (payload) => {
-      setMoveState(payload?.data ?? null);
-    });
-  }, [eventEmitter]);
-
-  const frame = useFrame();
-
-  return (
-    <>
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          borderLeft: "solid 1px red",
-          top: frame.chartAreaCSS.y,
-          height: frame.chartAreaCSS.height,
-          opacity: moveState ? 1 : 0,
-          pointerEvents: "none",
-          transform: `translateX(${
-            moveState ? moveState.cssX + frame.chartAreaCSS.x : 0
-          }px)`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: frame.chartAreaCSS.y,
-          height: 0,
-          borderTop: "solid 1px red",
-          left: frame.chartAreaCSS.x,
-          width: frame.chartAreaCSS.width,
-          opacity: moveState ? 1 : 0,
-          pointerEvents: "none",
-          transform: `translateY(${moveState ? moveState.cssY : 0}px)`,
-        }}
-      />
-    </>
-  );
-};
-
-
 export default App;
-

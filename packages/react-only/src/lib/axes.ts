@@ -6,7 +6,7 @@ import {
 } from "./defaults";
 import {
   applyStyles,
-  getScaleLimits,
+  getScale,
   isXScale,
   pxToValDistance,
   valToPos,
@@ -211,7 +211,7 @@ export const makeGenTicksDefault = ({
   space,
 }: { space?: number } = {}): PlotAxisGenTicks => {
   return ({ frame: frame, scaleId }) => {
-    const [scaleMin, scaleMax] = getScaleLimits(frame, scaleId);
+    const { min: scaleMin, max: scaleMax } = getScale(frame, scaleId);
     const ticks = [];
     const dpr = window.devicePixelRatio || 1;
     const effectiveSpace =

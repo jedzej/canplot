@@ -64,11 +64,13 @@ export const InteractionsBus = {
   sync_spanselect: makeInteractionsBus<SyncEvent_SpanSelect>(),
 };
 
-export const useInteractionsEvent = <K extends keyof typeof InteractionsBus>(
+export const useGenericInteractionsEvent = <
+  K extends keyof typeof InteractionsBus
+>(
   eventName: K,
   syncKey: string,
   callback: (
-    payload: Parameters<typeof InteractionsBus[K]["dispatchEvent"]>[1],
+    payload: Parameters<(typeof InteractionsBus)[K]["dispatchEvent"]>[1],
     syncKey: string
   ) => void
 ) => {
@@ -84,4 +86,18 @@ export const useInteractionsEvent = <K extends keyof typeof InteractionsBus>(
     );
     return removeListener;
   }, [syncKey, eventName, callbackRef]);
+};
+
+export const InteractionsIdContext = React.createContext<string>("");
+
+export const useInteractionsEvent = <K extends keyof typeof InteractionsBus>(
+  eventName: K,
+  callback: (
+    payload: Parameters<(typeof InteractionsBus)[K]["dispatchEvent"]>[1],
+    syncKey: string
+  ) => void
+) => {
+  const interactionsId = React.useContext(InteractionsIdContext);
+
+  return useGenericInteractionsEvent(eventName, interactionsId, callback);
 };

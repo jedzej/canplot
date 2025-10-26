@@ -22,7 +22,8 @@ export type PlotPadding = {
 export type PlotScaleLinearConfig = {
   type: "linear";
   id: string;
-  minmax: [number, number];
+  min: number;
+  max: number;
   origin: "x" | "y";
   axis: null | PlotAxisLinear;
 };
@@ -30,7 +31,8 @@ export type PlotScaleLinearConfig = {
 export type PlotScaleTimeConfig = {
   type: "time";
   id: string;
-  minmax: [number, number];
+  min: number;
+  max: number;
   origin: "x" | "y";
   axis: null | PlotAxisTime;
   timeZone: string;

@@ -4,7 +4,7 @@ import {
   DEFAULT_X_SPLIT_SPACE,
   DEFAULT_TIMEZONE,
 } from "./defaults";
-import { getScaleLimits } from "./helpers";
+import { getScale } from "./helpers";
 
 const millisecond = 1;
 const second = 1000 * millisecond;
@@ -226,7 +226,7 @@ export const genTimeTicks = ({
   space = DEFAULT_X_SPLIT_SPACE,
 }: GenTimeTicksOpts): PlotAxisGenTicks => {
   return ({ frame, scaleId }) => {
-    const [scaleMin, scaleMax] = getScaleLimits(frame, scaleId);
+    const { min: scaleMin, max: scaleMax } = getScale(frame, scaleId);
     const splitsCount = Math.floor(frame.chartAreaCanvasPX.width / space) + 1;
     const range = scaleMax - scaleMin;
     const splitDistance = range / splitsCount;

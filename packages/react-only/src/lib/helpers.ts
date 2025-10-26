@@ -7,7 +7,7 @@ export const pxToValDistance = (
   scaleId: string,
   space: "css" | "canvas"
 ) => {
-  const [min, max] = getScaleLimits(frame, scaleId);
+  const { min, max } = getScale(frame, scaleId);
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   const factor =
@@ -16,12 +16,12 @@ export const pxToValDistance = (
   return pxDistance / factor;
 };
 
-export const getScaleLimits = (frame: PlotDrawFrame, scaleId: string) => {
+export const getScale = (frame: PlotDrawFrame, scaleId: string) => {
   const scale = frame.scales.find((a) => a.id === scaleId);
   if (!scale) {
     throw new Error(`Scale ${scaleId} not found`);
   }
-  return scale.minmax;
+  return scale;
 };
 
 export const isXScale = (frame: PlotDrawFrame, scaleId: string) =>
@@ -54,7 +54,7 @@ export const valToPxDistance = (
 ) => {
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
-  const [min, max] = getScaleLimits(frame, scaleId);
+  const { min, max } = getScale(frame, scaleId);
   const factor =
     (isXScale(frame, scaleId) ? chartArea.width : chartArea.height) /
     (max - min);
@@ -67,7 +67,7 @@ export const valToPos = (
   scaleId: string,
   space: "css" | "canvas"
 ) => {
-  const [min] = getScaleLimits(frame, scaleId);
+  const { min } = getScale(frame, scaleId);
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   const relativePosition = valToPxDistance(frame, val - min, scaleId, space);
@@ -90,7 +90,7 @@ export const clampUnfit = (
   value: number,
   scaleId: string
 ) => {
-  const [min, max] = getScaleLimits(frame, scaleId);
+  const { min, max } = getScale(frame, scaleId);
   return clamp(value, min, max);
 };
 
@@ -99,7 +99,7 @@ export const pointsFit = (
   value: number,
   scaleId: string
 ): boolean => {
-  const [min, max] = getScaleLimits(frame, scaleId);
+  const { min, max } = getScale(frame, scaleId);
   return value >= min && value <= max;
 };
 
@@ -109,7 +109,7 @@ export const posToVal = (
   scaleId: string,
   space: "css" | "canvas"
 ) => {
-  const [min, max] = getScaleLimits(frame, scaleId);
+  const { min, max } = getScale(frame, scaleId);
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   const relativePosition = isXScale(frame, scaleId)
