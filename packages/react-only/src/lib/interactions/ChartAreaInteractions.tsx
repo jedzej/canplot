@@ -232,8 +232,6 @@ const ChartAreaInteractionsImpl: React.FC<{
         const dY = Math.abs(startCSSY - endCSSY);
         const dX = Math.abs(startCSSX - endCSSX);
 
-        console.log(startCSSX);
-
         if (dY < 10 && dX < 10) {
           mode = "none";
         } else if (dY > 30 && dX > 30) {
@@ -382,7 +380,6 @@ const ChartAreaInteractionsImpl: React.FC<{
   });
 
   useGenericInteractionsEvent("sync_spanselect", effectiveSyncKey, (event) => {
-    console.log("Received sync_spanselect", event.xRange);
     const xMappedRange = extrapolateScaledSelectionRange(
       "x",
       event.xRange,
@@ -447,7 +444,6 @@ const ChartAreaInteractionsImpl: React.FC<{
       }}
       onMouseMove={(event) => {
         withPointerPosition(event, (positions, _, keys) => {
-          console.log("move", positions)
           InteractionsBus.sync_move.dispatchEvent(effectiveSyncKey, {
             positions,
             keys,
@@ -461,7 +457,6 @@ const ChartAreaInteractionsImpl: React.FC<{
             keys,
           });
           lastSpanSelectSyncEventRef.current = null;
-          console.log("onMouseDown", cssX, cssY)
           selectStateRef.current = {
             xRangeCss: { start: cssX, end: cssX },
             yRangeCss: { start: cssY, end: cssY },
