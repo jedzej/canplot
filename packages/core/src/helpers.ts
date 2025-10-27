@@ -34,7 +34,7 @@ export const valToPos = (frame: Frame, val: number, scaleId: ScaleId) => {
   const relativePosition = valToPxDistance(frame, val - min, scaleId);
   if (isXScale(scaleId)) {
     return clamp(
-      relativePosition,
+      chartArea.x + relativePosition,
       chartArea.x - 10 * chartArea.width,
       chartArea.x + 11 * chartArea.width
     );
