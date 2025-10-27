@@ -186,6 +186,7 @@ export const CanPlot: React.FC<{
         left: "50px",
         top: "20px",
       }}
+      data-canplotroot
     >
       <span style={{ color: "red" }}>{plotSize.width}</span>
       <canvas

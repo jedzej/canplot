@@ -46,6 +46,7 @@ export const SelectBox: React.FC<{
   const widthPx = Math.abs(clampedToX - clampedFromX);
   const heightPx = Math.abs(clampedToY - clampedFromY);
 
+
   return (
     <div
       data-key-ctrl={selectState.keys.ctrlKey}

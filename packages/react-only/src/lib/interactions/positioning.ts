@@ -50,7 +50,7 @@ export const pointerSyncPositionToInteractionsPosition = (
         pointerSyncPosition.x.value,
         pointerSyncPosition.x.scaleId,
         "css"
-      ) - frame.chartAreaCSS.x
+      )
     : 0;
   const cssY = pointerSyncPosition.y
     ? valToPos(
@@ -58,7 +58,7 @@ export const pointerSyncPositionToInteractionsPosition = (
         pointerSyncPosition.y.value,
         pointerSyncPosition.y.scaleId,
         "css"
-      ) - frame.chartAreaCSS.y
+      )
     : 0;
   return {
     cssX,
@@ -97,6 +97,7 @@ export const extrapolateScaledSelectionRange = (
       }),
     };
   }
+
   const fromCSS = valToPos(
     frame,
     selectionRange.from,

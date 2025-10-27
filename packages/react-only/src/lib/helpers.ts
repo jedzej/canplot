@@ -102,7 +102,6 @@ export const clampXPosToChartArea = (
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
 
-  console.log(value, chartArea)
   return clamp(value, chartArea.x, chartArea.x + chartArea.width);
 };
 
@@ -134,8 +133,9 @@ export const posToVal = (
   const { min, max } = getScale(frame, scaleId);
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
+
   const relativePosition = isXScale(frame, scaleId)
-    ? pos / chartArea.width
-    : (chartArea.height - pos) / chartArea.height;
+    ? (pos - chartArea.x) / chartArea.width
+    : (chartArea.height - pos + chartArea.y) / chartArea.height;
   return min + relativePosition * (max - min);
 };
