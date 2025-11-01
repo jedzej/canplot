@@ -65,7 +65,7 @@ export const pointerSyncPositionToInteractionsPosition = (
     cssY,
     scaled: Object.fromEntries(
       frame.scales.map((scale) => {
-        const pos = scale.origin === "y" ? cssX : cssY;
+        const pos = scale.origin === "y" ? cssY : cssX;
 
         return [scale.id, posToVal(frame, pos, scale.id, "css")];
       })
