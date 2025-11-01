@@ -422,7 +422,7 @@ const ChartAreaInteractionsImpl: React.FC<{
         width: _frame.chartAreaCSS.width,
         height: _frame.chartAreaCSS.height,
         zIndex: 25,
-        cursor: "crosshair",
+        cursor: "none",
         ...style,
       }}
       onClick={(event) => {
