@@ -417,7 +417,6 @@ const ChartAreaInteractionsImpl: React.FC<{
       className={className}
       style={{
         position: "absolute",
-        backgroundColor: "#0000ff11",
         left: _frame.chartAreaCSS.x,
         top: _frame.chartAreaCSS.y,
         width: _frame.chartAreaCSS.width,
