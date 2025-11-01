@@ -1,24 +1,45 @@
 {
-  "name": "canplot",
-  "namespace": "@canplot",
-  "author": "jedzej",
-  "license": "MIT",
+  "name": "react-only",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev:demos": "concurrently --kill-others 'yarn workspace @canplot/core build:watch' 'sleep 5;yarn workspace @canplot/react build:watch' 'sleep 10;yarn workspace @canplot/demos storybook'",
-    "build:docs": "yarn workspace @canplot/demos build-storybook -o ../../docs"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o ./docs"
+  },
+  "dependencies": {
+    "install": "^0.13.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-merge-refs": "^3.0.2"
   },
   "devDependencies": {
-    "concurrently": "^7.6.0",
-    "typescript": "^4.6.4",
-    "vite": "^3.2.3"
-  },
-  "peerDependencies": {
-    "@canplot/core": "*",
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
-    "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0"
+    "@chromatic-com/storybook": "^4.1.2",
+    "@eslint/js": "^9.36.0",
+    "@storybook/addon-a11y": "^10.0.2",
+    "@storybook/addon-docs": "^10.0.2",
+    "@storybook/addon-onboarding": "^10.0.2",
+    "@storybook/addon-vitest": "^10.0.2",
+    "@storybook/react-vite": "^10.0.2",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.1.0",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "eslint-plugin-storybook": "^10.0.2",
+    "globals": "^16.4.0",
+    "storybook": "^10.0.2",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.44.0",
+    "vite": "^7.1.12",
+    "vitest": "^4.0.6",
+    "playwright": "^1.56.1",
+    "@vitest/browser-playwright": "^4.0.6",
+    "@vitest/coverage-v8": "^4.0.6"
   }
 }
