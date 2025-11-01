@@ -559,9 +559,7 @@ export const TimeSeriesOverlay: Story = {
 export const WithControls: Story = {
   render: () => {
     const [xRange, setXRange] = useState({ min: 0, max: 100 });
-    const [yRange, setYRange] = useState({ min: 0, max: 100 });
-
-    const zoomInX = () => {
+    const [yRange, setYRange] = useState({ min: 0, max: 100 });    const zoomInX = () => {
       const range = xRange.max - xRange.min;
       const center = (xRange.max + xRange.min) / 2;
       const newRange = range * 0.8;

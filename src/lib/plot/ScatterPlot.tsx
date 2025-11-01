@@ -1,5 +1,5 @@
 import { useFrame } from "../frameContext";
-import { applyStyles, pointsFit, valToPos } from "../helpers";
+import { applyStyles } from "../helpers";
 
 export const ScatterPlot: React.FC<{
   data: Array<{ x: number; y: number }>;
@@ -16,18 +16,16 @@ export const ScatterPlot: React.FC<{
     >
   >;
 }> = ({ data, xScaleId, yScaleId, radius = 5, style }) => {
-  useFrame((frame) => {
+  useFrame(({ frame, valToPos, valFits }) => {
     frame.ctx.save();
     frame.ctx.beginPath();
     applyStyles(frame.ctx, style);
     for (const point of data) {
-      if (
-        !pointsFit(frame, point.x, xScaleId) ||
-        !pointsFit(frame, point.y, yScaleId)
-      )
+      if (!valFits(point.x, xScaleId) || !valFits(point.y, yScaleId)) {
         continue;
-      const x = valToPos(frame, point.x, xScaleId, "canvas");
-      const y = valToPos(frame, point.y, yScaleId, "canvas");
+      }
+      const x = valToPos(point.x, xScaleId);
+      const y = valToPos(point.y, yScaleId);
       frame.ctx.moveTo(x + radius, y);
       frame.ctx.arc(x, y, radius, 0, Math.PI * 2);
     }

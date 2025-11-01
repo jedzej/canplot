@@ -1,10 +1,5 @@
 import { useFrame } from "../frameContext";
-import {
-  applyStyles,
-  clampXPosToChartArea,
-  clampYPosToChartArea,
-  valToPos,
-} from "../helpers";
+import { applyStyles } from "../helpers";
 
 export const SparklinePlot: React.FC<{
   data: Array<{ x: number; y: number }>;
@@ -21,54 +16,44 @@ export const SparklinePlot: React.FC<{
     >
   >;
 }> = ({ data, stroked, xScaleId, yScaleId, style }) => {
-  useFrame((frame) => {
-    const drawPoints: Array<{ x: number; y: number }> = [];
-    const ctx = frame.ctx;
+  useFrame(
+    ({ frame, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
+      const drawPoints: Array<{ x: number; y: number }> = [];
+      const ctx = frame.ctx;
 
-    for (const point of data) {
-      const x = clampXPosToChartArea(
-        frame,
-        valToPos(frame, point.x, xScaleId, "canvas"),
-        "canvas"
-      );
-      const y = clampYPosToChartArea(
-        frame,
-        valToPos(frame, point.y, yScaleId, "canvas"),
-        "canvas"
-      );
-      drawPoints.push({ x, y });
-    }
-    const first = drawPoints.at(0);
-    const last = drawPoints.at(-1);
+      for (const point of data) {
+        const x = clampXPosToChartArea(valToPos(point.x, xScaleId));
+        const y = clampYPosToChartArea(valToPos(point.y, yScaleId));
+        drawPoints.push({ x, y });
+      }
+      const first = drawPoints.at(0);
+      const last = drawPoints.at(-1);
 
-    if (!first || !last) {
-      return;
-    }
-    const scaledZeroY = clampYPosToChartArea(
-      frame,
-      valToPos(frame, 0, yScaleId, "canvas"),
-      "canvas"
-    );
+      if (!first || !last) {
+        return;
+      }
+      const scaledZeroY = clampYPosToChartArea(valToPos(0, yScaleId));
 
-    ctx.save();
-    ctx.beginPath();
-    applyStyles(ctx, style);
-    ctx.moveTo(first.x, scaledZeroY);
-    for (const point of drawPoints) {
-      ctx.lineTo(point.x, point.y);
-    }
-    ctx.lineTo(last.x, scaledZeroY);
-    ctx.closePath();
-    ctx.fill();
-    if (stroked) {
+      ctx.save();
       ctx.beginPath();
-      ctx.moveTo(first.x, first.y);
+      applyStyles(ctx, style);
+      ctx.moveTo(first.x, scaledZeroY);
       for (const point of drawPoints) {
         ctx.lineTo(point.x, point.y);
       }
-      ctx.stroke()
+      ctx.lineTo(last.x, scaledZeroY);
+      ctx.closePath();
+      ctx.fill();
+      if (stroked) {
+        ctx.beginPath();
+        ctx.moveTo(first.x, first.y);
+        for (const point of drawPoints) {
+          ctx.lineTo(point.x, point.y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
     }
-    ctx.restore();
-  });
+  );
   return null;
 };
