@@ -1,7 +1,12 @@
 import { useFrame } from "../frameContext";
-import { applyStyles, pointsFit, valToPos } from "../helpers";
+import {
+  applyStyles,
+  clampXPosToChartArea,
+  clampYPosToChartArea,
+  valToPos,
+} from "../helpers";
 
-export const ScatterPlot: React.FC<{
+export const LinePlot: React.FC<{
   data: Array<{ x: number; y: number }>;
   xScaleId: string;
   yScaleId: string;
@@ -21,15 +26,17 @@ export const ScatterPlot: React.FC<{
     frame.ctx.beginPath();
     applyStyles(frame.ctx, style);
     for (const point of data) {
-      if (
-        !pointsFit(frame, point.x, xScaleId) ||
-        !pointsFit(frame, point.y, yScaleId)
-      )
-        continue;
-      const x = valToPos(frame, point.x, xScaleId, "canvas");
-      const y = valToPos(frame, point.y, yScaleId, "canvas");
-      frame.ctx.moveTo(x + radius, y);
-      frame.ctx.arc(x, y, radius, 0, Math.PI * 2);
+      const x = clampXPosToChartArea(
+        frame,
+        valToPos(frame, point.x, xScaleId, "canvas"),
+        "canvas"
+      );
+      const y = clampYPosToChartArea(
+        frame,
+        valToPos(frame, point.y, yScaleId, "canvas"),
+        "canvas"
+      );
+      frame.ctx.lineTo(x + radius, y);
     }
     frame.ctx.stroke();
     frame.ctx.fill();

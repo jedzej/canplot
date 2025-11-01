@@ -1,7 +1,107 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  forwardRef,
+} from "react";
 import type { PlotConfiguration, PlotDrawFrame, PlotSize, Rect } from "./types";
 import { drawAxes } from "./axes";
 import { FrameContext } from "./frameContext";
+import { mergeRefs } from "react-merge-refs";
+
+export const CanPlot = forwardRef<
+  HTMLDivElement,
+  {
+    configuration: PlotConfiguration;
+    children?: ReactNode;
+    style?: React.CSSProperties;
+    className?: string;
+  }
+>(({ configuration, children, style, className }, ref) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const plotSize = useSize(rootRef);
+
+  const [frame, setFrame] = useState<PlotDrawFrame | null>(null);
+
+  useLayoutEffect(() => {
+    setFrame(makeFrame(configuration, plotSize, canvasRef.current));
+  }, [configuration, plotSize]);
+
+  useLayoutEffect(() => {
+    if (frame) {
+      drawFrame(frame);
+    }
+  }, [frame]);
+
+  const dpr = window.devicePixelRatio || 1;
+
+  return (
+    <div
+      ref={mergeRefs([ref, rootRef])}
+      className={className}
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        ...style,
+      }}
+      data-canplotroot
+    >
+      <canvas
+        ref={canvasRef}
+        width={plotSize.width * dpr}
+        height={plotSize.height * dpr}
+        style={{
+          inset: 0,
+          position: "absolute",
+          width: `${plotSize.width}px`,
+          height: `${plotSize.height}px`,
+        }}
+      />
+      {frame && (
+        <FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
+      )}
+    </div>
+  );
+});
+
+const useSize = (ref: React.RefObject<HTMLElement | null>) => {
+  const [plotSize, setPlotSize] = useState<PlotSize>({
+    width: 0,
+    height: 0,
+  });
+
+  const [resizeObserver] = useState(() => {
+    return new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = Math.round(entry.contentRect.width);
+        const height = Math.round(entry.contentRect.height);
+
+        setPlotSize((prev) =>
+          prev.width !== width || prev.height !== height
+            ? { ...prev, width, height }
+            : prev
+        );
+      }
+    });
+  });
+
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    const width = ref.current.clientWidth;
+    const height = ref.current.clientHeight;
+    setPlotSize((prev) =>
+      prev.width !== width || prev.height !== height
+        ? { ...prev, width, height }
+        : prev
+    );
+    resizeObserver.observe(ref.current, { box: "border-box" });
+    return () => resizeObserver.disconnect();
+  }, [resizeObserver, ref]);
+  return plotSize;
+};
 
 const makeFrame = (
   configuration: PlotConfiguration,
@@ -149,97 +249,4 @@ const makeFrame = (
 const drawFrame = (frame: PlotDrawFrame) => {
   frame.ctx.clearRect(0, 0, frame.ctx.canvas.width, frame.ctx.canvas.height);
   drawAxes(frame);
-};
-
-export const CanPlot: React.FC<{
-  configuration: PlotConfiguration;
-  children?: ReactNode;
-}> = ({ configuration, children }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  const plotSize = useSize(rootRef);
-
-  const [frame, setFrame] = useState<PlotDrawFrame | null>(null);
-
-  useLayoutEffect(() => {
-    setFrame(makeFrame(configuration, plotSize, canvasRef.current));
-  }, [configuration, plotSize]);
-
-  useLayoutEffect(() => {
-    if (frame) {
-      drawFrame(frame);
-    }
-  }, [frame]);
-
-  const dpr = window.devicePixelRatio || 1;
-
-  return (
-    <div
-      ref={rootRef}
-      style={{
-        width: "75vw",
-        height: "50vh",
-        position: "relative",
-        overflow: "hidden",
-        border: "4px red solid",
-        left: "50px",
-        top: "20px",
-      }}
-      data-canplotroot
-    >
-      <span style={{ color: "red" }}>{plotSize.width}</span>
-      <canvas
-        ref={canvasRef}
-        width={plotSize.width * dpr}
-        height={plotSize.height * dpr}
-        style={{
-          border: "1px solid black",
-          inset: 0,
-          position: "absolute",
-          width: `${plotSize.width}px`,
-          height: `${plotSize.height}px`,
-        }}
-      />
-      {frame && (
-        <FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
-      )}
-    </div>
-  );
-};
-
-const useSize = (ref: React.RefObject<HTMLElement | null>) => {
-  const [plotSize, setPlotSize] = useState<PlotSize>({
-    width: 0,
-    height: 0,
-  });
-
-  const [resizeObserver] = useState(() => {
-    return new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = Math.round(entry.contentRect.width);
-        const height = Math.round(entry.contentRect.height);
-
-        setPlotSize((prev) =>
-          prev.width !== width || prev.height !== height
-            ? { ...prev, width, height }
-            : prev
-        );
-      }
-    });
-  });
-
-  useLayoutEffect(() => {
-    if (!ref.current) return;
-    const width = ref.current.clientWidth;
-    const height = ref.current.clientHeight;
-    setPlotSize((prev) =>
-      prev.width !== width || prev.height !== height
-        ? { ...prev, width, height }
-        : prev
-    );
-    resizeObserver.observe(ref.current, { box: "border-box" });
-    return () => resizeObserver.disconnect();
-  }, [resizeObserver, ref]);
-  return plotSize;
 };
