@@ -10,7 +10,6 @@ export const LinePlot: React.FC<{
   data: Array<{ x: number; y: number }>;
   xScaleId: string;
   yScaleId: string;
-  radius?: number;
   style?: Partial<
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
@@ -20,7 +19,7 @@ export const LinePlot: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ data, xScaleId, yScaleId, radius = 5, style }) => {
+}> = ({ data, xScaleId, yScaleId, style }) => {
   useFrame((frame) => {
     frame.ctx.save();
     frame.ctx.beginPath();
@@ -36,10 +35,9 @@ export const LinePlot: React.FC<{
         valToPos(frame, point.y, yScaleId, "canvas"),
         "canvas"
       );
-      frame.ctx.lineTo(x + radius, y);
+      frame.ctx.lineTo(x, y);
     }
     frame.ctx.stroke();
-    frame.ctx.fill();
     frame.ctx.restore();
   });
   return null;
