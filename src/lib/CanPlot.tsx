@@ -4,11 +4,17 @@ import {
   useState,
   type ReactNode,
   forwardRef,
+  useMemo,
 } from "react";
 import type { PlotConfiguration, PlotDrawFrame, PlotSize, Rect } from "./types";
 import { drawAxes } from "./axes";
-import { FrameContext } from "./frameContext";
+import {
+  createFrameStore,
+  FrameContext,
+  type FrameStoreState,
+} from "./frameContext";
 import { mergeRefs } from "react-merge-refs";
+import { useStore, type StoreApi } from "zustand";
 
 export const CanPlot = forwardRef<
   HTMLDivElement,
@@ -24,17 +30,22 @@ export const CanPlot = forwardRef<
 
   const plotSize = useSize(rootRef);
 
-  const [frame, setFrame] = useState<PlotDrawFrame | null>(null);
+  const frameStore = useMemo(createFrameStore, []);
 
   useLayoutEffect(() => {
-    setFrame(makeFrame(configuration, plotSize, canvasRef.current));
-  }, [configuration, plotSize]);
+    console.log("Updating frame");
+    frameStore.setState({
+      _frame: makeFrame(configuration, plotSize, canvasRef.current),
+    });
+  }, [configuration, plotSize, canvasRef, frameStore]);
 
   useLayoutEffect(() => {
-    if (frame) {
-      drawFrame(frame);
-    }
-  }, [frame]);
+    return frameStore.subscribe((state) => {
+      if (state._frame) {
+        drawFrame(state._frame);
+      }
+    });
+  }, [frameStore]);
 
   const dpr = window.devicePixelRatio || 1;
 
@@ -60,12 +71,25 @@ export const CanPlot = forwardRef<
           height: `${plotSize.height}px`,
         }}
       />
-      {frame && (
-        <FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
-      )}
+      <FrameProvider frameStore={frameStore}>{children}</FrameProvider>
     </div>
   );
 });
+
+const FrameProvider: React.FC<{
+  frameStore: StoreApi<FrameStoreState>;
+  children: ReactNode;
+}> = ({ frameStore, children }) => {
+  const hasFrame = useStore(frameStore, (state) => !!state._frame);
+  console.log("FrameProvider render, hasFrame:", hasFrame);
+  if (!hasFrame) {
+    return null;
+  }
+  console.log("Now has frame:", hasFrame);
+  return (
+    <FrameContext.Provider value={frameStore}>{children}</FrameContext.Provider>
+  );
+};
 
 const useSize = (ref: React.RefObject<HTMLElement | null>) => {
   const [plotSize, setPlotSize] = useState<PlotSize>({

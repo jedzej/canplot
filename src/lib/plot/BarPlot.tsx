@@ -1,4 +1,4 @@
-import { useFrame } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 
 export const BarPlot: React.FC<{
@@ -26,23 +26,24 @@ export const BarPlot: React.FC<{
   xPositionOffset,
   radius,
 }) => {
-  useFrame(
+  useDrawEffect(
     ({
-      frame,
+      getCtx,
       valToPxDistance,
       valToPos,
       clampXPosToChartArea,
       clampYPosToChartArea,
     }) => {
       if (data.length === 0) return;
+      const ctx = getCtx();
 
-      frame.ctx.save();
-      applyStyles(frame.ctx, style);
+      ctx.save();
+      applyStyles(ctx, style);
 
       const barWidth = valToPxDistance(barWidthRaw, xScaleId);
-      frame.ctx.beginPath();
+      ctx.beginPath();
       for (const datapoint of data) {
-        let xCenter = valToPos(datapoint.x, xScaleId);
+        const xCenter = valToPos(datapoint.x, xScaleId);
 
         // Adjust x position based on bar position
         const x = xCenter - barWidth / 2 + xPositionOffset * barWidth;
@@ -57,7 +58,7 @@ export const BarPlot: React.FC<{
           clampXPosToChartArea(x + barWidth) - compensatedX;
 
         if (radius) {
-          frame.ctx.roundRect(
+          ctx.roundRect(
             compensatedX,
             yTop,
             compensatedWidth,
@@ -65,17 +66,18 @@ export const BarPlot: React.FC<{
             radius
           );
         } else {
-          frame.ctx.rect(compensatedX, yTop, compensatedWidth, barHeight);
+          ctx.rect(compensatedX, yTop, compensatedWidth, barHeight);
         }
       }
-      frame.ctx.closePath();
-      frame.ctx.fill();
+      ctx.closePath();
+      ctx.fill();
       if (style?.strokeStyle) {
-        frame.ctx.stroke();
+        ctx.stroke();
       }
 
-      frame.ctx.restore();
-    }
+      ctx.restore();
+    },
+    [data, xScaleId, yScaleId, style, barWidthRaw, xPositionOffset, radius]
   );
   return null;
 };

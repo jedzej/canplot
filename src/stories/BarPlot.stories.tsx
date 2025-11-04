@@ -545,7 +545,9 @@ export const WithLineOverlay: Story = {
 // Interactive zoom
 export const InteractiveZoom: Story = {
   render: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [xRange, setXRange] = useState({ min: 0, max: 12 });
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [yRange, setYRange] = useState({ min: 0, max: 100 });
 
     const zoomIn = () => {

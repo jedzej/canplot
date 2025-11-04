@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useInteractionsEvent } from "./interactionsBus";
 import type { MoveEvent } from "./types";
-import { getScale, pointsFit, valToPxDistance } from "../helpers";
+import { getScale, valFits, valToPxDistance } from "../helpers";
 import type { PlotDrawFrame } from "../types";
 
 type TooltipState = {
@@ -59,8 +59,8 @@ export const TooltipsX: React.FC<{
         const x = point.x ?? xScale.min;
         const y = point.y ?? yScale.min;
         if (
-          !pointsFit(frame, x, series.xScaleId) ||
-          !pointsFit(frame, y, series.yScaleId)
+          !valFits(frame, x, series.xScaleId) ||
+          !valFits(frame, y, series.yScaleId)
         ) {
           continue;
         }

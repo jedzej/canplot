@@ -144,9 +144,9 @@ export const MultipleAxes: Story = {
     ];
 
     return (
-      <div style={{ padding: "20px" }}>
+      <div style={{ padding: "20px", backgroundColor: "#ff0000" }}>
         <CanPlot
-          style={{ width: "100%", height: "400px" }}
+          style={{ width: "100%", height: "400px", backgroundColor: "#fff" }}
           configuration={{
             padding: {
               bottom: 20,
@@ -558,7 +558,9 @@ export const TimeSeriesOverlay: Story = {
 // With buttons and controls
 export const WithControls: Story = {
   render: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [xRange, setXRange] = useState({ min: 0, max: 100 });
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [yRange, setYRange] = useState({ min: 0, max: 100 });    const zoomInX = () => {
       const range = xRange.max - xRange.min;
       const center = (xRange.max + xRange.min) / 2;

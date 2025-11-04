@@ -1,58 +1,114 @@
 import { createContext, useContext, useLayoutEffect, useRef } from "react";
 import type { PlotDrawFrame } from "./types";
+import { createStore, useStore } from "zustand";
 import {
   clampXPosToChartArea,
   clampYPosToChartArea,
-  pointsFit,
+  getScale,
+  valFits,
   valToPos,
   valToPxDistance,
 } from "./helpers";
 
-export const FrameContext = createContext<PlotDrawFrame | null>(null);
+export interface FrameStoreState {
+  _frame: PlotDrawFrame | null;
+  clampXPosToChartArea: (x: number, space?: "canvas" | "css") => number;
+  clampYPosToChartArea: (y: number, space?: "canvas" | "css") => number;
+  getFrame: () => PlotDrawFrame;
+  getCtx: () => CanvasRenderingContext2D;
+  valToPos: (
+    value: number,
+    scaleId: string,
+    space?: "canvas" | "css"
+  ) => number;
+  valToPxDistance: (
+    value: number,
+    scaleId: string,
+    space?: "canvas" | "css"
+  ) => number;
+  valFits: (value: number, scaleId: string) => boolean;
+  getScale: (scaleId: string) => PlotDrawFrame["scales"][number] | undefined;
+}
 
-export const useFrame = (
-  runner?: (params: {
-    frame: PlotDrawFrame;
-    clampXPosToChartArea: (x: number, space?: "canvas" | "css") => number;
-    clampYPosToChartArea: (y: number, space?: "canvas" | "css") => number;
-    valToPos: (
-      value: number,
-      scaleId: string,
-      space?: "canvas" | "css"
-    ) => number;
-    valToPxDistance: (
-      value: number,
-      scaleId: string,
-      space?: "canvas" | "css"
-    ) => number;
-    valFits: (value: number, scaleId: string) => boolean;
-  }) => void
+export const createFrameStore = () =>
+  createStore<FrameStoreState>((_, get) => {
+    const getFrameOrDie = () => {
+      const _frame = get()._frame;
+      if (!_frame) throw new Error("No frame set in frame store");
+      return _frame;
+    };
+    return {
+      _frame: null,
+      getFrame: getFrameOrDie,
+      getCtx: () => {
+        return getFrameOrDie().ctx;
+      },
+      clampXPosToChartArea: (x, space) => {
+        return clampXPosToChartArea(getFrameOrDie(), x, space ?? "canvas");
+      },
+      clampYPosToChartArea: (y, space) => {
+        return clampYPosToChartArea(getFrameOrDie(), y, space ?? "canvas");
+      },
+      valToPos: (value, scaleId, space) => {
+        return valToPos(getFrameOrDie(), value, scaleId, space ?? "canvas");
+      },
+      valToPxDistance: (value, scaleId, space) => {
+        return valToPxDistance(
+          getFrameOrDie(),
+          value,
+          scaleId,
+          space ?? "canvas"
+        );
+      },
+      valFits: (value, scaleId) => {
+        return valFits(getFrameOrDie(), value, scaleId);
+      },
+      getScale: (scaleId) => {
+        return getScale(getFrameOrDie(), scaleId);
+      },
+    };
+  });
+
+export type FrameStoreType = ReturnType<typeof createFrameStore>;
+
+export const FrameContext = createContext<FrameStoreType | null>(null);
+
+export const useDrawEffect = (
+  runner: (params: Omit<FrameStoreState, "_frame">) => void,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deps: ReadonlyArray<any>
 ) => {
-  const frame = useContext(FrameContext);
-  if (!frame) {
+  const frameStore = useContext(FrameContext);
+  if (!frameStore) {
     throw new Error("useFrame must be used within a CanPlot component");
   }
+
   const runnerRef = useRef(runner);
   runnerRef.current = runner;
 
   useLayoutEffect(() => {
-    const foo = runnerRef.current;
-    if (!foo) return;
-    Promise.resolve().then(() => {
-      foo({
-        frame,
-        clampXPosToChartArea: (x, space) =>
-          clampXPosToChartArea(frame, x, space ?? "canvas"),
-        clampYPosToChartArea: (y, space) =>
-          clampYPosToChartArea(frame, y, space ?? "canvas"),
-        valToPos: (value, scaleId, space) =>
-          valToPos(frame, value, scaleId, space ?? "canvas"),
-        valToPxDistance: (value, scaleId, space) =>
-          valToPxDistance(frame, value, scaleId, space ?? "canvas"),
-        valFits: (value, scaleId) => pointsFit(frame, value, scaleId),
-      });
+    // run initial
+    runnerRef.current(frameStore.getState());
+    // subscribe to updates
+    frameStore.subscribe((state) => {
+      if (!state._frame) {
+        return;
+      }
+      runnerRef.current(state);
     });
-  }, [frame]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameStore, ...deps]);
+};
 
-  return frame;
+export const useFrameState = <T = PlotDrawFrame>(
+  selector?: (state: FrameStoreState) => T
+) => {
+  const frameStore = useContext(FrameContext);
+  if (!frameStore) {
+    throw new Error("useFrame must be used within a CanPlot component");
+  }
+  return useStore(
+    frameStore,
+    (selector as (state: FrameStoreState) => T) ?? ((state) => state.getFrame())
+  );
 };

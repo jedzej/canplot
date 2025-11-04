@@ -1,4 +1,4 @@
-import { useFrame } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 
 export const SparklinePlot: React.FC<{
@@ -16,10 +16,10 @@ export const SparklinePlot: React.FC<{
     >
   >;
 }> = ({ data, stroked, xScaleId, yScaleId, style }) => {
-  useFrame(
-    ({ frame, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
+  useDrawEffect(
+    ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
-      const ctx = frame.ctx;
+      const ctx = getCtx();
 
       for (const point of data) {
         const x = clampXPosToChartArea(valToPos(point.x, xScaleId));
@@ -53,7 +53,8 @@ export const SparklinePlot: React.FC<{
         ctx.stroke();
       }
       ctx.restore();
-    }
+    },
+    [data, stroked, xScaleId, yScaleId, style]
   );
   return null;
 };

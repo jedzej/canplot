@@ -5,7 +5,7 @@ import {
   getScale,
   posToVal,
 } from "../helpers";
-import { useFrame } from "../frameContext";
+import { useFrameState } from "../frameContext";
 import {
   InteractionsBus,
   InteractionsIdContext,
@@ -104,7 +104,7 @@ const ChartAreaInteractionsImpl: React.FC<{
 }> = ({ className, style, sync }) => {
   const interactionsAreaRef = useRef<HTMLDivElement>(null);
 
-  const _frame = useFrame();
+  const _frame = useFrameState();
 
   const frameRef = useRef(_frame);
   frameRef.current = _frame;
@@ -211,91 +211,94 @@ const ChartAreaInteractionsImpl: React.FC<{
     };
 
     const mouseOverDocumentListener = (event: MouseEvent) => {
-      withPointerPosition(event, (positions, { cssX, cssY }, keys) => {
-        const selectState = selectStateRef.current;
-        if (!selectState) return;
-        if (!positions.x || !positions.y) return;
+      withPointerPositionRef.current(
+        event,
+        (positions, { cssX, cssY }, keys) => {
+          const selectState = selectStateRef.current;
+          if (!selectState) return;
+          if (!positions.x || !positions.y) return;
 
-        const frame = frameRef.current;
-        const startCSSX = selectState.xRangeCss.start;
-        const endCSSX = cssX;
-        const startCSSY = selectState.yRangeCss.start;
-        const endCSSY = cssY;
-        const xScale = getScale(frame, positions.x.scaleId);
-        const yScale = getScale(frame, positions.y.scaleId);
-        selectStateRef.current = {
-          xRangeCss: { start: startCSSX, end: endCSSX },
-          yRangeCss: { start: startCSSY, end: endCSSY },
-        };
+          const frame = frameRef.current;
+          const startCSSX = selectState.xRangeCss.start;
+          const endCSSX = cssX;
+          const startCSSY = selectState.yRangeCss.start;
+          const endCSSY = cssY;
+          const xScale = getScale(frame, positions.x.scaleId);
+          const yScale = getScale(frame, positions.y.scaleId);
+          selectStateRef.current = {
+            xRangeCss: { start: startCSSX, end: endCSSX },
+            yRangeCss: { start: startCSSY, end: endCSSY },
+          };
 
-        let mode: "none" | "x" | "y" | "box" = "none";
-        const dY = Math.abs(startCSSY - endCSSY);
-        const dX = Math.abs(startCSSX - endCSSX);
+          let mode: "none" | "x" | "y" | "box" = "none";
+          const dY = Math.abs(startCSSY - endCSSY);
+          const dX = Math.abs(startCSSX - endCSSX);
 
-        if (dY < 10 && dX < 10) {
-          mode = "none";
-        } else if (dY > 30 && dX > 30) {
-          mode = "box";
-        } else if (dY > dX) {
-          mode = "y";
-        } else {
-          mode = "x";
+          if (dY < 10 && dX < 10) {
+            mode = "none";
+          } else if (dY > 30 && dX > 30) {
+            mode = "box";
+          } else if (dY > dX) {
+            mode = "y";
+          } else {
+            mode = "x";
+          }
+
+          const xRange: SyncEvent_SpanSelect["xRange"] =
+            mode === "x" || mode === "box"
+              ? {
+                  scaleId: xScale.id,
+                  from: posToVal(
+                    frame,
+                    clampXPosToChartArea(frameRef.current, startCSSX, "css"),
+                    xScale.id,
+                    "css"
+                  ),
+
+                  to: posToVal(
+                    frame,
+                    clampXPosToChartArea(frameRef.current, endCSSX, "css"),
+                    xScale.id,
+                    "css"
+                  ),
+                }
+              : undefined;
+
+          const yRange: SyncEvent_SpanSelect["yRange"] =
+            mode === "y" || mode === "box"
+              ? {
+                  scaleId: yScale.id,
+                  from: posToVal(
+                    frame,
+                    clampYPosToChartArea(frameRef.current, startCSSY, "css"),
+                    yScale.id,
+                    "css"
+                  ),
+
+                  to: posToVal(
+                    frame,
+                    clampYPosToChartArea(frameRef.current, endCSSY, "css"),
+                    yScale.id,
+                    "css"
+                  ),
+                }
+              : undefined;
+
+          const spanSelectSyncEvent: SyncEvent_SpanSelect = {
+            mode,
+            xRange,
+            yRange,
+            completed: false,
+            keys,
+          };
+          lastSpanSelectSyncEventRef.current = spanSelectSyncEvent;
+
+          InteractionsBus.sync_spanselect.dispatchEvent(
+            effectiveSyncKey,
+            spanSelectSyncEvent
+          );
         }
-
-        const xRange: SyncEvent_SpanSelect["xRange"] =
-          mode === "x" || mode === "box"
-            ? {
-                scaleId: xScale.id,
-                from: posToVal(
-                  frame,
-                  clampXPosToChartArea(frameRef.current, startCSSX, "css"),
-                  xScale.id,
-                  "css"
-                ),
-
-                to: posToVal(
-                  frame,
-                  clampXPosToChartArea(frameRef.current, endCSSX, "css"),
-                  xScale.id,
-                  "css"
-                ),
-              }
-            : undefined;
-
-        const yRange: SyncEvent_SpanSelect["yRange"] =
-          mode === "y" || mode === "box"
-            ? {
-                scaleId: yScale.id,
-                from: posToVal(
-                  frame,
-                  clampYPosToChartArea(frameRef.current, startCSSY, "css"),
-                  yScale.id,
-                  "css"
-                ),
-
-                to: posToVal(
-                  frame,
-                  clampYPosToChartArea(frameRef.current, endCSSY, "css"),
-                  yScale.id,
-                  "css"
-                ),
-              }
-            : undefined;
-
-        const spanSelectSyncEvent: SyncEvent_SpanSelect = {
-          mode,
-          xRange,
-          yRange,
-          completed: false,
-          keys,
-        };
-        lastSpanSelectSyncEventRef.current = spanSelectSyncEvent;
-
-        InteractionsBus.sync_spanselect.dispatchEvent(
-          effectiveSyncKey,
-          spanSelectSyncEvent
-        );
-      });
+      );
     };
 
     document.addEventListener("mouseup", listener);
@@ -308,7 +311,7 @@ const ChartAreaInteractionsImpl: React.FC<{
       document.removeEventListener("keyup", keyListener);
       document.removeEventListener("mousemove", mouseOverDocumentListener);
     };
-  }, [frameRef, effectiveSyncKey]);
+  }, [frameRef, effectiveSyncKey, withPointerPositionRef]);
 
   // SYNC EVENTS
   useGenericInteractionsEvent("sync_dblclick", effectiveSyncKey, (event) => {

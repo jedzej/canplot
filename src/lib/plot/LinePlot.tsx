@@ -1,4 +1,4 @@
-import { useFrame } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 
 export const LinePlot: React.FC<{
@@ -15,19 +15,21 @@ export const LinePlot: React.FC<{
     >
   >;
 }> = ({ data, xScaleId, yScaleId, style }) => {
-  useFrame(
-    ({ frame, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
-      frame.ctx.save();
-      frame.ctx.beginPath();
-      applyStyles(frame.ctx, style);
+  useDrawEffect(
+    ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
+      const ctx = getCtx();
+      ctx.save();
+      ctx.beginPath();
+      applyStyles(ctx, style);
       for (const point of data) {
         const x = clampXPosToChartArea(valToPos(point.x, xScaleId));
         const y = clampYPosToChartArea(valToPos(point.y, yScaleId));
-        frame.ctx.lineTo(x, y);
+        ctx.lineTo(x, y);
       }
-      frame.ctx.stroke();
-      frame.ctx.restore();
-    }
+      ctx.stroke();
+      ctx.restore();
+    },
+    [data, xScaleId, yScaleId, style]
   );
   return null;
 };

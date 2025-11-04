@@ -115,7 +115,7 @@ export const clampYPosToChartArea = (
   return clamp(value, chartArea.y, chartArea.y + chartArea.height);
 };
 
-export const pointsFit = (
+export const valFits = (
   frame: PlotDrawFrame,
   value: number,
   scaleId: string

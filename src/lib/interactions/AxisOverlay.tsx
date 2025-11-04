@@ -1,15 +1,12 @@
 import React from "react";
-import { getScale } from "../helpers";
-import { useFrame } from "../frameContext";
+import { useFrameState } from "../frameContext";
 
 export const AxisOverlay: React.FC<
   React.HTMLAttributes<HTMLDivElement> & {
     scaleId: string;
   }
 > = ({ style, children, scaleId, ...rest }) => {
-  const frame = useFrame();
-
-  const axis = getScale(frame, scaleId)?.axis;
+  const axis = useFrameState((it) => it.getScale(scaleId)?.axis);
 
   if (!axis) {
     return null;
