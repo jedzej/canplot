@@ -2,6 +2,10 @@
 
 A high-performance React charting library built on Canvas.
 
+## Documentation
+
+📚 [View live examples and documentation](https://jedzej.github.io/canplot/)
+
 ## Features
 
 - 🚀 **High Performance**: Built on Canvas for smooth rendering of large datasets
