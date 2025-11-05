@@ -59,9 +59,6 @@ npm login
 
 ```bash
 # Publish
-npm publish
-
-# Or for a scoped package
 npm publish --access public
 ```
 
