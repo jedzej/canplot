@@ -33,7 +33,6 @@ export const CanPlot = forwardRef<
   const frameStore = useMemo(createFrameStore, []);
 
   useLayoutEffect(() => {
-    console.log("Updating frame");
     frameStore.setState({
       _frame: makeFrame(configuration, plotSize, canvasRef.current),
     });
@@ -81,11 +80,9 @@ const FrameProvider: React.FC<{
   children: ReactNode;
 }> = ({ frameStore, children }) => {
   const hasFrame = useStore(frameStore, (state) => !!state._frame);
-  console.log("FrameProvider render, hasFrame:", hasFrame);
   if (!hasFrame) {
     return null;
   }
-  console.log("Now has frame:", hasFrame);
   return (
     <FrameContext.Provider value={frameStore}>{children}</FrameContext.Provider>
   );

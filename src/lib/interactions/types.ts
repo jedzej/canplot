@@ -45,6 +45,14 @@ export type SyncEvent_MouseUp = {
   keys: ModifiersKeys;
 };
 
+export type SyncEvent_PressAndWheel = {
+  positions: PointerSyncPosition;
+  keys: ModifiersKeys;
+  deltaX: number;
+  deltaY: number;
+  deltaAbs: number;
+};
+
 export type SyncEvent_SpanSelect = {
   mode: "x" | "y" | "box" | "none";
   xRange?: ScaledSelectionRange;
@@ -129,6 +137,13 @@ export type SpanSelectEvent = {
   yRanges: ScaledSelectionRange[];
   completed: boolean;
   keys: ModifiersKeys;
+};
+
+export type PressAndWheelEvent = InteractionsEvent & {
+  pointer: InteractionsEventPointerPosition;
+  deltaX: number;
+  deltaY: number;
+  deltaAbs: number;
 };
 
 export type DocumentMouseUpEvent = InteractionsEvent;

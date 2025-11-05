@@ -129,7 +129,7 @@ export const WithInteractions: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#4499ff44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#4499ff44" })} />
           </ChartAreaInteractions>
 
           <LinePlot
@@ -202,7 +202,7 @@ export const TimeSeries: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#51cf6644" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#51cf6644" })} />
           </ChartAreaInteractions>
 
           <LinePlot
@@ -276,7 +276,7 @@ export const MultipleLines: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#ffd43b44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#ffd43b44" })} />
           </ChartAreaInteractions>
 
           <LinePlot
@@ -372,8 +372,12 @@ export const DifferentStyles: Story = {
               yViaScaleId: "y",
             }}
           >
-            <Crosshair />
-            <SelectBox style={{ backgroundColor: "#9f7aea44" }} />
+            <Crosshair
+              makeXStyle={({keys}) =>
+                keys.altKey ? { borderColor: "blue" } : undefined
+              }
+            />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#9f7aea44" })} />
           </ChartAreaInteractions>
 
           {/* Thin line */}
@@ -478,7 +482,7 @@ export const LineWithPoints: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#ed893644" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#ed893644" })} />
           </ChartAreaInteractions>
 
           {/* Line */}
@@ -559,7 +563,7 @@ export const SmoothCurves: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#f0639744" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#f0639744" })} />
           </ChartAreaInteractions>
 
           {/* Sine wave */}
@@ -656,7 +660,7 @@ export const DualYAxis: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#4499ff22" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#4499ff22" })} />
           </ChartAreaInteractions>
 
           {/* Line on left Y-axis */}

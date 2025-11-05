@@ -4,11 +4,11 @@ import type { MoveEvent } from "./types";
 import { clampXPosToChartArea, clampYPosToChartArea } from "../helpers";
 
 export const Crosshair: React.FC<{
-  xStyle?: React.CSSProperties;
-  xClassName?: string;
-  yStyle?: React.CSSProperties;
-  yClassName?: string;
-}> = ({ xStyle, xClassName, yStyle, yClassName }) => {
+  makeXStyle?: (moveEvent: MoveEvent) => React.CSSProperties | undefined;
+  makeXClassName?: (moveEvent: MoveEvent) => string;
+  makeYStyle?: (moveEvent: MoveEvent) => React.CSSProperties | undefined;
+  makeYClassName?: (moveEvent: MoveEvent) => string;
+}> = ({ makeXStyle, makeXClassName, makeYStyle, makeYClassName }) => {
   const [moveState, setMoveState] = useState<MoveEvent | null>(null);
 
   useInteractionsEvent("move", (event) => {
@@ -30,21 +30,23 @@ export const Crosshair: React.FC<{
     <>
       <div
         data-show={!!pointer}
-        className={xClassName}
+        className={makeXClassName?.(moveState)}
         style={{
           position: "absolute",
           left: 0,
           top: frame.chartAreaCSS.y,
           height: frame.chartAreaCSS.height,
-          borderLeft: "solid 1px red",
+          borderColor: "red",
+          borderLeftWidth: "1px",
+          borderLeftStyle: "solid",
           pointerEvents: "none",
           opacity: pointer ? 1 : 0,
           transform: `translateX(${clampedX}px)`,
-          ...xStyle,
+          ...makeXStyle?.(moveState),
         }}
       />
       <div
-        className={yClassName}
+        className={makeYClassName?.(moveState)}
         data-show={!!pointer}
         style={{
           position: "absolute",
@@ -56,7 +58,7 @@ export const Crosshair: React.FC<{
           pointerEvents: "none",
           opacity: pointer ? 1 : 0,
           transform: `translateY(${clampedY}px)`,
-          ...yStyle,
+          ...makeYStyle?.(moveState),
         }}
       />
     </>

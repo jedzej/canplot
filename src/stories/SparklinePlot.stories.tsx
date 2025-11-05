@@ -129,7 +129,7 @@ export const WithInteractions: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#51cf6644" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#51cf6644" })} />
           </ChartAreaInteractions>
 
           <SparklinePlot
@@ -203,7 +203,7 @@ export const TimeSeries: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#ff6b6b44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#ff6b6b44" })} />
           </ChartAreaInteractions>
 
           <SparklinePlot
@@ -278,7 +278,7 @@ export const MultipleSparklines: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#ffd43b44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#ffd43b44" })} />
           </ChartAreaInteractions>
 
           <SparklinePlot
@@ -508,7 +508,7 @@ export const StockPrice: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#51cf6644" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#51cf6644" })} />
           </ChartAreaInteractions>
 
           <SparklinePlot
@@ -577,7 +577,7 @@ export const VolatileData: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#ed893644" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#ed893644" })} />
           </ChartAreaInteractions>
 
           <SparklinePlot
@@ -649,7 +649,7 @@ export const DifferentFillStyles: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#9f7aea44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#9f7aea44" })} />
           </ChartAreaInteractions>
 
           {/* Light fill */}
@@ -752,7 +752,7 @@ export const WithStrokeOnly: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#f0639744" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#f0639744" })} />
           </ChartAreaInteractions>
 
           {/* Thin stroke, no fill */}
@@ -852,7 +852,7 @@ export const WithFillOnly: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#fab00544" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#fab00544" })} />
           </ChartAreaInteractions>
 
           {/* Light fill, no stroke */}
@@ -949,7 +949,7 @@ export const MixedStrokeAndFill: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#e64980aa" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#e64980aa" })} />
           </ChartAreaInteractions>
 
           {/* Stroke only - outline only */}

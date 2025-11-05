@@ -129,7 +129,7 @@ export const WithInteractions: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#4499ff44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#4499ff44" })} />
           </ChartAreaInteractions>
 
           <ScatterPlot
@@ -203,7 +203,7 @@ export const TimeSeries: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#44992244" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#44992244" })} />
           </ChartAreaInteractions>
 
           <ScatterPlot
@@ -276,7 +276,7 @@ export const MultipleDatasets: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#ffd43b44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#ffd43b44" })} />
           </ChartAreaInteractions>
 
           <ScatterPlot
@@ -387,7 +387,7 @@ export const DualYAxis: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#4499ff22" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#4499ff22" })} />
           </ChartAreaInteractions>
 
           {/* First dataset on left Y-axis */}

@@ -128,7 +128,7 @@ export const WithInteractions: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#4299e144" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#4299e144" })} />
           </ChartAreaInteractions>
 
           <AreaPlot
@@ -205,7 +205,7 @@ export const TimeSeries: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#ed8936aa" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#ed8936aa" })} />
           </ChartAreaInteractions>
 
           <AreaPlot
@@ -282,7 +282,7 @@ export const MultipleAreas: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#9f7aea44" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#9f7aea44" })} />
           </ChartAreaInteractions>
 
           <AreaPlot
@@ -381,7 +381,7 @@ export const WithScatterOverlay: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#f6ad5544" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#f6ad5544" })} />
           </ChartAreaInteractions>
 
           {/* Area plot showing the range/uncertainty */}
@@ -467,7 +467,7 @@ export const ConfidenceBands: Story = {
             }}
           >
             <Crosshair />
-            <SelectBox style={{ backgroundColor: "#fc864944" }} />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#fc864944" })} />
           </ChartAreaInteractions>
 
           {/* Wide confidence band */}

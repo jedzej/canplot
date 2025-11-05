@@ -7,12 +7,14 @@ import type {
   MouseUpEvent,
   MoveEvent,
   SpanSelectEvent,
+  PressAndWheelEvent,
   SyncEvent_Click,
   SyncEvent_DblClick,
   SyncEvent_MouseDown,
   SyncEvent_MouseUp,
   SyncEvent_Move,
   SyncEvent_SpanSelect,
+  SyncEvent_PressAndWheel,
 } from "./types";
 
 export const makeInteractionsBus = <T>() => {
@@ -56,12 +58,14 @@ export const InteractionsBus = {
   mouseup: makeInteractionsBus<MouseUpEvent>(),
   spanselect: makeInteractionsBus<SpanSelectEvent>(),
   documentmouseup: makeInteractionsBus<DocumentMouseUpEvent>(),
+  pressandwheel: makeInteractionsBus<PressAndWheelEvent>(),
   sync_dblclick: makeInteractionsBus<SyncEvent_DblClick>(),
   sync_click: makeInteractionsBus<SyncEvent_Click>(),
   sync_move: makeInteractionsBus<SyncEvent_Move>(),
   sync_mousedown: makeInteractionsBus<SyncEvent_MouseDown>(),
   sync_mouseup: makeInteractionsBus<SyncEvent_MouseUp>(),
   sync_spanselect: makeInteractionsBus<SyncEvent_SpanSelect>(),
+  sync_pressandwheel: makeInteractionsBus<SyncEvent_PressAndWheel>(),
 };
 
 export const useGenericInteractionsEvent = <
