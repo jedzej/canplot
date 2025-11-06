@@ -19,19 +19,19 @@ A high-performance React charting library built on Canvas.
 ## Installation
 
 ```bash
-npm install canplot
+npm install @canplot/react
 # or
-yarn add canplot
+yarn add @canplot/react
 # or
-pnpm add canplot
+pnpm add @canplot/react
 # or
-bun add canplot
+bun add @canplot/react
 ```
 
 ## Quick Start
 
 ```tsx
-import { CanPlot, LinePlot } from 'canplot';
+import { CanPlot, LinePlot } from '@canplot/react';
 
 function MyChart() {
   const data = [
@@ -229,6 +229,34 @@ const data = Array.from({ length: 30 }, (_, i) => ({
 ### Types
 
 Full TypeScript type definitions are included.
+
+## Troubleshooting
+
+### "Could not find a declaration file for module" error
+
+If you encounter this error:
+
+1. **Install React type definitions**:
+   ```bash
+   npm install --save-dev @types/react @types/react-dom
+   ```
+
+2. **Check your tsconfig.json**:
+   ```json
+   {
+     "compilerOptions": {
+       "moduleResolution": "bundler",  // or "node16", "nodenext"
+       "esModuleInterop": true,
+       "skipLibCheck": false
+     }
+   }
+   ```
+
+3. **Clear cache and reinstall**:
+   ```bash
+   rm -rf node_modules/.cache
+   npm install
+   ```
 
 ## License
 

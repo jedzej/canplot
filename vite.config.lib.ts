@@ -31,5 +31,7 @@ export default defineConfig({
     sourcemap: true,
     // Optimize dependencies
     target: 'es2020',
+    // Don't empty the dist directory - preserve TypeScript declarations
+    emptyOutDir: false,
   },
 });
