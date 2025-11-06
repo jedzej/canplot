@@ -87,14 +87,14 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
     onSpanSelect?.(event);
   });
   return (
-    <InteractionsIdContext value={interactionsId}>
+    <InteractionsIdContext.Provider value={interactionsId}>
       <ChartAreaInteractionsImpl
         className={className}
         style={style}
         sync={sync}
       />
       {children}
-    </InteractionsIdContext>
+    </InteractionsIdContext.Provider>
   );
 };
 
