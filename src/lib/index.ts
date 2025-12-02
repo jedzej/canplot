@@ -11,6 +11,7 @@ export * from "./plot/Positioned";
 export * from "./plot/Ticks";
 
 // Interaction components
+export { useInteractionsEvent } from "./interactions/interactionsBus";
 export * from "./interactions/ChartAreaInteractions";
 export * from "./interactions/TooltipsX";
 export * from "./interactions/CrossHair";
