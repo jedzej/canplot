@@ -1,5 +1,5 @@
 import type { PlotDrawFrame, Style } from "./types";
-import { clamp } from "./utils";
+import { clamp } from "./dataUtils";
 
 export const pxToValDistance = (
   frame: PlotDrawFrame,

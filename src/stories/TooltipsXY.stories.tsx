@@ -54,7 +54,6 @@ export const BasicCloudTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -65,7 +64,6 @@ export const BasicCloudTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -190,7 +188,6 @@ export const MultipleCloudsSeparate: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -201,7 +198,6 @@ export const MultipleCloudsSeparate: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -392,7 +388,6 @@ export const CorrelationCloudTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -403,7 +398,6 @@ export const CorrelationCloudTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -528,7 +522,6 @@ export const DenseCloudTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -539,7 +532,6 @@ export const DenseCloudTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -674,7 +666,6 @@ export const OverlappingCloudsTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -685,7 +676,6 @@ export const OverlappingCloudsTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -840,7 +830,6 @@ export const EllipticalCloudTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -851,7 +840,6 @@ export const EllipticalCloudTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,

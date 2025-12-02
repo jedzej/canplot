@@ -24,7 +24,6 @@ export const Basic: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -35,7 +34,6 @@ export const Basic: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -110,7 +108,6 @@ export const MultipleAxes: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -121,7 +118,6 @@ export const MultipleAxes: Story = {
       },
       {
         id: "y1",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -132,7 +128,6 @@ export const MultipleAxes: Story = {
       },
       {
         id: "y2",
-        type: "linear",
         axis: {
           position: "right",
           size: 50,
@@ -239,7 +234,6 @@ export const CustomStyles: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 60,
@@ -250,7 +244,6 @@ export const CustomStyles: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 60,
@@ -313,7 +306,8 @@ export const CustomStyles: Story = {
           <AxisOverlay
             scaleId="y"
             style={{
-              background: "linear-gradient(90deg, rgba(76, 110, 245, 0.2), rgba(76, 110, 245, 0.05))",
+              background:
+                "linear-gradient(90deg, rgba(76, 110, 245, 0.2), rgba(76, 110, 245, 0.05))",
               borderLeft: "3px solid #4c6ef5",
             }}
           >
@@ -342,7 +336,6 @@ export const InteractiveOverlay: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 50,
@@ -353,7 +346,6 @@ export const InteractiveOverlay: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -458,8 +450,6 @@ export const TimeSeriesOverlay: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "t",
-        type: "time",
-        timeZone: "UTC",
         axis: {
           position: "bottom",
           size: 50,
@@ -470,7 +460,6 @@ export const TimeSeriesOverlay: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -561,7 +550,8 @@ export const WithControls: Story = {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [xRange, setXRange] = useState({ min: 0, max: 100 });
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [yRange, setYRange] = useState({ min: 0, max: 100 });    const zoomInX = () => {
+    const [yRange, setYRange] = useState({ min: 0, max: 100 });
+    const zoomInX = () => {
       const range = xRange.max - xRange.min;
       const center = (xRange.max + xRange.min) / 2;
       const newRange = range * 0.8;
@@ -604,7 +594,6 @@ export const WithControls: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 60,
@@ -615,7 +604,6 @@ export const WithControls: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 60,
@@ -760,7 +748,6 @@ export const AllAxisPositions: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x-bottom",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -771,7 +758,6 @@ export const AllAxisPositions: Story = {
       },
       {
         id: "x-top",
-        type: "linear",
         axis: {
           position: "top",
           size: 40,
@@ -782,7 +768,6 @@ export const AllAxisPositions: Story = {
       },
       {
         id: "y-left",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -793,7 +778,6 @@ export const AllAxisPositions: Story = {
       },
       {
         id: "y-right",
-        type: "linear",
         axis: {
           position: "right",
           size: 50,
@@ -835,7 +819,14 @@ export const AllAxisPositions: Story = {
             scaleId="x-bottom"
             style={{ backgroundColor: "rgba(76, 110, 245, 0.15)" }}
           >
-            <div style={{ textAlign: "center", color: "#364fc7", fontSize: "11px", padding: "8px" }}>
+            <div
+              style={{
+                textAlign: "center",
+                color: "#364fc7",
+                fontSize: "11px",
+                padding: "8px",
+              }}
+            >
               Bottom Axis
             </div>
           </AxisOverlay>
@@ -844,7 +835,14 @@ export const AllAxisPositions: Story = {
             scaleId="x-top"
             style={{ backgroundColor: "rgba(255, 107, 107, 0.15)" }}
           >
-            <div style={{ textAlign: "center", color: "#c92a2a", fontSize: "11px", padding: "8px" }}>
+            <div
+              style={{
+                textAlign: "center",
+                color: "#c92a2a",
+                fontSize: "11px",
+                padding: "8px",
+              }}
+            >
               Top Axis
             </div>
           </AxisOverlay>

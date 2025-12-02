@@ -26,7 +26,6 @@ export const Basic: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -37,7 +36,6 @@ export const Basic: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -99,7 +97,6 @@ export const MultipleBarSeries: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -110,7 +107,6 @@ export const MultipleBarSeries: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -210,7 +206,6 @@ export const WithInteractions: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -221,7 +216,6 @@ export const WithInteractions: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -287,7 +281,6 @@ export const TimeSeries: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "time",
         axis: {
           position: "bottom",
           size: 40,
@@ -295,11 +288,9 @@ export const TimeSeries: Story = {
         origin: "x",
         min: now.getTime(),
         max: now.getTime() + 30 * 24 * 60 * 60 * 1000, // 30 days
-        timeZone: "UTC",
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -353,7 +344,6 @@ export const DifferentStyles: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -364,7 +354,6 @@ export const DifferentStyles: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -453,7 +442,6 @@ export const WithLineOverlay: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -464,7 +452,6 @@ export const WithLineOverlay: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -590,7 +577,6 @@ export const InteractiveZoom: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -601,7 +587,6 @@ export const InteractiveZoom: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -704,7 +689,6 @@ export const RoundedCorners: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -715,7 +699,6 @@ export const RoundedCorners: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,

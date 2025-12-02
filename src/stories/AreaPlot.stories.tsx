@@ -6,6 +6,8 @@ import { ChartAreaInteractions } from "../lib/interactions/ChartAreaInteractions
 import { Crosshair } from "../lib/interactions/CrossHair";
 import { SelectBox } from "../lib/interactions/SelectBox";
 import type { PlotScaleConfig } from "../lib/types";
+import { XTicks, YTicks } from "../lib/plot/Ticks";
+import { makeLinearTicks,  makeTimeTicks } from "../lib";
 
 const meta: Meta<typeof CanPlot> = {
   title: "CanPlot/AreaPlot",
@@ -25,7 +27,6 @@ export const Basic: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -36,7 +37,6 @@ export const Basic: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -72,6 +72,8 @@ export const Basic: Story = {
               fillStyle: "rgba(66, 153, 225, 0.5)",
             }}
           />
+          <XTicks scaleId="x" ticks={makeLinearTicks()} />
+          <YTicks scaleId="y" ticks={makeLinearTicks()} />
         </CanPlot>
       </div>
     );
@@ -84,7 +86,6 @@ export const WithInteractions: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -95,7 +96,6 @@ export const WithInteractions: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -160,8 +160,6 @@ export const TimeSeries: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "t",
-        type: "time",
-        timeZone: "UTC",
         axis: {
           position: "bottom",
           size: 50,
@@ -172,7 +170,6 @@ export const TimeSeries: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -226,6 +223,8 @@ export const TimeSeries: Story = {
               fillStyle: "rgba(237, 137, 54, 0.5)",
             }}
           />
+          <XTicks scaleId="t" ticks={makeTimeTicks({})} />
+          <YTicks scaleId="y" ticks={makeLinearTicks()} />
         </CanPlot>
       </div>
     );
@@ -238,7 +237,6 @@ export const MultipleAreas: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -249,7 +247,6 @@ export const MultipleAreas: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -332,7 +329,6 @@ export const WithScatterOverlay: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -343,7 +339,6 @@ export const WithScatterOverlay: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -423,7 +418,6 @@ export const ConfidenceBands: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -434,7 +428,6 @@ export const ConfidenceBands: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,

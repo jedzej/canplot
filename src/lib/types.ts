@@ -19,27 +19,13 @@ export type PlotPadding = {
   right: number;
 };
 
-export type PlotScaleLinearConfig = {
-  type: "linear";
+export type PlotScaleConfig = {
   id: string;
   min: number;
   max: number;
   origin: "x" | "y";
-  axis: null | PlotAxisLinear;
+  axis: null | PlotAxis;
 };
-
-export type PlotScaleTimeConfig = {
-  type: "time";
-  id: string;
-  min: number;
-  max: number;
-  origin: "x" | "y";
-  axis: null | PlotAxisTime;
-  timeZone: string;
-  locale?: string;
-};
-
-export type PlotScaleConfig = PlotScaleLinearConfig | PlotScaleTimeConfig;
 
 export type Rect = {
   x: number;
@@ -48,29 +34,16 @@ export type Rect = {
   height: number;
 };
 
-export type PlotDrawScaleLinearConfig = PlotScaleLinearConfig & {
-  axis: null | (PlotAxisLinear & { cssRect: Rect; canvasRect: Rect });
+export type PlotDrawAxis = PlotAxis & { cssRect: Rect; canvasRect: Rect };
+
+export type PlotDrawScaleConfig = PlotScaleConfig & {
+  axis: null | PlotDrawAxis;
 };
 
-export type PlotDrawScaleTimeConfig = PlotScaleTimeConfig & {
-  axis: null | (PlotAxisTime & { cssRect: Rect; canvasRect: Rect });
-};
-
-export type PlotDrawScaleConfig =
-  | PlotDrawScaleLinearConfig
-  | PlotDrawScaleTimeConfig;
-
-export type PlotAxisLinear = {
+export type PlotAxis = {
   position: "left" | "right" | "top" | "bottom";
   size: number;
-  tickSpace?: number;
-};
-
-export type PlotAxisTime = {
-  position: "left" | "right" | "top" | "bottom";
-  size: number;
-  tickSpace?: number;
-  showTimezone?: boolean;
+  style?: Style;
 };
 
 export type PlotSize = {
@@ -88,3 +61,12 @@ export type Style = {
   >
 > &
   Partial<CanvasTextDrawingStyles>;
+
+export type TicksConfig =
+  | { value: number; label: string }[]
+  | ((
+      scale: PlotDrawScaleConfig & { axis: PlotDrawAxis },
+      frame: PlotDrawFrame
+    ) => { value: number; label: string }[]);
+
+export type TicksFormatter = (ticks: number[]) => { value: number; label: string }[];

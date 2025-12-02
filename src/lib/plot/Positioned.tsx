@@ -1,6 +1,6 @@
 import { useFrameState } from "../frameContext";
 
-export const usePositioned = <
+export const useXPositioned = <
   T extends Record<
     string,
     {

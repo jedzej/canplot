@@ -1,10 +1,64 @@
-import type { PlotAxisGenTicks, PlotAxisTickFormat } from "./axes";
 import {
   DEFAULT_LOCALE,
-  DEFAULT_X_SPLIT_SPACE,
   DEFAULT_TIMEZONE,
+  DEFAULT_X_SPLIT_SPACE,
+  DEFAULT_Y_SPLIT_SPACE,
 } from "./defaults";
-import { getScale } from "./helpers";
+import { pxToValDistance } from "./helpers";
+import type { TicksFormatter, TicksConfig } from "./types";
+
+// LINEAR TICKS
+
+export const makeLinearTicks = ({
+  space,
+  formatter,
+}: {
+  space?: number;
+  formatter?: TicksFormatter;
+} = {}): TicksConfig => {
+  return (scale, frame) => {
+    const { min: scaleMin, max: scaleMax } = scale;
+    const ticks = [];
+    const dpr = window.devicePixelRatio || 1;
+    const effectiveSpace =
+      (space ??
+        (scale.origin === "x"
+          ? DEFAULT_X_SPLIT_SPACE
+          : DEFAULT_Y_SPLIT_SPACE)) * dpr;
+    const unnormalizedIncr = pxToValDistance(
+      frame,
+      effectiveSpace,
+      scale.id,
+      "canvas"
+    );
+    const incr =
+      ACCEPTABLE_NUMERICAL_TICK_VALUES.find((a) => a > unnormalizedIncr) ?? 1;
+    let curr =
+      scaleMin % incr < Number.EPSILON
+        ? scaleMin
+        : scaleMin + incr - (scaleMin % incr);
+    while (curr <= scaleMax) {
+      ticks.push(curr);
+      curr += incr;
+    }
+
+    return (formatter ?? defaultNumericalTicksFormatter)(ticks);
+  };
+};
+
+export const defaultNumericalTicksFormatter: TicksFormatter = (ticks) => {
+  const span = Math.max(0, Math.ceil(-Math.log10(ticks[1] - ticks[0])));
+  return ticks.map((tick) => ({ value: tick, label: tick.toFixed(span) }));
+};
+
+const ACCEPTABLE_NUMERICAL_TICK_VALUES: number[] = [];
+for (let i = -12; i <= 12; i++) {
+  ACCEPTABLE_NUMERICAL_TICK_VALUES.push(1 * 10 ** i);
+  ACCEPTABLE_NUMERICAL_TICK_VALUES.push(2 * 10 ** i);
+  ACCEPTABLE_NUMERICAL_TICK_VALUES.push(5 * 10 ** i);
+}
+
+// TIME TICKS
 
 const millisecond = 1;
 const second = 1000 * millisecond;
@@ -216,17 +270,21 @@ const makeFirstTick = (
   return result.getTime();
 };
 
-type GenTimeTicksOpts = {
-  timeZone?: string;
-  space?: number;
-};
-
-export const genTimeTicks = ({
+export const makeTimeTicks = ({
   timeZone = DEFAULT_TIMEZONE,
   space = DEFAULT_X_SPLIT_SPACE,
-}: GenTimeTicksOpts): PlotAxisGenTicks => {
-  return ({ frame, scaleId }) => {
-    const { min: scaleMin, max: scaleMax } = getScale(frame, scaleId);
+  formatter,
+  locale,
+  showTimezone,
+}: {
+  formatter?: TicksFormatter;
+  timeZone?: string;
+  space?: number;
+  locale?: string;
+  showTimezone?: boolean;
+} = {}): TicksConfig => {
+  return (scale, frame) => {
+    const { min: scaleMin, max: scaleMax } = scale;
     const splitsCount = Math.floor(frame.chartAreaCanvasPX.width / space) + 1;
     const range = scaleMax - scaleMin;
     const splitDistance = range / splitsCount;
@@ -282,7 +340,14 @@ export const genTimeTicks = ({
       splits.push(candidate);
     }
 
-    return splits;
+    return (
+      formatter ??
+      makeTimeTickFormat({
+        locale,
+        showTimezone,
+        timeZone,
+      })
+    )(splits);
   };
 };
 
@@ -307,7 +372,7 @@ export const makeTimeTickFormat = ({
   timeZone = DEFAULT_TIMEZONE,
   locale = DEFAULT_LOCALE,
   showTimezone = true,
-}: MakeTimeTickFormatOpts): PlotAxisTickFormat => {
+}: MakeTimeTickFormatOpts): TicksFormatter => {
   const formatter = new Intl.DateTimeFormat(locale, {
     year: "numeric",
     day: "numeric",
@@ -320,35 +385,42 @@ export const makeTimeTickFormat = ({
     timeZoneName: "short",
     timeZone,
   });
-  return ({ ticks }) => {
+  return (ticks) => {
     const splitMs = ticks[1] - ticks[0];
     const showHours = splitMs < durationToMilliseconds([1, "days"]);
     const showSeconds = splitMs < durationToMilliseconds([1, "minutes"]);
     const showMilliseconds = splitMs < durationToMilliseconds([1, "seconds"]);
 
     return ticks
-      .map((tick) => {
-        return formatter.formatToParts(new Date(tick));
+      .map((value) => {
+        return { value, label: formatter.formatToParts(new Date(value)) };
       })
       .map((curr, index, arr) => {
         const prev = arr[index - 1];
         const newYear =
-          index === 0 || isTimeFormatPartDifferent(curr, prev, "year");
+          index === 0 ||
+          isTimeFormatPartDifferent(curr.label, prev.label, "year");
         const newDay =
-          index === 0 || isTimeFormatPartDifferent(curr, prev, "day");
+          index === 0 ||
+          isTimeFormatPartDifferent(curr.label, prev.label, "day");
         const newMonth =
-          index === 0 || isTimeFormatPartDifferent(curr, prev, "month");
+          index === 0 ||
+          isTimeFormatPartDifferent(curr.label, prev.label, "month");
         const newHour =
-          index === 0 || isTimeFormatPartDifferent(curr, prev, "hour");
+          index === 0 ||
+          isTimeFormatPartDifferent(curr.label, prev.label, "hour");
         const newTimeZoneName =
-          index === 0 || isTimeFormatPartDifferent(curr, prev, "timeZoneName");
+          index === 0 ||
+          isTimeFormatPartDifferent(curr.label, prev.label, "timeZoneName");
         const newMinute =
-          index === 0 || isTimeFormatPartDifferent(curr, prev, "minute");
+          index === 0 ||
+          isTimeFormatPartDifferent(curr.label, prev.label, "minute");
         const newSecond =
-          index === 0 || isTimeFormatPartDifferent(curr, prev, "second");
+          index === 0 ||
+          isTimeFormatPartDifferent(curr.label, prev.label, "second");
         const newMillisecond =
           index === 0 ||
-          isTimeFormatPartDifferent(curr, prev, "fractionalSecond");
+          isTimeFormatPartDifferent(curr.label, prev.label, "fractionalSecond");
 
         const visibleParts: (string | undefined)[] = [];
         if (
@@ -359,13 +431,15 @@ export const makeTimeTickFormat = ({
             newSecond ||
             newMillisecond)
         ) {
-          const h = curr.find((a) => a.type === "hour")?.value;
-          const m = curr.find((a) => a.type === "minute")?.value;
-          const tz = curr.find((a) => a.type === "timeZoneName")?.value;
+          const h = curr.label.find((a) => a.type === "hour")?.value;
+          const m = curr.label.find((a) => a.type === "minute")?.value;
+          const tz = curr.label.find((a) => a.type === "timeZoneName")?.value;
           let secondsPart = "";
           if (showSeconds) {
-            const s = curr.find((a) => a.type === "second")?.value;
-            const ms = curr.find((a) => a.type === "fractionalSecond")?.value;
+            const s = curr.label.find((a) => a.type === "second")?.value;
+            const ms = curr.label.find(
+              (a) => a.type === "fractionalSecond"
+            )?.value;
             secondsPart = `:${s}` + (showMilliseconds ? `.${ms}` : "");
           }
           visibleParts.push(
@@ -376,18 +450,21 @@ export const makeTimeTickFormat = ({
         if (newDay || newMonth) {
           visibleParts.push(
             [
-              curr.find((a) => a.type === "month")?.value,
-              newDay && curr.find((a) => a.type === "day")?.value,
+              curr.label.find((a) => a.type === "month")?.value,
+              newDay && curr.label.find((a) => a.type === "day")?.value,
             ]
               .filter(Boolean)
               .join(" ")
           );
         }
         if (newYear) {
-          visibleParts.push(curr.find((a) => a.type === "year")?.value);
+          visibleParts.push(curr.label.find((a) => a.type === "year")?.value);
         }
 
-        return visibleParts.filter((a) => a).join("\n");
+        return {
+          value: curr.value,
+          label: visibleParts.filter((a) => a).join("\n"),
+        };
       });
   };
 };

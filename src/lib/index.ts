@@ -1,41 +1,37 @@
 // Main components
-export { CanPlot } from './CanPlot';
+export { CanPlot } from "./CanPlot";
 
 // Plot components
-export { LinePlot } from './plot/LinePlot';
-export { ScatterPlot } from './plot/ScatterPlot';
-export { BarPlot } from './plot/BarPlot';
-export { AreaPlot } from './plot/AreaPlot';
-export { SparklinePlot } from './plot/SparklinePlot';
-export { usePositioned } from './plot/AnnotationX';
+export { LinePlot } from "./plot/LinePlot";
+export { ScatterPlot } from "./plot/ScatterPlot";
+export { BarPlot } from "./plot/BarPlot";
+export { AreaPlot } from "./plot/AreaPlot";
+export { SparklinePlot } from "./plot/SparklinePlot";
+export { useXPositioned as usePositioned } from "./plot/Positioned";
 
 // Interaction components
-export { ChartAreaInteractions } from './interactions/ChartAreaInteractions';
-export { TooltipsX } from './interactions/TooltipsX';
-export { Crosshair } from './interactions/CrossHair';
-export { SelectBox } from './interactions/SelectBox';
-export { AxisOverlay } from './interactions/AxisOverlay';
+export { ChartAreaInteractions } from "./interactions/ChartAreaInteractions";
+export { TooltipsX } from "./interactions/TooltipsX";
+export { Crosshair } from "./interactions/CrossHair";
+export { SelectBox } from "./interactions/SelectBox";
+export { AxisOverlay } from "./interactions/AxisOverlay";
 
 // Types
 export type {
   PlotScaleConfig,
-  PlotScaleLinearConfig,
-  PlotScaleTimeConfig,
   PlotConfiguration,
   PlotDrawFrame,
   PlotDrawScaleConfig,
-  PlotDrawScaleLinearConfig,
-  PlotDrawScaleTimeConfig,
   PlotPadding,
   PlotSize,
   Rect,
   Style,
-} from './types';
+} from "./types";
 
 // Utilities
-export { 
-  valToPos, 
-  valToPxDistance, 
+export {
+  valToPos,
+  valToPxDistance,
   valFits,
   getScale,
   isXScale,
@@ -45,4 +41,8 @@ export {
   clampXPosToChartArea,
   clampYPosToChartArea,
   posToVal,
-} from './helpers';
+} from "./helpers";
+
+export { useDrawEffect, useFrameState } from "./frameContext";
+
+export * from "./tickUtils"

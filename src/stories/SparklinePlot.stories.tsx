@@ -24,7 +24,6 @@ export const Basic: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -35,7 +34,6 @@ export const Basic: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -85,7 +83,6 @@ export const WithInteractions: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -96,7 +93,6 @@ export const WithInteractions: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -158,8 +154,6 @@ export const TimeSeries: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "t",
-        type: "time",
-        timeZone: "UTC",
         axis: {
           position: "bottom",
           size: 50,
@@ -170,7 +164,6 @@ export const TimeSeries: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -234,7 +227,6 @@ export const MultipleSparklines: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -245,7 +237,6 @@ export const MultipleSparklines: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -334,7 +325,6 @@ export const MinimalSparkline: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: null,
         origin: "x",
         min: 0,
@@ -342,7 +332,6 @@ export const MinimalSparkline: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: null,
         origin: "y",
         min: 0,
@@ -452,7 +441,6 @@ export const StockPrice: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -463,7 +451,6 @@ export const StockPrice: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -533,7 +520,6 @@ export const VolatileData: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -544,7 +530,6 @@ export const VolatileData: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -605,7 +590,6 @@ export const DifferentFillStyles: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -616,7 +600,6 @@ export const DifferentFillStyles: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -708,7 +691,6 @@ export const WithStrokeOnly: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -719,7 +701,6 @@ export const WithStrokeOnly: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -808,7 +789,6 @@ export const WithFillOnly: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -819,7 +799,6 @@ export const WithFillOnly: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -905,7 +884,6 @@ export const MixedStrokeAndFill: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -916,7 +894,6 @@ export const MixedStrokeAndFill: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -979,7 +956,6 @@ export const DashboardStyle: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: null,
         origin: "x",
         min: 0,
@@ -987,7 +963,6 @@ export const DashboardStyle: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: null,
         origin: "y",
         min: -50,

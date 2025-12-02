@@ -24,7 +24,6 @@ export const Basic: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -35,7 +34,6 @@ export const Basic: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -85,7 +83,6 @@ export const WithInteractions: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -96,7 +93,6 @@ export const WithInteractions: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -158,8 +154,6 @@ export const TimeSeries: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "t",
-        type: "time",
-        timeZone: "UTC",
         axis: {
           position: "bottom",
           size: 50,
@@ -170,7 +164,6 @@ export const TimeSeries: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -232,7 +225,6 @@ export const MultipleDatasets: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -243,7 +235,6 @@ export const MultipleDatasets: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -332,7 +323,6 @@ export const DualYAxis: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -343,7 +333,6 @@ export const DualYAxis: Story = {
       },
       {
         id: "y1",
-        type: "linear",
         axis: {
           position: "left",
           size: 50,
@@ -354,7 +343,6 @@ export const DualYAxis: Story = {
       },
       {
         id: "y2",
-        type: "linear",
         axis: {
           position: "right",
           size: 50,

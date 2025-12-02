@@ -27,7 +27,6 @@ export const BasicLineTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -38,7 +37,6 @@ export const BasicLineTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -156,7 +154,6 @@ export const MultiSeriesLinesTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -167,7 +164,6 @@ export const MultiSeriesLinesTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -354,7 +350,6 @@ export const BarChartTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -365,7 +360,6 @@ export const BarChartTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -482,7 +476,6 @@ export const TimeSeriesWithTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "time",
         axis: {
           position: "bottom",
           size: 40,
@@ -490,11 +483,9 @@ export const TimeSeriesWithTooltip: Story = {
         origin: "x",
         min: now.getTime(),
         max: now.getTime() + 30 * 24 * 60 * 60 * 1000,
-        timeZone: "UTC",
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -606,7 +597,6 @@ export const CustomStyledTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -617,7 +607,6 @@ export const CustomStyledTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
@@ -753,7 +742,6 @@ export const GroupedBarsTooltip: Story = {
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
-        type: "linear",
         axis: {
           position: "bottom",
           size: 40,
@@ -764,7 +752,6 @@ export const GroupedBarsTooltip: Story = {
       },
       {
         id: "y",
-        type: "linear",
         axis: {
           position: "left",
           size: 40,
