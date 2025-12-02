@@ -497,6 +497,9 @@ const ChartAreaInteractionsImpl: React.FC<{
         zIndex: 25,
         ...style,
       }}
+      onDragStart={(e) => {
+        e.preventDefault();
+      }}
       onClick={(event) => {
         withPointerPosition(event, (positions, _, keys) => {
           InteractionsBus.sync_click.dispatchEvent(effectiveSyncKey, {
