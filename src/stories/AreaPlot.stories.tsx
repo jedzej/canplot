@@ -10,7 +10,6 @@ import { XTicks, YTicks } from "../lib/plot/Ticks";
 import { makeLinearTicks,  makeTimeTicks } from "../lib";
 
 const meta: Meta<typeof CanPlot> = {
-  title: "CanPlot/AreaPlot",
   component: CanPlot,
   parameters: {
     layout: "fullscreen",

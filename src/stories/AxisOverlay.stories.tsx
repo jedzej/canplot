@@ -7,7 +7,6 @@ import { AxisOverlay } from "../lib/interactions/AxisOverlay";
 import type { PlotScaleConfig } from "../lib/types";
 
 const meta: Meta<typeof CanPlot> = {
-  title: "CanPlot/AxisOverlay",
   component: CanPlot,
   parameters: {
     layout: "fullscreen",

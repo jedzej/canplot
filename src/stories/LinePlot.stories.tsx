@@ -8,7 +8,6 @@ import { SelectBox } from "../lib/interactions/SelectBox";
 import type { PlotScaleConfig } from "../lib/types";
 
 const meta: Meta<typeof CanPlot> = {
-  title: "CanPlot/LinePlot",
   component: CanPlot,
   parameters: {
     layout: "fullscreen",

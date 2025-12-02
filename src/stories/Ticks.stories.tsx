@@ -6,7 +6,6 @@ import { makeLinearTicks, makeTimeTicks } from "../lib/tickUtils";
 import type { PlotScaleConfig } from "../lib/types";
 
 const meta: Meta<typeof CanPlot> = {
-  title: "CanPlot/Ticks",
   component: CanPlot,
   parameters: {
     layout: "fullscreen",

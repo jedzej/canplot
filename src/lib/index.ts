@@ -24,6 +24,7 @@ export type * from "./types";
 // Utilities
 export * from "./helpers";
 export * from "./tickUtils";
+export * from "./dataUtils";
 
 // Drawing utilities
 export { useDrawEffect, useFrameState } from "./frameContext";

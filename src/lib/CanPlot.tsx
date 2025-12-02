@@ -10,11 +10,14 @@ import type { PlotConfiguration, PlotDrawFrame, PlotSize, Rect } from "./types";
 import { drawAxes } from "./axes";
 import {
   createFrameStore,
+  createUpdateRequestStore,
   FrameContext,
-  type FrameStoreState,
+  UpdateRequestContext,
+  type FrameStoreType,
+  type UpdateRequestStoreType,
 } from "./frameContext";
 import { mergeRefs } from "react-merge-refs";
-import { useStore, type StoreApi } from "zustand";
+import { useStore } from "zustand";
 
 export const CanPlot = forwardRef<
   HTMLDivElement,
@@ -31,6 +34,7 @@ export const CanPlot = forwardRef<
   const plotSize = useSize(rootRef);
 
   const frameStore = useMemo(createFrameStore, []);
+  const updateRequestStore = useMemo(createUpdateRequestStore, []);
 
   useLayoutEffect(() => {
     frameStore.setState({
@@ -45,6 +49,22 @@ export const CanPlot = forwardRef<
       }
     });
   }, [frameStore]);
+
+  useLayoutEffect(() => {
+    let requested = false;
+    return updateRequestStore.subscribe(() => {
+      if(requested){
+        return;
+      }
+      requested = true;
+      window.requestAnimationFrame(() => {
+        requested = false;
+        frameStore.setState((state) => ({
+          _frame: state._frame ? { ...state._frame } : null,
+        }));
+      });
+    });
+  }, [updateRequestStore, frameStore]);
 
   const dpr = window.devicePixelRatio || 1;
 
@@ -70,21 +90,31 @@ export const CanPlot = forwardRef<
           height: `${plotSize.height}px`,
         }}
       />
-      <FrameProvider frameStore={frameStore}>{children}</FrameProvider>
+      <FrameProvider
+        frameStore={frameStore}
+        updateRequestStore={updateRequestStore}
+      >
+        {children}
+      </FrameProvider>
     </div>
   );
 });
 
 const FrameProvider: React.FC<{
-  frameStore: StoreApi<FrameStoreState>;
+  frameStore: FrameStoreType;
+  updateRequestStore: UpdateRequestStoreType;
   children: ReactNode;
-}> = ({ frameStore, children }) => {
+}> = ({ frameStore, updateRequestStore, children }) => {
   const hasFrame = useStore(frameStore, (state) => !!state._frame);
   if (!hasFrame) {
     return null;
   }
   return (
-    <FrameContext.Provider value={frameStore}>{children}</FrameContext.Provider>
+    <UpdateRequestContext.Provider value={updateRequestStore}>
+      <FrameContext.Provider value={frameStore}>
+        {children}
+      </FrameContext.Provider>
+    </UpdateRequestContext.Provider>
   );
 };
 

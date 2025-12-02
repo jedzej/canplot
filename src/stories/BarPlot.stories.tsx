@@ -8,7 +8,6 @@ import { Crosshair } from "../lib/interactions/CrossHair";
 import type { PlotScaleConfig } from "../lib/types";
 
 const meta: Meta<typeof CanPlot> = {
-  title: "CanPlot/BarPlot",
   component: CanPlot,
   parameters: {
     layout: "fullscreen",

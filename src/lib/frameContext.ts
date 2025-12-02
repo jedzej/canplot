@@ -1,4 +1,10 @@
-import { createContext, useContext, useLayoutEffect, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import type { PlotDrawFrame } from "./types";
 import { createStore, useStore } from "zustand";
 import {
@@ -69,9 +75,24 @@ export const createFrameStore = () =>
     };
   });
 
+export const createUpdateRequestStore = () =>
+  createStore<{ notify: () => void; version: number }>((set) => {
+    return {
+      notify: () => {
+        set((state) => ({ version: state.version + 1 }));
+      },
+      version: 0,
+    };
+  });
+
 export type FrameStoreType = ReturnType<typeof createFrameStore>;
 
+export type UpdateRequestStoreType = ReturnType<typeof createUpdateRequestStore>;
+
 export const FrameContext = createContext<FrameStoreType | null>(null);
+
+export const UpdateRequestContext =
+  createContext<UpdateRequestStoreType | null>(null);
 
 export const useDrawEffect = (
   runner: (params: Omit<FrameStoreState, "_frame">) => void,
@@ -79,7 +100,9 @@ export const useDrawEffect = (
   deps: ReadonlyArray<any>
 ) => {
   const frameStore = useContext(FrameContext);
-  if (!frameStore) {
+  const updateRequestStore = useContext(UpdateRequestContext);
+
+  if (!frameStore || !updateRequestStore) {
     throw new Error("useFrame must be used within a CanPlot component");
   }
 
@@ -96,8 +119,12 @@ export const useDrawEffect = (
       }
       runnerRef.current(state);
     });
+  }, [frameStore]);
+
+  useEffect(() => {
+    updateRequestStore.getState().notify();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frameStore, ...deps]);
+  }, [updateRequestStore, ...deps]);
 };
 
 export const useFrameState = <T = PlotDrawFrame>(

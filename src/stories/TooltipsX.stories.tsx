@@ -9,7 +9,6 @@ import type { PlotScaleConfig } from "../lib/types";
 import { valToPos } from "../lib/helpers";
 
 const meta: Meta<typeof CanPlot> = {
-  title: "CanPlot/TooltipsX",
   component: CanPlot,
   parameters: {
     layout: "fullscreen",
