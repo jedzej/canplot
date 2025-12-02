@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useInteractionsEvent } from "./interactionsBus";
 import type { SpanSelectEvent } from "./types";
 import { clampXPosToChartArea, clampYPosToChartArea } from "../helpers";
@@ -13,48 +13,51 @@ export const SelectBox: React.FC<{
     setSelectState(event.mode === "none" || event.completed ? null : event);
   });
 
-  if (!selectState) {
-    return null;
-  }
+  const dimensions = useMemo(() => {
+    if (!selectState) {
+      return null;
+    }
+    const clampedFromX = clampXPosToChartArea(
+      selectState.frame,
+      selectState.x.fromCSS,
+      "css"
+    );
+    const clampedToX = clampXPosToChartArea(
+      selectState.frame,
+      selectState.x.toCSS,
+      "css"
+    );
+    const clampedFromY = clampYPosToChartArea(
+      selectState.frame,
+      selectState.y.fromCSS,
+      "css"
+    );
+    const clampedToY = clampYPosToChartArea(
+      selectState.frame,
+      selectState.y.toCSS,
+      "css"
+    );
 
-  const clampedFromX = clampXPosToChartArea(
-    selectState.frame,
-    selectState.x.fromCSS,
-    "css"
-  );
-  const clampedToX = clampXPosToChartArea(
-    selectState.frame,
-    selectState.x.toCSS,
-    "css"
-  );
-  const clampedFromY = clampYPosToChartArea(
-    selectState.frame,
-    selectState.y.fromCSS,
-    "css"
-  );
-  const clampedToY = clampYPosToChartArea(
-    selectState.frame,
-    selectState.y.toCSS,
-    "css"
-  );
+    const leftPx = Math.min(clampedFromX, clampedToX);
+    const topPx = Math.min(clampedFromY, clampedToY);
+    const widthPx = Math.abs(clampedToX - clampedFromX);
+    const heightPx = Math.abs(clampedToY - clampedFromY);
 
-  const leftPx = Math.min(clampedFromX, clampedToX);
-  const topPx = Math.min(clampedFromY, clampedToY);
-  const widthPx = Math.abs(clampedToX - clampedFromX);
-  const heightPx = Math.abs(clampedToY - clampedFromY);
+    return { leftPx, topPx, widthPx, heightPx };
+  }, [selectState]);
 
   return (
     <div
-      className={makeClassName?.(selectState)}
+      className={selectState ? makeClassName?.(selectState) : undefined}
       style={{
         position: "absolute",
-        backgroundColor: "#0000ff22",
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-        width: `${widthPx}px`,
-        height: `${heightPx}px`,
+        visibility: selectState ? "visible" : "hidden",
+        left: `${dimensions?.leftPx ?? 0}px`,
+        top: `${dimensions?.topPx ?? 0}px`,
+        width: `${dimensions?.widthPx ?? 0}px`,
+        height: `${dimensions?.heightPx ?? 0}px`,
         pointerEvents: "none",
-        ...makeStyle?.(selectState),
+        ...(selectState ? makeStyle?.(selectState) : undefined),
       }}
     />
   );

@@ -88,11 +88,10 @@ export const YTicks: React.FC<{
           ? axis.canvasRect.x + axis.canvasRect.width
           : axis.canvasRect.x;
 
-      const dpr = window.devicePixelRatio || 1;
       const x0 = x;
-      const effectiveTickSize = (tickSize ?? 6) * dpr;
+      const effectiveTickSize = (tickSize ?? 6);
       const x1 = axis.position === "left" ? x - effectiveTickSize : x + effectiveTickSize;
-      const multilineGap = (labelGap ?? 12) * dpr;
+      const multilineGap = (labelGap ?? 12);
 
       const resolvedTicks = Array.isArray(ticks)
         ? ticks
