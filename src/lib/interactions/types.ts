@@ -35,6 +35,11 @@ export type SyncEvent_Click = {
   keys: ModifiersKeys;
 };
 
+export type SyncEvent_ContextMenu = {
+  positions: PointerSyncPosition;
+  keys: ModifiersKeys;
+};
+
 export type SyncEvent_MouseDown = {
   positions: PointerSyncPosition;
   keys: ModifiersKeys;
@@ -69,7 +74,8 @@ export type PointerSyncEvent =
         | "move"
         | "mousedown"
         | "mouseup"
-        | "documentmouseup";
+        | "documentmouseup"
+        | "contextmenu";
       x: {
         scaleId: string;
         value: number;
@@ -101,6 +107,10 @@ export type DblClickEvent = InteractionsEvent & {
 };
 
 export type ClickEvent = InteractionsEvent & {
+  pointer: InteractionsEventPointerPosition;
+};
+
+export type ContextMenuEvent = InteractionsEvent & {
   pointer: InteractionsEventPointerPosition;
 };
 

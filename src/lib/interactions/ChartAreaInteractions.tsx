@@ -13,6 +13,7 @@ import {
 } from "./interactionsBus";
 import type {
   ClickEvent,
+  ContextMenuEvent,
   DblClickEvent,
   DocumentMouseUpEvent,
   MouseDownEvent,
@@ -37,6 +38,7 @@ type ChartAreaInteractionsProps = {
   onMouseUp?: (event: MouseUpEvent) => void;
   onDocumentMouseUp?: (event: DocumentMouseUpEvent) => void;
   onSpanSelect?: (event: SpanSelectEvent) => void;
+  onContextMenu?: (event: ContextMenuEvent) => void;
   className?: string;
   style?: React.CSSProperties;
   id?: string;
@@ -57,6 +59,7 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
   onMouseUp,
   onDocumentMouseUp,
   onSpanSelect,
+  onContextMenu,
   className,
   style,
   sync,
@@ -86,6 +89,10 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
   useGenericInteractionsEvent("spanselect", interactionsId, (event) => {
     onSpanSelect?.(event);
   });
+  useGenericInteractionsEvent("contextmenu", interactionsId, (event) => {
+    onContextMenu?.(event);
+  });
+
   return (
     <InteractionsIdContext.Provider value={interactionsId}>
       <ChartAreaInteractionsImpl
@@ -389,6 +396,19 @@ const ChartAreaInteractionsImpl: React.FC<{
     });
   });
 
+  useGenericInteractionsEvent("sync_contextmenu", effectiveSyncKey, (event) => {
+    const positions = pointerSyncPositionToInteractionsPosition(
+      event.positions,
+      frameRef.current
+    );
+    if (!positions) return;
+    InteractionsBus.contextmenu.dispatchEvent(interactionsId, {
+      frame: frameRef.current,
+      pointer: positions,
+      keys: event.keys,
+    });
+  });
+
   useGenericInteractionsEvent("sync_move", effectiveSyncKey, (event) => {
     const positions = event.positions
       ? pointerSyncPositionToInteractionsPosition(
@@ -558,6 +578,15 @@ const ChartAreaInteractionsImpl: React.FC<{
               spanSelectEvent
             );
           }
+        });
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        withPointerPosition(event, (positions, _, keys) => {
+          InteractionsBus.sync_contextmenu.dispatchEvent(effectiveSyncKey, {
+            positions,
+            keys,
+          });
         });
       }}
       onDoubleClick={(event) => {

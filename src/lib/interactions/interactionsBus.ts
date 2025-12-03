@@ -15,6 +15,8 @@ import type {
   SyncEvent_Move,
   SyncEvent_SpanSelect,
   SyncEvent_PressAndWheel,
+  SyncEvent_ContextMenu,
+  ContextMenuEvent,
 } from "./types";
 
 export const makeInteractionsBus = <T>() => {
@@ -53,6 +55,7 @@ export type InteractionsBus<T> = ReturnType<typeof makeInteractionsBus<T>>;
 export const InteractionsBus = {
   dblclick: makeInteractionsBus<DblClickEvent>(),
   click: makeInteractionsBus<ClickEvent>(),
+  contextmenu: makeInteractionsBus<ContextMenuEvent>(),
   move: makeInteractionsBus<MoveEvent>(),
   mousedown: makeInteractionsBus<MouseDownEvent>(),
   mouseup: makeInteractionsBus<MouseUpEvent>(),
@@ -66,6 +69,7 @@ export const InteractionsBus = {
   sync_mouseup: makeInteractionsBus<SyncEvent_MouseUp>(),
   sync_spanselect: makeInteractionsBus<SyncEvent_SpanSelect>(),
   sync_pressandwheel: makeInteractionsBus<SyncEvent_PressAndWheel>(),
+  sync_contextmenu: makeInteractionsBus<SyncEvent_ContextMenu>(),
 };
 
 export const useGenericInteractionsEvent = <
