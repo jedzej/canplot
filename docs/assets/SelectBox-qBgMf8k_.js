@@ -1,16 +1,14 @@
-import{j as k}from"./jsx-runtime-D_zvdyIk.js";import{r as i}from"./iframe-B_ZNLO9M.js";import{u as p}from"./ChartAreaInteractions-Bgi1Bg9u.js";import{c as u,b as m}from"./CanPlot-DcHqXOCz.js";const g=({makeClassName:s,makeStyle:o})=>{const[e,y]=i.useState(null);p("spanselect",n=>{y(n.mode==="none"||n.completed?null:n)});const r=i.useMemo(()=>{if(!e)return null;const n=u(e.frame,e.x.fromCSS,"css"),a=u(e.frame,e.x.toCSS,"css"),t=m(e.frame,e.y.fromCSS,"css"),l=m(e.frame,e.y.toCSS,"css"),S=Math.min(n,a),v=Math.min(t,l),d=Math.abs(a-n),b=Math.abs(l-t);return{leftPx:S,topPx:v,widthPx:d,heightPx:b}},[e]);return k.jsx("div",{className:e?s?.(e):void 0,style:{position:"absolute",visibility:e?"visible":"hidden",left:`${r?.leftPx??0}px`,top:`${r?.topPx??0}px`,width:`${r?.widthPx??0}px`,height:`${r?.heightPx??0}px`,pointerEvents:"none",...e?o?.(e):void 0}})};g.__docgenInfo={description:"",methods:[],displayName:"SelectBox",props:{makeClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(selectState: SpanSelectEvent) => string",signature:{arguments:[{type:{name:"signature",type:"object",raw:`{
+import{j as p}from"./jsx-runtime-D_zvdyIk.js";import{r as i}from"./iframe-B9ZU6-mP.js";import{u as k}from"./ChartAreaInteractions-B6EBIp6h.js";import{c as u,b as s}from"./CanPlot-Cupv9CKr.js";const S=({makeClassName:m,makeStyle:o})=>{const[e,y]=i.useState(null);k("spanselect",r=>{y(r.mode==="below_threshold"||r.completed?null:r)});const n=i.useMemo(()=>{if(!e||e.mode==="below_threshold")return null;const r=u(e.frame,e.x.css?.from??-1/0,"css"),a=u(e.frame,e.x.css?.to??1/0,"css"),t=s(e.frame,e.y.css?.from??-1/0,"css"),l=s(e.frame,e.y.css?.to??1/0,"css"),d=Math.min(r,a),v=Math.min(t,l),b=Math.abs(a-r),c=Math.abs(l-t);return{leftPx:d,topPx:v,widthPx:b,heightPx:c}},[e]);return p.jsx("div",{className:e?m?.(e):void 0,style:{position:"absolute",visibility:e?"visible":"hidden",left:`${n?.leftPx??0}px`,top:`${n?.topPx??0}px`,width:`${n?.widthPx??0}px`,height:`${n?.heightPx??0}px`,pointerEvents:"none",...e?o?.(e):void 0}})};S.__docgenInfo={description:"",methods:[],displayName:"SelectBox",props:{makeClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(selectState: SpanSelectEvent) => string",signature:{arguments:[{type:{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
-  mode: "x" | "y" | "box" | "none";
+  mode: "x" | "y" | "box" | "below_threshold";
   x: {
-    fromCSS: number;
-    toCSS: number;
+    css?: { from: number; to: number };
+    scaled: ScaledSelectionRange[];
   };
   y: {
-    fromCSS: number;
-    toCSS: number;
+    css?: { from: number; to: number };
+    scaled: ScaledSelectionRange[];
   };
-  xRanges: ScaledSelectionRange[];
-  yRanges: ScaledSelectionRange[];
   completed: boolean;
   keys: ModifiersKeys;
 }`,signature:{properties:[{key:"frame",value:{name:"signature",type:"object",raw:`{
@@ -93,38 +91,36 @@ import{j as k}from"./jsx-runtime-D_zvdyIk.js";import{r as i}from"./iframe-B_ZNLO
   y: number;
   width: number;
   height: number;
-}`,signature:{properties:[{key:"x",value:{name:"number",required:!0}},{key:"y",value:{name:"number",required:!0}},{key:"width",value:{name:"number",required:!0}},{key:"height",value:{name:"number",required:!0}}]},required:!0}}]}}]}],required:!0}}]}}]}],raw:"PlotDrawScaleConfig[]",required:!0}}]},required:!0}},{key:"mode",value:{name:"union",raw:'"x" | "y" | "box" | "none"',elements:[{name:"literal",value:'"x"'},{name:"literal",value:'"y"'},{name:"literal",value:'"box"'},{name:"literal",value:'"none"'}],required:!0}},{key:"x",value:{name:"signature",type:"object",raw:`{
-  fromCSS: number;
-  toCSS: number;
-}`,signature:{properties:[{key:"fromCSS",value:{name:"number",required:!0}},{key:"toCSS",value:{name:"number",required:!0}}]},required:!0}},{key:"y",value:{name:"signature",type:"object",raw:`{
-  fromCSS: number;
-  toCSS: number;
-}`,signature:{properties:[{key:"fromCSS",value:{name:"number",required:!0}},{key:"toCSS",value:{name:"number",required:!0}}]},required:!0}},{key:"xRanges",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
+}`,signature:{properties:[{key:"x",value:{name:"number",required:!0}},{key:"y",value:{name:"number",required:!0}},{key:"width",value:{name:"number",required:!0}},{key:"height",value:{name:"number",required:!0}}]},required:!0}}]}}]}],required:!0}}]}}]}],raw:"PlotDrawScaleConfig[]",required:!0}}]},required:!0}},{key:"mode",value:{name:"union",raw:'"x" | "y" | "box" | "below_threshold"',elements:[{name:"literal",value:'"x"'},{name:"literal",value:'"y"'},{name:"literal",value:'"box"'},{name:"literal",value:'"below_threshold"'}],required:!0}},{key:"x",value:{name:"signature",type:"object",raw:`{
+  css?: { from: number; to: number };
+  scaled: ScaledSelectionRange[];
+}`,signature:{properties:[{key:"css",value:{name:"signature",type:"object",raw:"{ from: number; to: number }",signature:{properties:[{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]},required:!1}},{key:"scaled",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
   scaleId: string;
   from: number;
   to: number;
-}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}},{key:"yRanges",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
+}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}}]},required:!0}},{key:"y",value:{name:"signature",type:"object",raw:`{
+  css?: { from: number; to: number };
+  scaled: ScaledSelectionRange[];
+}`,signature:{properties:[{key:"css",value:{name:"signature",type:"object",raw:"{ from: number; to: number }",signature:{properties:[{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]},required:!1}},{key:"scaled",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
   scaleId: string;
   from: number;
   to: number;
-}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}},{key:"completed",value:{name:"boolean",required:!0}},{key:"keys",value:{name:"signature",type:"object",raw:`{
+}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}}]},required:!0}},{key:"completed",value:{name:"boolean",required:!0}},{key:"keys",value:{name:"signature",type:"object",raw:`{
   ctrlKey: boolean;
   altKey: boolean;
   shiftKey: boolean;
   metaKey: boolean;
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},name:"selectState"}],return:{name:"string"}}},description:""},makeStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(selectState: SpanSelectEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
-  mode: "x" | "y" | "box" | "none";
+  mode: "x" | "y" | "box" | "below_threshold";
   x: {
-    fromCSS: number;
-    toCSS: number;
+    css?: { from: number; to: number };
+    scaled: ScaledSelectionRange[];
   };
   y: {
-    fromCSS: number;
-    toCSS: number;
+    css?: { from: number; to: number };
+    scaled: ScaledSelectionRange[];
   };
-  xRanges: ScaledSelectionRange[];
-  yRanges: ScaledSelectionRange[];
   completed: boolean;
   keys: ModifiersKeys;
 }`,signature:{properties:[{key:"frame",value:{name:"signature",type:"object",raw:`{
@@ -207,23 +203,23 @@ import{j as k}from"./jsx-runtime-D_zvdyIk.js";import{r as i}from"./iframe-B_ZNLO
   y: number;
   width: number;
   height: number;
-}`,signature:{properties:[{key:"x",value:{name:"number",required:!0}},{key:"y",value:{name:"number",required:!0}},{key:"width",value:{name:"number",required:!0}},{key:"height",value:{name:"number",required:!0}}]},required:!0}}]}}]}],required:!0}}]}}]}],raw:"PlotDrawScaleConfig[]",required:!0}}]},required:!0}},{key:"mode",value:{name:"union",raw:'"x" | "y" | "box" | "none"',elements:[{name:"literal",value:'"x"'},{name:"literal",value:'"y"'},{name:"literal",value:'"box"'},{name:"literal",value:'"none"'}],required:!0}},{key:"x",value:{name:"signature",type:"object",raw:`{
-  fromCSS: number;
-  toCSS: number;
-}`,signature:{properties:[{key:"fromCSS",value:{name:"number",required:!0}},{key:"toCSS",value:{name:"number",required:!0}}]},required:!0}},{key:"y",value:{name:"signature",type:"object",raw:`{
-  fromCSS: number;
-  toCSS: number;
-}`,signature:{properties:[{key:"fromCSS",value:{name:"number",required:!0}},{key:"toCSS",value:{name:"number",required:!0}}]},required:!0}},{key:"xRanges",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
+}`,signature:{properties:[{key:"x",value:{name:"number",required:!0}},{key:"y",value:{name:"number",required:!0}},{key:"width",value:{name:"number",required:!0}},{key:"height",value:{name:"number",required:!0}}]},required:!0}}]}}]}],required:!0}}]}}]}],raw:"PlotDrawScaleConfig[]",required:!0}}]},required:!0}},{key:"mode",value:{name:"union",raw:'"x" | "y" | "box" | "below_threshold"',elements:[{name:"literal",value:'"x"'},{name:"literal",value:'"y"'},{name:"literal",value:'"box"'},{name:"literal",value:'"below_threshold"'}],required:!0}},{key:"x",value:{name:"signature",type:"object",raw:`{
+  css?: { from: number; to: number };
+  scaled: ScaledSelectionRange[];
+}`,signature:{properties:[{key:"css",value:{name:"signature",type:"object",raw:"{ from: number; to: number }",signature:{properties:[{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]},required:!1}},{key:"scaled",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
   scaleId: string;
   from: number;
   to: number;
-}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}},{key:"yRanges",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
+}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}}]},required:!0}},{key:"y",value:{name:"signature",type:"object",raw:`{
+  css?: { from: number; to: number };
+  scaled: ScaledSelectionRange[];
+}`,signature:{properties:[{key:"css",value:{name:"signature",type:"object",raw:"{ from: number; to: number }",signature:{properties:[{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]},required:!1}},{key:"scaled",value:{name:"Array",elements:[{name:"signature",type:"object",raw:`{
   scaleId: string;
   from: number;
   to: number;
-}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}},{key:"completed",value:{name:"boolean",required:!0}},{key:"keys",value:{name:"signature",type:"object",raw:`{
+}`,signature:{properties:[{key:"scaleId",value:{name:"string",required:!0}},{key:"from",value:{name:"number",required:!0}},{key:"to",value:{name:"number",required:!0}}]}}],raw:"ScaledSelectionRange[]",required:!0}}]},required:!0}},{key:"completed",value:{name:"boolean",required:!0}},{key:"keys",value:{name:"signature",type:"object",raw:`{
   ctrlKey: boolean;
   altKey: boolean;
   shiftKey: boolean;
   metaKey: boolean;
-}`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},name:"selectState"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""}}};export{g as S};
+}`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},name:"selectState"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""}}};export{S};
