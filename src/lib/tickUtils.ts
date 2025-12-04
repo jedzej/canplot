@@ -12,8 +12,10 @@ import type { TicksFormatter, TicksConfig } from "./types";
 export const makeLinearTicks = ({
   space,
   formatter,
+  acceptableIncrements,
 }: {
   space?: number;
+  acceptableIncrements?: number[];
   formatter?: TicksFormatter;
 } = {}): TicksConfig => {
   return (scale, frame) => {
@@ -31,13 +33,21 @@ export const makeLinearTicks = ({
       scale.id,
       "canvas"
     );
+
+    const effectiveAcceptableIncrements =
+      acceptableIncrements ?? DEFAULT_ACCEPTABLE_TICKS_INCREMENTS;
+
     const incr =
-      ACCEPTABLE_NUMERICAL_TICK_VALUES.find((a) => a > unnormalizedIncr) ?? 1;
-    let curr =
-      scaleMin % incr < Number.EPSILON
-        ? scaleMin
-        : scaleMin + incr - (scaleMin % incr);
-    while (curr <= scaleMax) {
+      effectiveAcceptableIncrements.find((a) => a > unnormalizedIncr) ??
+      effectiveAcceptableIncrements.at(-1) ??
+      1;
+
+    let curr = scaleMin;
+    if (Math.abs(curr % incr) > Number.EPSILON) {
+      const alignBy = (incr - (curr % incr)) % incr;
+      curr += alignBy;
+    }
+    while (curr <= scaleMax && ticks.length < 1000) {
       ticks.push(curr);
       curr += incr;
     }
@@ -51,11 +61,11 @@ export const defaultNumericalTicksFormatter: TicksFormatter = (ticks) => {
   return ticks.map((tick) => ({ value: tick, label: tick.toFixed(span) }));
 };
 
-const ACCEPTABLE_NUMERICAL_TICK_VALUES: number[] = [];
+const DEFAULT_ACCEPTABLE_TICKS_INCREMENTS: number[] = [];
 for (let i = -12; i <= 12; i++) {
-  ACCEPTABLE_NUMERICAL_TICK_VALUES.push(1 * 10 ** i);
-  ACCEPTABLE_NUMERICAL_TICK_VALUES.push(2 * 10 ** i);
-  ACCEPTABLE_NUMERICAL_TICK_VALUES.push(5 * 10 ** i);
+  DEFAULT_ACCEPTABLE_TICKS_INCREMENTS.push(1 * 10 ** i);
+  DEFAULT_ACCEPTABLE_TICKS_INCREMENTS.push(2 * 10 ** i);
+  DEFAULT_ACCEPTABLE_TICKS_INCREMENTS.push(5 * 10 ** i);
 }
 
 // TIME TICKS
