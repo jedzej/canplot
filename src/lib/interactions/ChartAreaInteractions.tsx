@@ -275,45 +275,39 @@ const ChartAreaInteractionsImpl: React.FC<{
             mode = "x";
           }
 
-          const xRange: SyncEvent_SpanSelect["xRange"] =
-            mode === "x" || mode === "box"
-              ? {
-                  scaleId: xScale.id,
-                  from: posToVal(
-                    frame,
-                    clampXPosToChartArea(frameRef.current, startCSSX, "css"),
-                    xScale.id,
-                    "css"
-                  ),
+          const xRange: SyncEvent_SpanSelect["xRange"] = {
+            scaleId: xScale.id,
+            from: posToVal(
+              frame,
+              clampXPosToChartArea(frameRef.current, startCSSX, "css"),
+              xScale.id,
+              "css"
+            ),
 
-                  to: posToVal(
-                    frame,
-                    clampXPosToChartArea(frameRef.current, endCSSX, "css"),
-                    xScale.id,
-                    "css"
-                  ),
-                }
-              : undefined;
+            to: posToVal(
+              frame,
+              clampXPosToChartArea(frameRef.current, endCSSX, "css"),
+              xScale.id,
+              "css"
+            ),
+          };
 
-          const yRange: SyncEvent_SpanSelect["yRange"] =
-            mode === "y" || mode === "box"
-              ? {
-                  scaleId: yScale.id,
-                  from: posToVal(
-                    frame,
-                    clampYPosToChartArea(frameRef.current, startCSSY, "css"),
-                    yScale.id,
-                    "css"
-                  ),
+          const yRange: SyncEvent_SpanSelect["yRange"] = {
+            scaleId: yScale.id,
+            from: posToVal(
+              frame,
+              clampYPosToChartArea(frameRef.current, startCSSY, "css"),
+              yScale.id,
+              "css"
+            ),
 
-                  to: posToVal(
-                    frame,
-                    clampYPosToChartArea(frameRef.current, endCSSY, "css"),
-                    yScale.id,
-                    "css"
-                  ),
-                }
-              : undefined;
+            to: posToVal(
+              frame,
+              clampYPosToChartArea(frameRef.current, endCSSY, "css"),
+              yScale.id,
+              "css"
+            ),
+          };
 
           const spanSelectSyncEvent: SyncEvent_SpanSelect = {
             mode,

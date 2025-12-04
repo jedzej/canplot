@@ -60,8 +60,8 @@ export type SyncEvent_PressAndWheel = {
 
 export type SyncEvent_SpanSelect = {
   mode: "x" | "y" | "box" | "below_threshold";
-  xRange?: ScaledSelectionRange;
-  yRange?: ScaledSelectionRange;
+  xRange: ScaledSelectionRange;
+  yRange: ScaledSelectionRange;
   completed: boolean;
   keys: ModifiersKeys;
 };
