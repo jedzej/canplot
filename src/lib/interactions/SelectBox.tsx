@@ -26,7 +26,7 @@ export const SelectBox: React.FC<{
     const fromY =
       selection.mode === "x" ? -Infinity : selection.y.css?.from ?? -Infinity;
     const toY =
-      selection.mode === "x" ? Infinity : selection.y.css?.from ?? Infinity;
+      selection.mode === "x" ? Infinity : selection.y.css?.to ?? Infinity;
 
     const clampedFromX = clampXPosToChartArea(selection.frame, fromX, "css");
     const clampedToX = clampXPosToChartArea(selection.frame, toX, "css");
