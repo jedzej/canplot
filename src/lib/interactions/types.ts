@@ -59,7 +59,7 @@ export type SyncEvent_PressAndWheel = {
 };
 
 export type SyncEvent_SpanSelect = {
-  mode: "x" | "y" | "box" | "none";
+  mode: "x" | "y" | "box" | "below_threshold";
   xRange?: ScaledSelectionRange;
   yRange?: ScaledSelectionRange;
   completed: boolean;
@@ -134,17 +134,15 @@ export type ScaledSelectionRange = {
 
 export type SpanSelectEvent = {
   frame: PlotDrawFrame;
-  mode: "x" | "y" | "box" | "none";
+  mode: "x" | "y" | "box" | "below_threshold";
   x: {
-    fromCSS: number;
-    toCSS: number;
+    css?: { from: number; to: number };
+    scaled: ScaledSelectionRange[];
   };
   y: {
-    fromCSS: number;
-    toCSS: number;
+    css?: { from: number; to: number };
+    scaled: ScaledSelectionRange[];
   };
-  xRanges: ScaledSelectionRange[];
-  yRanges: ScaledSelectionRange[];
   completed: boolean;
   keys: ModifiersKeys;
 };

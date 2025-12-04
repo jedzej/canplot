@@ -261,12 +261,12 @@ const ChartAreaInteractionsImpl: React.FC<{
             yRangeCss: { start: startCSSY, end: endCSSY },
           };
 
-          let mode: "none" | "x" | "y" | "box" = "none";
+          let mode: "below_threshold" | "x" | "y" | "box" = "below_threshold";
           const dY = Math.abs(startCSSY - endCSSY);
           const dX = Math.abs(startCSSX - endCSSX);
 
           if (dY < 10 && dX < 10) {
-            mode = "none";
+            mode = "below_threshold";
           } else if (dY > 30 && dX > 30) {
             mode = "box";
           } else if (dY > dX) {
@@ -473,19 +473,15 @@ const ChartAreaInteractionsImpl: React.FC<{
   );
 
   useGenericInteractionsEvent("sync_spanselect", effectiveSyncKey, (event) => {
-    const xMappedRange = extrapolateScaledSelectionRange(
-      "x",
-      event.xRange,
-      frameRef.current
-    );
-    const yMappedRange = extrapolateScaledSelectionRange(
-      "y",
-      event.yRange,
-      frameRef.current
-    );
+    const xMappedRange =
+      event.xRange &&
+      extrapolateScaledSelectionRange("x", event.xRange, frameRef.current);
+    const yMappedRange =
+      event.yRange &&
+      extrapolateScaledSelectionRange("y", event.yRange, frameRef.current);
 
-    const xRanges = xMappedRange.scaled;
-    const yRanges = yMappedRange.scaled;
+    const xRanges = xMappedRange?.scaled;
+    const yRanges = yMappedRange?.scaled;
 
     if (event.completed) {
       selectStateRef.current = null;
@@ -494,11 +490,21 @@ const ChartAreaInteractionsImpl: React.FC<{
     InteractionsBus.spanselect.dispatchEvent(interactionsId, {
       mode: event.mode,
       frame: frameRef.current,
-      xRanges,
-      yRanges,
       completed: event.completed,
-      x: { fromCSS: xMappedRange.fromCSS, toCSS: xMappedRange.toCSS },
-      y: { fromCSS: yMappedRange.fromCSS, toCSS: yMappedRange.toCSS },
+      x: {
+        css: xMappedRange && {
+          from: xMappedRange.fromCSS,
+          to: xMappedRange.toCSS,
+        },
+        scaled: xRanges ?? [],
+      },
+      y: {
+        css: yMappedRange && {
+          from: yMappedRange.fromCSS,
+          to: yMappedRange.toCSS,
+        },
+        scaled: yRanges ?? [],
+      },
       keys: event.keys,
     });
   });

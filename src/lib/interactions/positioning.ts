@@ -1,4 +1,4 @@
-import { getScale, posToVal, valToPos } from "../helpers";
+import { posToVal, valToPos } from "../helpers";
 import type { PlotDrawFrame, PlotDrawScaleConfig } from "../types";
 import type {
   InteractionsEventPointerPosition,
@@ -75,29 +75,9 @@ export const pointerSyncPositionToInteractionsPosition = (
 
 export const extrapolateScaledSelectionRange = (
   origin: PlotDrawScaleConfig["origin"],
-  selectionRange: ScaledSelectionRange | undefined,
+  selectionRange: ScaledSelectionRange,
   frame: PlotDrawFrame
 ): { fromCSS: number; toCSS: number; scaled: ScaledSelectionRange[] } => {
-  if (!selectionRange) {
-    const fromCSS =
-      origin === "x" ? frame.chartAreaCSS.x : frame.chartAreaCSS.y;
-    const toCSS =
-      origin === "x"
-        ? frame.chartAreaCSS.x + frame.chartAreaCSS.width
-        : frame.chartAreaCSS.y + frame.chartAreaCSS.height;
-    return {
-      fromCSS,
-      toCSS,
-      scaled: frame.scales.flatMap((scale): ScaledSelectionRange[] => {
-        if (scale.origin !== origin) {
-          return [];
-        }
-        const { min, max } = getScale(frame, scale.id);
-        return [{ scaleId: scale.id, from: min, to: max }];
-      }),
-    };
-  }
-
   const fromCSS = valToPos(
     frame,
     selectionRange.from,

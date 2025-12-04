@@ -10,31 +10,31 @@ export const SelectBox: React.FC<{
   const [selectState, setSelectState] = useState<SpanSelectEvent | null>(null);
 
   useInteractionsEvent("spanselect", (event) => {
-    setSelectState(event.mode === "none" || event.completed ? null : event);
+    setSelectState(event.mode === "below_threshold" || event.completed ? null : event);
   });
 
   const dimensions = useMemo(() => {
-    if (!selectState) {
+    if (!selectState || selectState.mode === "below_threshold") {
       return null;
     }
     const clampedFromX = clampXPosToChartArea(
       selectState.frame,
-      selectState.x.fromCSS,
+      selectState.x.css?.from ?? -Infinity,
       "css"
     );
     const clampedToX = clampXPosToChartArea(
       selectState.frame,
-      selectState.x.toCSS,
+      selectState.x.css?.to ?? Infinity,
       "css"
     );
     const clampedFromY = clampYPosToChartArea(
       selectState.frame,
-      selectState.y.fromCSS,
+      selectState.y.css?.from ?? -Infinity,
       "css"
     );
     const clampedToY = clampYPosToChartArea(
       selectState.frame,
-      selectState.y.toCSS,
+      selectState.y.css?.to ?? Infinity,
       "css"
     );
 
