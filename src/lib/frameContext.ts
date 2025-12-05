@@ -87,7 +87,9 @@ export const createUpdateRequestStore = () =>
 
 export type FrameStoreType = ReturnType<typeof createFrameStore>;
 
-export type UpdateRequestStoreType = ReturnType<typeof createUpdateRequestStore>;
+export type UpdateRequestStoreType = ReturnType<
+  typeof createUpdateRequestStore
+>;
 
 export const FrameContext = createContext<FrameStoreType | null>(null);
 
@@ -113,7 +115,7 @@ export const useDrawEffect = (
     // run initial
     runnerRef.current(frameStore.getState());
     // subscribe to updates
-    frameStore.subscribe((state) => {
+    return frameStore.subscribe((state) => {
       if (!state._frame) {
         return;
       }
@@ -125,6 +127,7 @@ export const useDrawEffect = (
     updateRequestStore.getState().notify();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateRequestStore, ...deps]);
+
 };
 
 export const useFrameState = <T = PlotDrawFrame>(
