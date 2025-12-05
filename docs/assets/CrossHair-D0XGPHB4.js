@@ -1,4 +1,4 @@
-import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as v}from"./iframe-B9ZU6-mP.js";import{u as d}from"./ChartAreaInteractions-B6EBIp6h.js";import{c as b,b as k}from"./CanPlot-Cupv9CKr.js";const p=({makeXStyle:a,makeXClassName:i,makeYStyle:l,makeYClassName:u})=>{const[e,s]=v.useState(null);if(d("move",y=>{s(y)}),!e)return null;const{frame:n,pointer:t}=e,m=b(n,t?.cssX??0,"css"),o=k(n,t?.cssY??0,"css");return r.jsxs(r.Fragment,{children:[r.jsx("div",{"data-show":!!t,className:i?.(e),style:{position:"absolute",left:0,top:n.chartAreaCSS.y,height:n.chartAreaCSS.height,borderColor:"red",borderLeftWidth:"1px",borderLeftStyle:"solid",pointerEvents:"none",opacity:t?1:0,transform:`translateX(${m}px)`,...a?.(e)}}),r.jsx("div",{className:u?.(e),"data-show":!!t,style:{position:"absolute",top:0,height:0,borderTop:"solid 1px red",left:n.chartAreaCSS.x,width:n.chartAreaCSS.width,pointerEvents:"none",opacity:t?1:0,transform:`translateY(${o}px)`,...l?.(e)}})]})};p.__docgenInfo={description:"",methods:[],displayName:"Crosshair",props:{makeXStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as b}from"./iframe-C1CH_hI7.js";import{u as k}from"./ChartAreaInteractions-CZ0U30Cp.js";import{c as p,d as S}from"./CanPlot-D1VaopC9.js";const g=({makeXStyle:l,makeXClassName:u,makeYStyle:s,makeYClassName:m})=>{const[e,o]=b.useState(null);if(k("move",d=>{o(d)}),!e)return null;const{frame:n,pointer:t}=e,a=t?.cssX??null,i=t?.cssY??null,y=a?p(n,a,"css"):0,v=i?S(n,i,"css"):0;return r.jsxs(r.Fragment,{children:[r.jsx("div",{"data-show":!!t,className:u?.(e),style:{position:"absolute",left:0,visibility:a===null?"hidden":"visible",top:n.chartAreaCSS.y,height:n.chartAreaCSS.height,borderColor:"red",borderLeftWidth:"1px",borderLeftStyle:"solid",pointerEvents:"none",opacity:t?1:0,transform:`translateX(${y}px)`,...l?.(e)}}),r.jsx("div",{className:m?.(e),"data-show":!!t,style:{position:"absolute",visibility:i===null?"hidden":"visible",top:0,height:0,borderTop:"solid 1px red",left:n.chartAreaCSS.x,width:n.chartAreaCSS.width,pointerEvents:"none",opacity:t?1:0,transform:`translateY(${v}px)`,...s?.(e)}})]})};g.__docgenInfo={description:"",methods:[],displayName:"Crosshair",props:{makeXStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
@@ -91,10 +91,10 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as v}from"./iframe-B9ZU6-
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
-  cssX: number;
-  cssY: number;
+  cssX: number | null;
+  cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"number",required:!0}},{key:"cssY",value:{name:"number",required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeXClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeXClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
@@ -187,10 +187,10 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as v}from"./iframe-B9ZU6-
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
-  cssX: number;
-  cssY: number;
+  cssX: number | null;
+  cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"number",required:!0}},{key:"cssY",value:{name:"number",required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""},makeYStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""},makeYStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
@@ -283,10 +283,10 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as v}from"./iframe-B9ZU6-
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
-  cssX: number;
-  cssY: number;
+  cssX: number | null;
+  cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"number",required:!0}},{key:"cssY",value:{name:"number",required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeYClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeYClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
@@ -379,7 +379,7 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as v}from"./iframe-B9ZU6-
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
-  cssX: number;
-  cssY: number;
+  cssX: number | null;
+  cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"number",required:!0}},{key:"cssY",value:{name:"number",required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""}}};export{p as C};
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""}}};export{g as C};

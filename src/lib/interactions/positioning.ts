@@ -44,30 +44,26 @@ export const pointerSyncPositionToInteractionsPosition = (
   pointerSyncPosition: PointerSyncPosition,
   frame: PlotDrawFrame
 ): InteractionsEventPointerPosition | undefined => {
-  const cssX = pointerSyncPosition.x
-    ? valToPos(
-        frame,
-        pointerSyncPosition.x.value,
-        pointerSyncPosition.x.scaleId,
-        "css"
-      )
-    : 0;
-  const cssY = pointerSyncPosition.y
-    ? valToPos(
-        frame,
-        pointerSyncPosition.y.value,
-        pointerSyncPosition.y.scaleId,
-        "css"
-      )
-    : 0;
+  const { x, y } = pointerSyncPosition;
+  const cssX =
+    x && frame.scales.some((scale) => scale.id === x.scaleId)
+      ? valToPos(frame, x.value, x.scaleId, "css")
+      : null;
+  const cssY =
+    y && frame.scales.some((scale) => scale.id === y.scaleId)
+      ? valToPos(frame, y.value, y.scaleId, "css")
+      : null;
   return {
     cssX,
     cssY,
     scaled: Object.fromEntries(
-      frame.scales.map((scale) => {
+      frame.scales.flatMap((scale) => {
         const pos = scale.origin === "y" ? cssY : cssX;
+        if (pos === null) {
+          return [];
+        }
 
-        return [scale.id, posToVal(frame, pos, scale.id, "css")];
+        return [[scale.id, posToVal(frame, pos, scale.id, "css")]];
       })
     ),
   };

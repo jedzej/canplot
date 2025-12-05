@@ -1,1 +1,0 @@
-import{u as a,d as l}from"./CanPlot-Cupv9CKr.js";const y=({data:o,xScaleId:n,yScaleId:s,style:r})=>(a(({getCtx:f,clampXPosToChartArea:i,clampYPosToChartArea:p,valToPos:e})=>{const t=f();t.save(),t.beginPath(),l(t,r);for(const c of o){const u=i(e(c.x,n)),x=p(e(c.y,s));t.lineTo(u,x)}t.stroke(),t.restore()},[o,n,s,r]),null);export{y as L};

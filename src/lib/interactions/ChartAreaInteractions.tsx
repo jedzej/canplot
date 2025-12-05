@@ -119,14 +119,14 @@ const ChartAreaInteractionsImpl: React.FC<{
 
   const interactionsId = useContext(InteractionsIdContext);
 
-  const effectiveSyncKey = sync?.key || interactionsId;
+  const moveSyncKey = sync?.key || interactionsId;
 
   const selectStateRef = useRef<{
     xRangeCss: { start: number; end: number };
     yRangeCss: { start: number; end: number };
   } | null>(null);
 
-  const lastSpanSelectSyncEventRef = useRef<SyncEvent_SpanSelect | null>(null);
+  const lastSpanSelectEventRef = useRef<SpanSelectEvent | null>(null);
   const lastMoveSyncEventRef = useRef<SyncEvent_Move | null>(null);
 
   const getRect = () => {
@@ -184,14 +184,14 @@ const ChartAreaInteractionsImpl: React.FC<{
 
   useEffect(() => {
     const mouseUpListener = (event: MouseEvent) => {
-      const lastSpanSelectSyncEvent = lastSpanSelectSyncEventRef.current;
+      const lastSpanSelectSyncEvent = lastSpanSelectEventRef.current;
       if (lastSpanSelectSyncEvent) {
-        InteractionsBus.sync_spanselect.dispatchEvent(effectiveSyncKey, {
+        InteractionsBus.spanselect.dispatchEvent(interactionsId, {
           ...lastSpanSelectSyncEvent,
           completed: true,
         });
       }
-      InteractionsBus.documentmouseup.dispatchEvent(effectiveSyncKey, {
+      InteractionsBus.documentmouseup.dispatchEvent(interactionsId, {
         frame: frameRef.current,
         keys: {
           ctrlKey: event.ctrlKey,
@@ -219,10 +219,10 @@ const ChartAreaInteractionsImpl: React.FC<{
       ) {
         const newMoveEvent = { ...lastMove, keys: newKeys };
         lastMoveSyncEventRef.current = newMoveEvent;
-        InteractionsBus.sync_move.dispatchEvent(effectiveSyncKey, newMoveEvent);
+        InteractionsBus.sync_move.dispatchEvent(moveSyncKey, newMoveEvent);
       }
 
-      const lastSpan = lastSpanSelectSyncEventRef.current;
+      const lastSpan = lastSpanSelectEventRef.current;
       if (
         lastSpan &&
         Object.entries(newKeys).some(
@@ -233,11 +233,8 @@ const ChartAreaInteractionsImpl: React.FC<{
         event.stopPropagation();
         event.preventDefault();
         const newSpanEvent = { ...lastSpan, keys: newKeys };
-        lastSpanSelectSyncEventRef.current = newSpanEvent;
-        InteractionsBus.sync_spanselect.dispatchEvent(
-          effectiveSyncKey,
-          newSpanEvent
-        );
+        lastSpanSelectEventRef.current = newSpanEvent;
+        InteractionsBus.spanselect.dispatchEvent(interactionsId, newSpanEvent);
       }
     };
 
@@ -309,18 +306,41 @@ const ChartAreaInteractionsImpl: React.FC<{
             ),
           };
 
-          const spanSelectSyncEvent: SyncEvent_SpanSelect = {
+          const xMappedRange =
+            xRange &&
+            extrapolateScaledSelectionRange("x", xRange, frameRef.current);
+          const yMappedRange =
+            yRange &&
+            extrapolateScaledSelectionRange("y", yRange, frameRef.current);
+
+          const xRanges = xMappedRange?.scaled;
+          const yRanges = yMappedRange?.scaled;
+
+          const spanSelectEvent: SpanSelectEvent = {
             mode,
-            xRange,
-            yRange,
+            frame: frameRef.current,
             completed: false,
+            x: {
+              css: xMappedRange && {
+                from: xMappedRange.fromCSS,
+                to: xMappedRange.toCSS,
+              },
+              scaled: xRanges ?? [],
+            },
+            y: {
+              css: yMappedRange && {
+                from: yMappedRange.fromCSS,
+                to: yMappedRange.toCSS,
+              },
+              scaled: yRanges ?? [],
+            },
             keys,
           };
-          lastSpanSelectSyncEventRef.current = spanSelectSyncEvent;
+          lastSpanSelectEventRef.current = spanSelectEvent;
 
-          InteractionsBus.sync_spanselect.dispatchEvent(
-            effectiveSyncKey,
-            spanSelectSyncEvent
+          InteractionsBus.spanselect.dispatchEvent(
+            interactionsId,
+            spanSelectEvent
           );
         }
       );
@@ -328,6 +348,11 @@ const ChartAreaInteractionsImpl: React.FC<{
 
     const mouseWheelListener = (event: WheelEvent) => {
       withPointerPositionRef.current(event, (positions, _, keys) => {
+        const pointer = pointerSyncPositionToInteractionsPosition(
+          positions,
+          frameRef.current
+        );
+        if (!pointer) return;
         const anyButtonPressed = Object.values(keys).some((v) => v);
         if (anyButtonPressed) {
           event.preventDefault();
@@ -335,8 +360,9 @@ const ChartAreaInteractionsImpl: React.FC<{
             Math.abs(event.deltaY) > Math.abs(event.deltaX)
               ? event.deltaY
               : event.deltaX;
-          InteractionsBus.sync_pressandwheel.dispatchEvent(effectiveSyncKey, {
-            positions,
+          InteractionsBus.pressandwheel.dispatchEvent(interactionsId, {
+            pointer,
+            frame: frameRef.current,
             keys,
             deltaX: event.deltaX,
             deltaY: event.deltaY,
@@ -361,49 +387,11 @@ const ChartAreaInteractionsImpl: React.FC<{
       document.removeEventListener("mousemove", mouseOverDocumentListener);
       interactionsAreaElement?.removeEventListener("wheel", mouseWheelListener);
     };
-  }, [frameRef, effectiveSyncKey, withPointerPositionRef]);
+  }, [frameRef, interactionsId, moveSyncKey, withPointerPositionRef]);
 
   // SYNC EVENTS
-  useGenericInteractionsEvent("sync_dblclick", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions,
-      frameRef.current
-    );
-    if (!positions) return;
-    InteractionsBus.dblclick.dispatchEvent(interactionsId, {
-      frame: frameRef.current,
-      pointer: positions,
-      keys: event.keys,
-    });
-  });
 
-  useGenericInteractionsEvent("sync_click", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions,
-      frameRef.current
-    );
-    if (!positions) return;
-    InteractionsBus.click.dispatchEvent(interactionsId, {
-      frame: frameRef.current,
-      pointer: positions,
-      keys: event.keys,
-    });
-  });
-
-  useGenericInteractionsEvent("sync_contextmenu", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions,
-      frameRef.current
-    );
-    if (!positions) return;
-    InteractionsBus.contextmenu.dispatchEvent(interactionsId, {
-      frame: frameRef.current,
-      pointer: positions,
-      keys: event.keys,
-    });
-  });
-
-  useGenericInteractionsEvent("sync_move", effectiveSyncKey, (event) => {
+  useGenericInteractionsEvent("sync_move", moveSyncKey, (event) => {
     const positions = event.positions
       ? pointerSyncPositionToInteractionsPosition(
           event.positions,
@@ -415,90 +403,6 @@ const ChartAreaInteractionsImpl: React.FC<{
     InteractionsBus.move.dispatchEvent(interactionsId, {
       frame: frameRef.current,
       pointer: positions ?? null,
-      keys: event.keys,
-    });
-  });
-
-  useGenericInteractionsEvent("sync_mousedown", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions,
-      frameRef.current
-    );
-    if (!positions) return;
-
-    InteractionsBus.mousedown.dispatchEvent(interactionsId, {
-      frame: frameRef.current,
-      pointer: positions,
-      keys: event.keys,
-    });
-  });
-
-  useGenericInteractionsEvent("sync_mouseup", effectiveSyncKey, (event) => {
-    const positions = pointerSyncPositionToInteractionsPosition(
-      event.positions,
-      frameRef.current
-    );
-    if (!positions) return;
-    InteractionsBus.mouseup.dispatchEvent(interactionsId, {
-      frame: frameRef.current,
-      pointer: positions,
-      keys: event.keys,
-    });
-  });
-
-  useGenericInteractionsEvent(
-    "sync_pressandwheel",
-    effectiveSyncKey,
-    (event) => {
-      const positions = pointerSyncPositionToInteractionsPosition(
-        event.positions,
-        frameRef.current
-      );
-      if (!positions) return;
-      InteractionsBus.pressandwheel.dispatchEvent(interactionsId, {
-        frame: frameRef.current,
-        pointer: positions,
-        keys: event.keys,
-        deltaX: event.deltaX,
-        deltaY: event.deltaY,
-        deltaAbs: event.deltaAbs,
-      });
-    }
-  );
-
-  useGenericInteractionsEvent("sync_spanselect", effectiveSyncKey, (event) => {
-    const xMappedRange =
-      event.xRange &&
-      extrapolateScaledSelectionRange("x", event.xRange, frameRef.current);
-    const yMappedRange =
-      event.yRange &&
-      extrapolateScaledSelectionRange("y", event.yRange, frameRef.current);
-
-    const xRanges = xMappedRange?.scaled;
-    const yRanges = yMappedRange?.scaled;
-
-    if (event.completed) {
-      selectStateRef.current = null;
-    }
-
-    InteractionsBus.spanselect.dispatchEvent(interactionsId, {
-      mode: event.mode,
-      frame: frameRef.current,
-      completed: event.completed,
-      x: {
-        css: xMappedRange && {
-          from: xMappedRange.fromCSS,
-          to: xMappedRange.toCSS,
-        },
-        scaled: xRanges ?? [],
-      },
-      y: {
-        css: yMappedRange && {
-          from: yMappedRange.fromCSS,
-          to: yMappedRange.toCSS,
-        },
-        scaled: yRanges ?? [],
-      },
       keys: event.keys,
     });
   });
@@ -522,15 +426,21 @@ const ChartAreaInteractionsImpl: React.FC<{
       }}
       onClick={(event) => {
         withPointerPosition(event, (positions, _, keys) => {
-          InteractionsBus.sync_click.dispatchEvent(effectiveSyncKey, {
+          const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
+            frameRef.current
+          );
+          if (!pointer) return;
+          InteractionsBus.click.dispatchEvent(interactionsId, {
+            pointer,
+            frame: frameRef.current,
             keys,
           });
         });
       }}
       onMouseLeave={(event) => {
         withPointerPosition(event, (_, __, keys) => {
-          InteractionsBus.sync_move.dispatchEvent(effectiveSyncKey, {
+          InteractionsBus.sync_move.dispatchEvent(interactionsId, {
             positions: null,
             keys,
           });
@@ -538,7 +448,7 @@ const ChartAreaInteractionsImpl: React.FC<{
       }}
       onMouseMove={(event) => {
         withPointerPosition(event, (positions, _, keys) => {
-          InteractionsBus.sync_move.dispatchEvent(effectiveSyncKey, {
+          InteractionsBus.sync_move.dispatchEvent(moveSyncKey, {
             positions,
             keys,
           });
@@ -546,11 +456,16 @@ const ChartAreaInteractionsImpl: React.FC<{
       }}
       onMouseDown={(event) => {
         withPointerPosition(event, (positions, { cssX, cssY }, keys) => {
-          InteractionsBus.sync_mousedown.dispatchEvent(effectiveSyncKey, {
+          const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
+            frameRef.current
+          );
+          if (!pointer) return;
+          InteractionsBus.mousedown.dispatchEvent(interactionsId, {
+            pointer,
+            frame: frameRef.current,
             keys,
           });
-          lastSpanSelectSyncEventRef.current = null;
           selectStateRef.current = {
             xRangeCss: { start: cssX, end: cssX },
             yRangeCss: { start: cssY, end: cssY },
@@ -559,12 +474,18 @@ const ChartAreaInteractionsImpl: React.FC<{
       }}
       onMouseUp={(event) => {
         withPointerPosition(event, (positions, _, keys) => {
-          InteractionsBus.sync_mouseup.dispatchEvent(effectiveSyncKey, {
+          const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
+            frameRef.current
+          );
+          if (!pointer) return;
+          InteractionsBus.mouseup.dispatchEvent(interactionsId, {
+            frame: frameRef.current,
+            pointer,
             keys,
           });
-          const lastSpanSelectEvent = lastSpanSelectSyncEventRef.current;
-          lastSpanSelectSyncEventRef.current = null;
+          const lastSpanSelectEvent = lastSpanSelectEventRef.current;
+          lastSpanSelectEventRef.current = null;
           const selectState = selectStateRef.current;
           selectStateRef.current = null;
           if (selectState && lastSpanSelectEvent) {
@@ -573,8 +494,9 @@ const ChartAreaInteractionsImpl: React.FC<{
               keys,
               completed: true,
             };
-            InteractionsBus.sync_spanselect.dispatchEvent(
-              effectiveSyncKey,
+            lastSpanSelectEventRef.current = null;
+            InteractionsBus.spanselect.dispatchEvent(
+              interactionsId,
               spanSelectEvent
             );
           }
@@ -583,16 +505,28 @@ const ChartAreaInteractionsImpl: React.FC<{
       onContextMenu={(event) => {
         event.preventDefault();
         withPointerPosition(event, (positions, _, keys) => {
-          InteractionsBus.sync_contextmenu.dispatchEvent(effectiveSyncKey, {
+          const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
+            frameRef.current
+          );
+          if (!pointer) return;
+          InteractionsBus.contextmenu.dispatchEvent(interactionsId, {
+            frame: frameRef.current,
+            pointer,
             keys,
           });
         });
       }}
       onDoubleClick={(event) => {
         withPointerPosition(event, (positions, _, keys) => {
-          InteractionsBus.sync_dblclick.dispatchEvent(effectiveSyncKey, {
+          const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
+            frameRef.current
+          );
+          if (!pointer) return;
+          InteractionsBus.dblclick.dispatchEvent(interactionsId, {
+            frame: frameRef.current,
+            pointer,
             keys,
           });
         });

@@ -8,14 +8,7 @@ import type {
   MoveEvent,
   SpanSelectEvent,
   PressAndWheelEvent,
-  SyncEvent_Click,
-  SyncEvent_DblClick,
-  SyncEvent_MouseDown,
-  SyncEvent_MouseUp,
   SyncEvent_Move,
-  SyncEvent_SpanSelect,
-  SyncEvent_PressAndWheel,
-  SyncEvent_ContextMenu,
   ContextMenuEvent,
 } from "./types";
 
@@ -62,14 +55,7 @@ export const InteractionsBus = {
   spanselect: makeInteractionsBus<SpanSelectEvent>(),
   documentmouseup: makeInteractionsBus<DocumentMouseUpEvent>(),
   pressandwheel: makeInteractionsBus<PressAndWheelEvent>(),
-  sync_dblclick: makeInteractionsBus<SyncEvent_DblClick>(),
-  sync_click: makeInteractionsBus<SyncEvent_Click>(),
   sync_move: makeInteractionsBus<SyncEvent_Move>(),
-  sync_mousedown: makeInteractionsBus<SyncEvent_MouseDown>(),
-  sync_mouseup: makeInteractionsBus<SyncEvent_MouseUp>(),
-  sync_spanselect: makeInteractionsBus<SyncEvent_SpanSelect>(),
-  sync_pressandwheel: makeInteractionsBus<SyncEvent_PressAndWheel>(),
-  sync_contextmenu: makeInteractionsBus<SyncEvent_ContextMenu>(),
 };
 
 export const useGenericInteractionsEvent = <

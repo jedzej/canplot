@@ -1,0 +1,1 @@
+import{u as a,b}from"./CanPlot-D1VaopC9.js";const m=({data:o,xScaleId:n,yScaleId:s,style:r})=>(a(({getCtx:f,clampXPosToChartArea:i,clampYPosToChartArea:p,valToPos:e})=>{const t=f();t.save(),t.beginPath(),b(t,r);for(const c of o){const u=i(e(c.x,n)),x=p(e(c.y,s));t.lineTo(u,x)}t.stroke(),t.restore()},[o,n,s,r]),null);export{m as L};

@@ -21,10 +21,12 @@ export const Crosshair: React.FC<{
   }
 
   const { frame, pointer } = moveState;
+  const cssX = pointer?.cssX ?? null;
+  const cssY = pointer?.cssY ?? null;
 
-  const clampedX = clampXPosToChartArea(frame, pointer?.cssX ?? 0, "css");
+  const clampedX = cssX ? clampXPosToChartArea(frame, cssX, "css") : 0;
 
-  const clampedY = clampYPosToChartArea(frame, pointer?.cssY ?? 0, "css");
+  const clampedY = cssY ? clampYPosToChartArea(frame, cssY, "css") : 0;
 
   return (
     <>
@@ -34,6 +36,7 @@ export const Crosshair: React.FC<{
         style={{
           position: "absolute",
           left: 0,
+          visibility: cssX === null ? "hidden" : "visible",
           top: frame.chartAreaCSS.y,
           height: frame.chartAreaCSS.height,
           borderColor: "red",
@@ -50,6 +53,7 @@ export const Crosshair: React.FC<{
         data-show={!!pointer}
         style={{
           position: "absolute",
+          visibility: cssY === null ? "hidden" : "visible",
           top: 0,
           height: 0,
           borderTop: "solid 1px red",

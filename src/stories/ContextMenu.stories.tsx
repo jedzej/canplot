@@ -63,8 +63,8 @@ export const BasicContextMenu: Story = {
       // Get the mouse position relative to the viewport
       const rect = event.frame.ctx.canvas.getBoundingClientRect();
       setMenuPosition({
-        x: event.pointer.cssX + rect.left,
-        y: event.pointer.cssY + rect.top,
+        x: (event.pointer?.cssX ?? 0) + rect.left,
+        y: (event.pointer?.cssY ?? 0) + rect.top,
         xValue: event.pointer.scaled.x,
         yValue: event.pointer.scaled.y,
       });
@@ -281,8 +281,8 @@ export const ContextMenuWithDataSelection: Story = {
 
       const rect = event.frame.ctx.canvas.getBoundingClientRect();
       setMenuPosition({
-        x: event.pointer.cssX + rect.left,
-        y: event.pointer.cssY + rect.top,
+        x: (event.pointer.cssX ?? 0) + rect.left,
+        y: (event.pointer.cssY ?? 0) + rect.top,
         nearestPoint: minDistance < 10 ? nearestPoint : null,
       });
     };
@@ -557,8 +557,8 @@ export const ContextMenuMultiSeries: Story = {
 
       const rect = event.frame.ctx.canvas.getBoundingClientRect();
       setMenuPosition({
-        x: event.pointer.cssX + rect.left,
-        y: event.pointer.cssY + rect.top,
+        x: (event.pointer.cssX ?? 0) + rect.left,
+        y: (event.pointer.cssY ?? 0) + rect.top,
         xValue: event.pointer.scaled.x,
         yValue: event.pointer.scaled.y,
       });
@@ -847,8 +847,8 @@ export const ContextMenuWithModifiers: Story = {
 
       const rect = event.frame.ctx.canvas.getBoundingClientRect();
       setMenuPosition({
-        x: event.pointer.cssX + rect.left,
-        y: event.pointer.cssY + rect.top,
+        x: (event.pointer.cssX ?? 0) + rect.left,
+        y: (event.pointer.cssY ?? 0) + rect.top,
         xValue: event.pointer.scaled.x,
         yValue: event.pointer.scaled.y,
         modifiers: {
@@ -1119,8 +1119,8 @@ export const StyledContextMenu: Story = {
 
       const rect = event.frame.ctx.canvas.getBoundingClientRect();
       setMenuPosition({
-        x: event.pointer.cssX + rect.left,
-        y: event.pointer.cssY + rect.top,
+        x: (event.pointer.cssX ?? 0) + rect.left,
+        y: (event.pointer.cssY ?? 0) + rect.top,
         xValue: event.pointer.scaled.x,
         yValue: event.pointer.scaled.y,
       });

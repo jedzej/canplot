@@ -66,34 +66,11 @@ export type SyncEvent_SpanSelect = {
   keys: ModifiersKeys;
 };
 
-export type PointerSyncEvent =
-  | {
-      type:
-        | "dblclick"
-        | "click"
-        | "move"
-        | "mousedown"
-        | "mouseup"
-        | "documentmouseup"
-        | "contextmenu";
-      x: {
-        scaleId: string;
-        value: number;
-      } | null;
-      y: {
-        scaleId: string;
-        value: number;
-      } | null;
-    }
-  | {
-      type: "spanselect";
-    };
-
 // INTERACTIONS PER SINGLE PLOT
 
 export type InteractionsEventPointerPosition = {
-  cssX: number;
-  cssY: number;
+  cssX: number | null;
+  cssY: number | null;
   scaled: Record<string, number>;
 };
 
