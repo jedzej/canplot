@@ -440,7 +440,7 @@ const ChartAreaInteractionsImpl: React.FC<{
       }}
       onMouseLeave={(event) => {
         withPointerPosition(event, (_, __, keys) => {
-          InteractionsBus.sync_move.dispatchEvent(interactionsId, {
+          InteractionsBus.sync_move.dispatchEvent(moveSyncKey, {
             positions: null,
             keys,
           });
