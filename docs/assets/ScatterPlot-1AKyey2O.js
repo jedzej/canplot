@@ -1,0 +1,1 @@
+import{u as x,b}from"./CanPlot-nn6GHReb.js";const y=({data:s,xScaleId:n,yScaleId:r,radius:e=5,style:f})=>(x(({getCtx:u,valToPos:c,valFits:p})=>{const t=u();t.save(),t.beginPath(),b(t,f);for(const o of s){if(!p(o.x,n)||!p(o.y,r))continue;const i=c(o.x,n),m=c(o.y,r);t.moveTo(i+e,m),t.arc(i,m,e,0,Math.PI*2)}t.stroke(),t.fill(),t.restore()},[s,n,r,e,f]),null);export{y as S};
