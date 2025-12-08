@@ -113,7 +113,9 @@ export const useDrawEffect = (
 
   useLayoutEffect(() => {
     // run initial
-    runnerRef.current(frameStore.getState());
+    Promise.resolve().then(() => {
+      runnerRef.current(frameStore.getState());
+    });
     // subscribe to updates
     return frameStore.subscribe((state) => {
       if (!state._frame) {
@@ -127,7 +129,6 @@ export const useDrawEffect = (
     updateRequestStore.getState().notify();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateRequestStore, ...deps]);
-
 };
 
 export const useFrameState = <T = PlotDrawFrame>(
