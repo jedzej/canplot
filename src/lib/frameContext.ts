@@ -17,8 +17,8 @@ import {
 } from "./helpers";
 
 export const CANPLOT_LAYER = {
-  TOP: 300,
-  MIDDLE: 200,
+  TOP: 400,
+  MIDDLE: 300,
   BOTTOM: 200,
   BACKGROUND: 100,
 } as const;
