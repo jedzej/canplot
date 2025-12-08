@@ -1,7 +1,8 @@
-import { useDrawEffect } from "../frameContext";
+import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 
 export const BarPlot: React.FC<{
+  layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: number }>;
   xPositionOffset: number;
   xScaleId: string;
@@ -25,9 +26,10 @@ export const BarPlot: React.FC<{
   barWidth: barWidthRaw,
   xPositionOffset,
   radius,
+  layer = "MIDDLE",
 }) => {
   useDrawEffect(
-    "MIDDLE",
+    layer,
     ({
       getCtx,
       valToPxDistance,

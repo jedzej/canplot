@@ -1,11 +1,13 @@
-import { useDrawEffect } from "../frameContext";
+import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 
 export const ScatterPlot: React.FC<{
+  layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: number }>;
   xScaleId: string;
   yScaleId: string;
   radius?: number;
+  globalAlpha?: number;
   style?: Partial<
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
@@ -15,28 +17,32 @@ export const ScatterPlot: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ data, xScaleId, yScaleId, radius = 5, style }) => {
+}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, radius = 5, style, globalAlpha }) => {
   useDrawEffect(
-    "MIDDLE",
+    layer,
     ({ getCtx, valToPos, valFits }) => {
       const ctx = getCtx();
       ctx.save();
       ctx.beginPath();
+      const path = new Path2D();
       applyStyles(ctx, style);
+      if (globalAlpha !== undefined) {
+        ctx.globalAlpha = globalAlpha;
+      }
       for (const point of data) {
         if (!valFits(point.x, xScaleId) || !valFits(point.y, yScaleId)) {
           continue;
         }
         const x = valToPos(point.x, xScaleId);
         const y = valToPos(point.y, yScaleId);
-        ctx.moveTo(x + radius, y);
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        path.moveTo(x + radius, y);
+        path.arc(x, y, radius, 0, Math.PI * 2);
       }
-      ctx.stroke();
-      ctx.fill();
+      ctx.fill(path);
+      ctx.stroke(path);
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, radius, style]
+    [data, xScaleId, yScaleId, radius, style, globalAlpha]
   );
   return null;
 };

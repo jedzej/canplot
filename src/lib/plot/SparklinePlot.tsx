@@ -1,7 +1,8 @@
-import { useDrawEffect } from "../frameContext";
+import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 
 export const SparklinePlot: React.FC<{
+  layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: number }>;
   xScaleId: string;
   yScaleId: string;
@@ -15,9 +16,9 @@ export const SparklinePlot: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ data, stroked, xScaleId, yScaleId, style }) => {
+}> = ({ layer = "MIDDLE", data, stroked, xScaleId, yScaleId, style }) => {
   useDrawEffect(
-    "MIDDLE",
+    layer,
     ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
       const ctx = getCtx();

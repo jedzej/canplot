@@ -1,7 +1,8 @@
-import { useDrawEffect } from "../frameContext";
+import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 
 export const AreaPlot: React.FC<{
+  layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: [number, number] }>;
   xScaleId: string;
   yScaleId: string;
@@ -14,9 +15,9 @@ export const AreaPlot: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ data, xScaleId, yScaleId, style }) => {
+}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
   useDrawEffect(
-    "MIDDLE",
+    layer,
     ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
       for (const datapoint of data) {

@@ -1,17 +1,18 @@
-import { useDrawEffect } from "../frameContext";
+import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
 import type { Style, TicksConfig } from "../types";
 
 export const XTicks: React.FC<{
+  layer?: number | keyof typeof CANPLOT_LAYER;
   scaleId: string;
   tickStyle?: Style;
   labelStyle?: Style;
   labelGap?: number;
   tickSize?: number;
   ticks: TicksConfig;
-}> = ({ scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
+}> = ({ layer = "BOTTOM", scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
   useDrawEffect(
-    "BOTTOM",
+    layer,
     ({ getCtx, valToPos, getScale, getFrame }) => {
       const ctx = getCtx();
       const scale = getScale(scaleId);
@@ -71,15 +72,16 @@ export const XTicks: React.FC<{
 };
 
 export const YTicks: React.FC<{
+  layer?: number | keyof typeof CANPLOT_LAYER;
   scaleId: string;
   tickStyle?: Style;
   labelStyle?: Style;
   labelGap?: number;
   tickSize?: number;
   ticks: TicksConfig;
-}> = ({ scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
+}> = ({ layer = "BOTTOM", scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
   useDrawEffect(
-    "BOTTOM",
+    layer,
     ({ getCtx, valToPos, getScale, getFrame }) => {
       const ctx = getCtx();
       const scale = getScale(scaleId);
