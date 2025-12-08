@@ -1,7 +1,6 @@
 import { useDrawEffect } from "../frameContext";
 import { applyStyles } from "../helpers";
-import type {  Style, TicksConfig } from "../types";
-
+import type { Style, TicksConfig } from "../types";
 
 export const XTicks: React.FC<{
   scaleId: string;
@@ -12,6 +11,7 @@ export const XTicks: React.FC<{
   ticks: TicksConfig;
 }> = ({ scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
   useDrawEffect(
+    "BOTTOM",
     ({ getCtx, valToPos, getScale, getFrame }) => {
       const ctx = getCtx();
       const scale = getScale(scaleId);
@@ -25,7 +25,8 @@ export const XTicks: React.FC<{
       const dpr = window.devicePixelRatio || 1;
       const y0 = y;
       const effectiveTickSize = (tickSize ?? 6) * dpr;
-      const y1 = axis.position === "top" ? y - effectiveTickSize : y + effectiveTickSize;
+      const y1 =
+        axis.position === "top" ? y - effectiveTickSize : y + effectiveTickSize;
       const multilineGap = (labelGap ?? 12) * dpr;
 
       // draw ticks
@@ -37,7 +38,7 @@ export const XTicks: React.FC<{
       ctx.beginPath();
       const resolvedTicks = Array.isArray(ticks)
         ? ticks
-        : ticks({...scale, axis}, getFrame());
+        : ticks({ ...scale, axis }, getFrame());
 
       for (const { value } of resolvedTicks) {
         const x = valToPos(value, scaleId, "canvas");
@@ -78,6 +79,7 @@ export const YTicks: React.FC<{
   ticks: TicksConfig;
 }> = ({ scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
   useDrawEffect(
+    "BOTTOM",
     ({ getCtx, valToPos, getScale, getFrame }) => {
       const ctx = getCtx();
       const scale = getScale(scaleId);
@@ -89,13 +91,16 @@ export const YTicks: React.FC<{
           : axis.canvasRect.x;
 
       const x0 = x;
-      const effectiveTickSize = (tickSize ?? 6);
-      const x1 = axis.position === "left" ? x - effectiveTickSize : x + effectiveTickSize;
-      const multilineGap = (labelGap ?? 12);
+      const effectiveTickSize = tickSize ?? 6;
+      const x1 =
+        axis.position === "left"
+          ? x - effectiveTickSize
+          : x + effectiveTickSize;
+      const multilineGap = labelGap ?? 12;
 
       const resolvedTicks = Array.isArray(ticks)
         ? ticks
-        : ticks({...scale, axis}, getFrame());
+        : ticks({ ...scale, axis }, getFrame());
 
       // draw ticks
       ctx.save();

@@ -17,6 +17,7 @@ export const SparklinePlot: React.FC<{
   >;
 }> = ({ data, stroked, xScaleId, yScaleId, style }) => {
   useDrawEffect(
+    "MIDDLE",
     ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
       const ctx = getCtx();

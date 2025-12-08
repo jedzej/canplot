@@ -16,6 +16,7 @@ export const LinePlot: React.FC<{
   >;
 }> = ({ data, xScaleId, yScaleId, style }) => {
   useDrawEffect(
+    "MIDDLE",
     ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const ctx = getCtx();
       ctx.save();

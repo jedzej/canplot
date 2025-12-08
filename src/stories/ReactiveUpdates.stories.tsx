@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CanPlot } from "../lib/CanPlot";
 import type { PlotScaleConfig } from "../lib/types";
 import type React from "react";
-import { useDrawEffect } from "../lib";
+import { useDrawEffect, CANPLOT_LAYER } from "../lib";
 import { useEffect, useState } from "react";
 import { LinePlot } from "../lib/plot/LinePlot";
 import { ScatterPlot } from "../lib/plot/ScatterPlot";
@@ -88,21 +88,25 @@ const ReactiveChild: React.FC<{ color: string }> = ({ color }) => {
     return () => clearInterval(interval);
   }, []);
 
-  useDrawEffect(({clampYPosToChartArea, getCtx, valToPos}) => {
-    const ctx = getCtx();
-    const xPos = valToPos(randomNumber, "x", "canvas");
-    const x0 = clampYPosToChartArea(-Infinity, "canvas")
-    const x1 = clampYPosToChartArea(Infinity, "canvas")
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(xPos, x0);
-    ctx.lineTo(xPos, x1);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.closePath()
-    ctx.restore();
-  }, [randomNumber, color]);
+  useDrawEffect(
+    "TOP",
+    ({ clampYPosToChartArea, getCtx, valToPos }) => {
+      const ctx = getCtx();
+      const xPos = valToPos(randomNumber, "x", "canvas");
+      const x0 = clampYPosToChartArea(-Infinity, "canvas");
+      const x1 = clampYPosToChartArea(Infinity, "canvas");
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(xPos, x0);
+      ctx.lineTo(xPos, x1);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.closePath();
+      ctx.restore();
+    },
+    [randomNumber, color]
+  );
   return null;
 };
 
@@ -110,7 +114,13 @@ const ReactiveChild: React.FC<{ color: string }> = ({ color }) => {
 export const DynamicSeries: Story = {
   render: () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [series, setSeries] = useState<Array<{ id: number; color: string; data: Array<{ x: number; y: number }> }>>([
+    const [series, setSeries] = useState<
+      Array<{
+        id: number;
+        color: string;
+        data: Array<{ x: number; y: number }>;
+      }>
+    >([
       {
         id: 1,
         color: "#ff6b6b",
@@ -123,7 +133,16 @@ export const DynamicSeries: Story = {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [nextId, setNextId] = useState(2);
 
-    const colors = ["#4c6ef5", "#51cf66", "#ff6b6b", "#f59f00", "#7950f2", "#f06595", "#20c997", "#fab005"];
+    const colors = [
+      "#4c6ef5",
+      "#51cf66",
+      "#ff6b6b",
+      "#f59f00",
+      "#7950f2",
+      "#f06595",
+      "#20c997",
+      "#fab005",
+    ];
 
     const addLineSeries = () => {
       const newSeries = {
@@ -131,7 +150,10 @@ export const DynamicSeries: Story = {
         color: colors[nextId % colors.length],
         data: Array.from({ length: 50 }, (_, i) => ({
           x: i * 2,
-          y: 50 + Math.sin((i + nextId * 10) / 5) * 25 + Math.cos((i + nextId * 5) / 3) * 15,
+          y:
+            50 +
+            Math.sin((i + nextId * 10) / 5) * 25 +
+            Math.cos((i + nextId * 5) / 3) * 15,
         })),
       };
       setSeries([...series, newSeries]);
@@ -193,7 +215,8 @@ export const DynamicSeries: Story = {
         <div style={{ marginBottom: "20px" }}>
           <h3 style={{ margin: "0 0 10px 0" }}>Dynamic Series Management</h3>
           <p style={{ fontSize: "14px", color: "#666", marginBottom: "15px" }}>
-            Add and remove series dynamically. Each series is rendered as a separate component.
+            Add and remove series dynamically. Each series is rendered as a
+            separate component.
           </p>
           <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
             <button
@@ -257,7 +280,9 @@ export const DynamicSeries: Story = {
               Clear All
             </button>
           </div>
-          <div style={{ fontSize: "14px", color: "#495057", marginBottom: "10px" }}>
+          <div
+            style={{ fontSize: "14px", color: "#495057", marginBottom: "10px" }}
+          >
             Active Series: {series.length}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -275,7 +300,9 @@ export const DynamicSeries: Story = {
                   gap: "8px",
                 }}
               >
-                <span style={{ color: s.color, fontWeight: "bold" }}>Series {s.id}</span>
+                <span style={{ color: s.color, fontWeight: "bold" }}>
+                  Series {s.id}
+                </span>
                 <button
                   onClick={() => removeSeries(s.id)}
                   style={{
@@ -310,7 +337,7 @@ export const DynamicSeries: Story = {
           {series.map((s) => {
             // Alternate between LinePlot and ScatterPlot based on data characteristics
             const isScatter = s.data.length < 40;
-            
+
             if (isScatter) {
               return (
                 <ScatterPlot
@@ -327,7 +354,7 @@ export const DynamicSeries: Story = {
                 />
               );
             }
-            
+
             return (
               <LinePlot
                 key={s.id}
@@ -351,13 +378,22 @@ export const DynamicSeries: Story = {
 export const DynamicScales: Story = {
   render: () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [yScales, setYScales] = useState<Array<{ id: string; color: string; position: "left" | "right" }>>([
-      { id: "y1", color: "#4c6ef5", position: "left" },
-    ]);
+    const [yScales, setYScales] = useState<
+      Array<{ id: string; color: string; position: "left" | "right" }>
+    >([{ id: "y1", color: "#4c6ef5", position: "left" }]);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [nextScaleNum, setNextScaleNum] = useState(2);
 
-    const colors = ["#4c6ef5", "#51cf66", "#ff6b6b", "#f59f00", "#7950f2", "#f06595", "#20c997", "#fab005"];
+    const colors = [
+      "#4c6ef5",
+      "#51cf66",
+      "#ff6b6b",
+      "#f59f00",
+      "#7950f2",
+      "#f06595",
+      "#20c997",
+      "#fab005",
+    ];
 
     const addLeftScale = () => {
       const newScale = {
@@ -412,8 +448,11 @@ export const DynamicScales: Story = {
         max: 100,
       },
       ...yScales.map((scale) => {
-        const samePositionScales = scale.position === "left" ? leftScales : rightScales;
-        const positionIndex = samePositionScales.findIndex((s) => s.id === scale.id);
+        const samePositionScales =
+          scale.position === "left" ? leftScales : rightScales;
+        const positionIndex = samePositionScales.findIndex(
+          (s) => s.id === scale.id
+        );
         const offset = positionIndex * 60;
 
         return {
@@ -436,7 +475,10 @@ export const DynamicScales: Story = {
       color: scale.color,
       data: Array.from({ length: 50 }, (_, i) => ({
         x: i * 2,
-        y: 50 + Math.sin((i + index * 15) / 5) * 25 + Math.cos((i + index * 8) / 4) * 20,
+        y:
+          50 +
+          Math.sin((i + index * 15) / 5) * 25 +
+          Math.cos((i + index * 8) / 4) * 20,
       })),
     }));
 
@@ -445,7 +487,8 @@ export const DynamicScales: Story = {
         <div style={{ marginBottom: "20px" }}>
           <h3 style={{ margin: "0 0 10px 0" }}>Dynamic Scales with Ticks</h3>
           <p style={{ fontSize: "14px", color: "#666", marginBottom: "15px" }}>
-            Add and remove Y-axes dynamically. Each scale has its own ticks and can be positioned on the left or right.
+            Add and remove Y-axes dynamically. Each scale has its own ticks and
+            can be positioned on the left or right.
           </p>
           <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
             <button
@@ -509,8 +552,11 @@ export const DynamicScales: Story = {
               Clear All
             </button>
           </div>
-          <div style={{ fontSize: "14px", color: "#495057", marginBottom: "10px" }}>
-            Active Scales: {yScales.length} ({leftScales.length} left, {rightScales.length} right)
+          <div
+            style={{ fontSize: "14px", color: "#495057", marginBottom: "10px" }}
+          >
+            Active Scales: {yScales.length} ({leftScales.length} left,{" "}
+            {rightScales.length} right)
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
             {yScales.map((scale) => (
@@ -564,7 +610,7 @@ export const DynamicScales: Story = {
           }}
         >
           <XTicks scaleId="x" ticks={makeLinearTicks()} />
-          
+
           {yScales.map((scale) => (
             <YTicks
               key={scale.id}
@@ -597,4 +643,212 @@ export const DynamicScales: Story = {
       </div>
     );
   },
+};
+
+// Drawing priorities test
+export const DrawingPriorities: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 50,
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <div style={{ marginBottom: "20px" }}>
+          <h3 style={{ margin: "0 0 10px 0" }}>Drawing Priorities Test</h3>
+          <p style={{ fontSize: "14px", color: "#666", marginBottom: "10px" }}>
+            This demonstrates the drawing layer system. Lower priority numbers draw first (background), higher numbers draw last (foreground).
+          </p>
+          <div style={{ fontSize: "13px", color: "#495057", marginBottom: "15px" }}>
+            <div><strong>Layer Order (from back to front):</strong></div>
+            <div>• BACKGROUND (100) - Blue filled rectangle</div>
+            <div>• BOTTOM (200) - Green filled circle</div>
+            <div>• MIDDLE (200) - Red line plot (default for plots)</div>
+            <div>• TOP (300) - Yellow annotation text</div>
+            <div>• Custom (350) - Purple crosshair overlay</div>
+          </div>
+        </div>
+
+        <CanPlot
+          style={{ width: "100%", height: "500px" }}
+          configuration={{
+            padding: {
+              bottom: 60,
+              left: 70,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          {/* BACKGROUND layer - draws first */}
+          <BackgroundLayer />
+          
+          {/* BOTTOM layer - draws after background */}
+          <BottomLayer />
+          
+          {/* MIDDLE layer - default for LinePlot */}
+          <LinePlot
+            data={Array.from({ length: 50 }, (_, i) => ({
+              x: i * 2,
+              y: 50 + Math.sin(i / 5) * 30,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#ff6b6b",
+              lineWidth: 3,
+            }}
+          />
+          
+          {/* TOP layer - draws after plots */}
+          <TopLayer />
+          
+          {/* Custom high priority - draws last */}
+          <HighPriorityLayer />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+const BackgroundLayer: React.FC = () => {
+  useDrawEffect(
+    CANPLOT_LAYER.BACKGROUND,
+    ({ getCtx, valToPos }) => {
+      const ctx = getCtx();
+      ctx.save();
+      ctx.fillStyle = "#4c6ef5aa";
+      const x1 = valToPos(15, "x");
+      const y1 = valToPos(70, "y");
+      const x2 = valToPos(60, "x");
+      const y2 = valToPos(30, "y");
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      
+      // Add label
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 14px sans-serif";
+      ctx.fillText("BACKGROUND (100)", x1 + 10, y1 + 25);
+      ctx.restore();
+    },
+    []
+  );
+  return null;
+};
+
+const BottomLayer: React.FC = () => {
+  useDrawEffect(
+    CANPLOT_LAYER.BOTTOM,
+    ({ getCtx, valToPos }) => {
+      const ctx = getCtx();
+      ctx.save();
+      ctx.fillStyle = "#51cf66dd";
+      ctx.strokeStyle = "#2f9e44";
+      ctx.lineWidth = 3;
+      
+      const centerX = valToPos(40, "x");
+      const centerY = valToPos(55, "y");
+      const radius = 60;
+      
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Add label
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("BOTTOM", centerX, centerY - 8);
+      ctx.fillText("(200)", centerX, centerY + 10);
+      ctx.restore();
+    },
+    []
+  );
+  return null;
+};
+
+const TopLayer: React.FC = () => {
+  useDrawEffect(
+    CANPLOT_LAYER.TOP,
+    ({ getCtx, valToPos }) => {
+      const ctx = getCtx();
+      ctx.save();
+      
+      // Draw a large overlapping rectangle
+      ctx.fillStyle = "#ffd43bee";
+      ctx.strokeStyle = "#f59f00";
+      ctx.lineWidth = 3;
+      
+      const x1 = valToPos(25, "x");
+      const y1 = valToPos(80, "y");
+      const x2 = valToPos(70, "x");
+      const y2 = valToPos(40, "y");
+      
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      
+      // Add label
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("TOP (300)", x1 + 10, y1 + 25);
+      
+      ctx.restore();
+    },
+    []
+  );
+  return null;
+};
+
+const HighPriorityLayer: React.FC = () => {
+  useDrawEffect(
+    350, // Custom priority higher than TOP
+    ({ getCtx, valToPos }) => {
+      const ctx = getCtx();
+      ctx.save();
+      
+      // Draw a small rectangle that overlaps everything
+      ctx.fillStyle = "#7950f2ee";
+      ctx.strokeStyle = "#5f3dc4";
+      ctx.lineWidth = 4;
+      
+      const x1 = valToPos(50, "x");
+      const y1 = valToPos(65, "y");
+      const x2 = valToPos(85, "x");
+      const y2 = valToPos(45, "y");
+      
+      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      
+      // Label
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("CUSTOM (350)", x1 + 10, y1 + 25);
+      
+      ctx.restore();
+    },
+    []
+  );
+  return null;
 };

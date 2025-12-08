@@ -27,4 +27,4 @@ export * from "./tickUtils";
 export * from "./dataUtils";
 
 // Drawing utilities
-export { useDrawEffect, useFrameState } from "./frameContext";
+export { useDrawEffect, useFrameState, CANPLOT_LAYER } from "./frameContext";

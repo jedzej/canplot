@@ -16,6 +16,13 @@ import {
   valToPxDistance,
 } from "./helpers";
 
+export const CANPLOT_LAYER = {
+  TOP: 300,
+  MIDDLE: 200,
+  BOTTOM: 200,
+  BACKGROUND: 100,
+} as const;
+
 export interface FrameStoreState {
   _frame: PlotDrawFrame | null;
   clampXPosToChartArea: (x: number, space?: "canvas" | "css") => number;
@@ -34,6 +41,12 @@ export interface FrameStoreState {
   ) => number;
   valFits: (value: number, scaleId: string) => boolean;
   getScale: (scaleId: string) => PlotDrawFrame["scales"][number] | undefined;
+  _listeners: [prio: number, cb: (state: FrameStoreState) => void][];
+  _subscribe: (
+    listener: (state: FrameStoreState) => void,
+    prio: number
+  ) => () => void;
+  _notifyListeners: (value: FrameStoreState) => void;
 }
 
 export const createFrameStore = () =>
@@ -72,6 +85,22 @@ export const createFrameStore = () =>
       getScale: (scaleId) => {
         return getScale(getFrameOrDie(), scaleId);
       },
+      _listeners: [],
+      _subscribe: (listener, prio) => {
+        get()._listeners.push([prio, listener]);
+        get()._listeners.sort((a, b) => a[0] - b[0]);
+        return () => {
+          const idx = get()._listeners.findIndex(([, cb]) => cb === listener);
+          if (idx !== -1) {
+            get()._listeners.splice(idx, 1);
+          }
+        };
+      },
+      _notifyListeners: (value) => {
+        for (const [, cb] of get()._listeners) {
+          cb(value);
+        }
+      },
     };
   });
 
@@ -97,6 +126,7 @@ export const UpdateRequestContext =
   createContext<UpdateRequestStoreType | null>(null);
 
 export const useDrawEffect = (
+  layer: number | keyof typeof CANPLOT_LAYER,
   runner: (params: Omit<FrameStoreState, "_frame">) => void,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deps: ReadonlyArray<any>
@@ -117,13 +147,16 @@ export const useDrawEffect = (
       runnerRef.current(frameStore.getState());
     });
     // subscribe to updates
-    return frameStore.subscribe((state) => {
-      if (!state._frame) {
-        return;
-      }
-      runnerRef.current(state);
-    });
-  }, [frameStore]);
+    return frameStore.getState()._subscribe(
+      (state) => {
+        if (!state._frame) {
+          return;
+        }
+        runnerRef.current(state);
+      },
+      typeof layer === "number" ? layer : CANPLOT_LAYER[layer]
+    );
+  }, [frameStore, layer]);
 
   useEffect(() => {
     updateRequestStore.getState().notify();

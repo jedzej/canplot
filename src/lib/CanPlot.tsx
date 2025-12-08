@@ -9,6 +9,7 @@ import {
 import type { PlotConfiguration, PlotDrawFrame, PlotSize, Rect } from "./types";
 import { drawAxes } from "./axes";
 import {
+  CANPLOT_LAYER,
   createFrameStore,
   createUpdateRequestStore,
   FrameContext,
@@ -40,20 +41,31 @@ export const CanPlot = forwardRef<
     frameStore.setState({
       _frame: makeFrame(configuration, plotSize, canvasRef.current),
     });
+    const state = frameStore.getState();
+    state._notifyListeners(state)
   }, [configuration, plotSize, canvasRef, frameStore]);
 
   useLayoutEffect(() => {
-    return frameStore.subscribe((state) => {
-      if (state._frame) {
-        drawFrame(state._frame);
+    return frameStore.getState()._subscribe((state) => {
+      const ctx = state._frame?.ctx;
+      if (ctx) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
       }
-    });
+    }, CANPLOT_LAYER.BACKGROUND);
+  }, [frameStore]);
+
+  useLayoutEffect(() => {
+    return frameStore.getState()._subscribe((state) => {
+      if (state._frame) {
+        drawAxes(state._frame);
+      }
+    }, CANPLOT_LAYER.BOTTOM);
   }, [frameStore]);
 
   useLayoutEffect(() => {
     let requested = false;
     return updateRequestStore.subscribe(() => {
-      if(requested){
+      if (requested) {
         return;
       }
       requested = true;
@@ -62,6 +74,8 @@ export const CanPlot = forwardRef<
         frameStore.setState((state) => ({
           _frame: state._frame ? { ...state._frame } : null,
         }));
+        const state = frameStore.getState();
+        state._notifyListeners(state);
       });
     });
   }, [updateRequestStore, frameStore]);
@@ -295,9 +309,4 @@ const makeFrame = (
   };
 
   return result;
-};
-
-const drawFrame = (frame: PlotDrawFrame) => {
-  frame.ctx.clearRect(0, 0, frame.ctx.canvas.width, frame.ctx.canvas.height);
-  drawAxes(frame);
 };

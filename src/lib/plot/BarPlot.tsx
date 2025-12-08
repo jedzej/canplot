@@ -27,6 +27,7 @@ export const BarPlot: React.FC<{
   radius,
 }) => {
   useDrawEffect(
+    "MIDDLE",
     ({
       getCtx,
       valToPxDistance,
