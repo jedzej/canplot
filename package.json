@@ -1,6 +1,6 @@
 {
   "name": "@canplot/react",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "A high-performance React charting library built on Canvas",
   "author": "jedzej",
   "license": "MIT",
