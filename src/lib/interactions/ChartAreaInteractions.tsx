@@ -48,6 +48,7 @@ type ChartAreaInteractionsProps = {
     yViaScaleId?: string;
   };
   children?: React.ReactNode;
+  innerChildren?: React.ReactNode;
 };
 
 export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
@@ -63,6 +64,7 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
   className,
   style,
   sync,
+  innerChildren,
   children,
 }) => {
   const fallbackInteractionsId = useId();
@@ -100,8 +102,9 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
         style={style}
         sync={sync}
       >
-        {children}
+        {innerChildren}
       </ChartAreaInteractionsImpl>
+      {children}
     </InteractionsIdContext.Provider>
   );
 };

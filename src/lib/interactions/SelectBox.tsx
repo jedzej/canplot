@@ -33,8 +33,8 @@ export const SelectBox: React.FC<{
     const clampedFromY = clampYPosToChartArea(selection.frame, fromY, "css");
     const clampedToY = clampYPosToChartArea(selection.frame, toY, "css");
 
-    const leftPx = Math.min(clampedFromX, clampedToX) - selection.frame.chartAreaCSS.x;
-    const topPx = Math.min(clampedFromY, clampedToY) - selection.frame.chartAreaCSS.y;
+    const leftPx = Math.min(clampedFromX, clampedToX);
+    const topPx = Math.min(clampedFromY, clampedToY);
     const widthPx = Math.abs(clampedToX - clampedFromX);
     const heightPx = Math.abs(clampedToY - clampedFromY);
 
