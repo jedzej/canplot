@@ -99,8 +99,9 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
         className={className}
         style={style}
         sync={sync}
-      />
-      {children}
+      >
+        {children}
+      </ChartAreaInteractionsImpl>
     </InteractionsIdContext.Provider>
   );
 };
@@ -109,7 +110,8 @@ const ChartAreaInteractionsImpl: React.FC<{
   className?: string;
   style?: React.CSSProperties;
   sync?: ChartAreaInteractionsProps["sync"];
-}> = ({ className, style, sync }) => {
+  children?: React.ReactNode;
+}> = ({ className, style, sync, children }) => {
   const interactionsAreaRef = useRef<HTMLDivElement>(null);
 
   const _frame = useFrameState();
@@ -531,6 +533,8 @@ const ChartAreaInteractionsImpl: React.FC<{
           });
         });
       }}
-    />
+    >
+      {children}
+    </div>
   );
 };
