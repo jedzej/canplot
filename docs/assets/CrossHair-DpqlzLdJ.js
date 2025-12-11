@@ -1,5 +1,6 @@
-import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as b}from"./iframe-BhdRC15w.js";import{u as k}from"./ChartAreaInteractions-C0Mpw1mr.js";import{d as p,e as S}from"./CanPlot-BeNKusqU.js";const g=({makeXStyle:l,makeXClassName:u,makeYStyle:s,makeYClassName:m})=>{const[e,o]=b.useState(null);if(k("move",d=>{o(d)}),!e)return null;const{frame:n,pointer:t}=e,a=t?.cssX??null,i=t?.cssY??null,y=a?p(n,a,"css"):0,v=i?S(n,i,"css"):0;return r.jsxs(r.Fragment,{children:[r.jsx("div",{"data-show":!!t,className:u?.(e),style:{position:"absolute",left:0,visibility:a===null?"hidden":"visible",top:n.chartAreaCSS.y,height:n.chartAreaCSS.height,borderColor:"red",borderLeftWidth:"1px",borderLeftStyle:"solid",pointerEvents:"none",opacity:t?1:0,transform:`translateX(${y}px)`,...l?.(e)}}),r.jsx("div",{className:m?.(e),"data-show":!!t,style:{position:"absolute",visibility:i===null?"hidden":"visible",top:0,height:0,borderTop:"solid 1px red",left:n.chartAreaCSS.x,width:n.chartAreaCSS.width,pointerEvents:"none",opacity:t?1:0,transform:`translateY(${v}px)`,...s?.(e)}})]})};g.__docgenInfo={description:"",methods:[],displayName:"Crosshair",props:{makeXStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+import{j as t}from"./jsx-runtime-D_zvdyIk.js";import{r as b}from"./iframe-C_5h61o-.js";import{u as k}from"./ChartAreaInteractions-B1xZ5UkT.js";import{d as p,e as c}from"./CanPlot-Dt-Hk-bz.js";const S=({makeXStyle:l,makeXClassName:u,makeYStyle:s,makeYClassName:m})=>{const[e,o]=b.useState(null);if(k("move",d=>{o(d)}),!e)return null;const{frame:n,pointer:r}=e,a=r?.cssX??null,i=r?.cssY??null,y=a?p(n,a,"css"):0,v=i?c(n,i,"css"):0;return t.jsxs(t.Fragment,{children:[t.jsx("div",{"data-show":!!r,className:u?.(e),style:{position:"absolute",left:0,visibility:a===null?"hidden":"visible",top:n.chartAreaCSS.y,height:n.chartAreaCSS.height,borderColor:"red",borderLeftWidth:"1px",borderLeftStyle:"solid",pointerEvents:"none",opacity:r?1:0,transform:`translateX(${y}px)`,...l?.(e)}}),t.jsx("div",{className:m?.(e),"data-show":!!r,style:{position:"absolute",visibility:i===null?"hidden":"visible",top:0,height:0,borderTop:"solid 1px red",left:n.chartAreaCSS.x,width:n.chartAreaCSS.width,pointerEvents:"none",opacity:r?1:0,transform:`translateY(${v}px)`,...s?.(e)}})]})};S.__docgenInfo={description:"",methods:[],displayName:"Crosshair",props:{makeXStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
   keys: ModifiersKeys;
@@ -90,12 +91,14 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as b}from"./iframe-BhdRC1
   metaKey: boolean;
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
   cssX: number | null;
   cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeXClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}},{key:"source",value:{name:"union",raw:'"own" | "sync"',elements:[{name:"literal",value:'"own"'},{name:"literal",value:'"sync"'}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeXClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
   keys: ModifiersKeys;
@@ -186,12 +189,14 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as b}from"./iframe-BhdRC1
   metaKey: boolean;
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
   cssX: number | null;
   cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""},makeYStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}},{key:"source",value:{name:"union",raw:'"own" | "sync"',elements:[{name:"literal",value:'"own"'},{name:"literal",value:'"sync"'}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""},makeYStyle:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => React.CSSProperties | undefined",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
   keys: ModifiersKeys;
@@ -282,12 +287,14 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as b}from"./iframe-BhdRC1
   metaKey: boolean;
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
   cssX: number | null;
   cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeYClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}},{key:"source",value:{name:"union",raw:'"own" | "sync"',elements:[{name:"literal",value:'"own"'},{name:"literal",value:'"sync"'}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"union",raw:"React.CSSProperties | undefined",elements:[{name:"ReactCSSProperties",raw:"React.CSSProperties"},{name:"undefined"}]}}},description:""},makeYClassName:{required:!1,tsType:{name:"signature",type:"function",raw:"(moveEvent: MoveEvent) => string",signature:{arguments:[{type:{name:"intersection",raw:`InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,elements:[{name:"signature",type:"object",raw:`{
   frame: PlotDrawFrame;
   keys: ModifiersKeys;
@@ -378,8 +385,9 @@ import{j as r}from"./jsx-runtime-D_zvdyIk.js";import{r as b}from"./iframe-BhdRC1
   metaKey: boolean;
 }`,signature:{properties:[{key:"ctrlKey",value:{name:"boolean",required:!0}},{key:"altKey",value:{name:"boolean",required:!0}},{key:"shiftKey",value:{name:"boolean",required:!0}},{key:"metaKey",value:{name:"boolean",required:!0}}]},required:!0}}]}},{name:"signature",type:"object",raw:`{
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 }`,signature:{properties:[{key:"pointer",value:{name:"union",raw:"InteractionsEventPointerPosition | null",elements:[{name:"signature",type:"object",raw:`{
   cssX: number | null;
   cssY: number | null;
   scaled: Record<string, number>;
-}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""}}};export{g as C};
+}`,signature:{properties:[{key:"cssX",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"cssY",value:{name:"union",raw:"number | null",elements:[{name:"number"},{name:"null"}],required:!0}},{key:"scaled",value:{name:"Record",elements:[{name:"string"},{name:"number"}],raw:"Record<string, number>",required:!0}}]}},{name:"null"}],required:!0}},{key:"source",value:{name:"union",raw:'"own" | "sync"',elements:[{name:"literal",value:'"own"'},{name:"literal",value:'"sync"'}],required:!0}}]}}]},name:"moveEvent"}],return:{name:"string"}}},description:""}}};export{S as C};

@@ -9,6 +9,7 @@ import { ScatterPlot } from "../lib/plot/ScatterPlot";
 import { XTicks, YTicks } from "../lib/plot/Ticks";
 import { makeLinearTicks } from "../lib/tickUtils";
 
+
 const meta: Meta<typeof CanPlot> = {
   component: CanPlot,
   parameters: {
@@ -676,10 +677,15 @@ export const DrawingPriorities: Story = {
         <div style={{ marginBottom: "20px" }}>
           <h3 style={{ margin: "0 0 10px 0" }}>Drawing Priorities Test</h3>
           <p style={{ fontSize: "14px", color: "#666", marginBottom: "10px" }}>
-            This demonstrates the drawing layer system. Lower priority numbers draw first (background), higher numbers draw last (foreground).
+            This demonstrates the drawing layer system. Lower priority numbers
+            draw first (background), higher numbers draw last (foreground).
           </p>
-          <div style={{ fontSize: "13px", color: "#495057", marginBottom: "15px" }}>
-            <div><strong>Layer Order (from back to front):</strong></div>
+          <div
+            style={{ fontSize: "13px", color: "#495057", marginBottom: "15px" }}
+          >
+            <div>
+              <strong>Layer Order (from back to front):</strong>
+            </div>
             <div>• BACKGROUND (100) - Blue filled rectangle</div>
             <div>• BOTTOM (200) - Green filled circle</div>
             <div>• MIDDLE (200) - Red line plot (default for plots)</div>
@@ -702,10 +708,10 @@ export const DrawingPriorities: Story = {
         >
           {/* BACKGROUND layer - draws first */}
           <BackgroundLayer />
-          
+
           {/* BOTTOM layer - draws after background */}
           <BottomLayer />
-          
+
           {/* MIDDLE layer - default for LinePlot */}
           <LinePlot
             data={Array.from({ length: 50 }, (_, i) => ({
@@ -719,10 +725,10 @@ export const DrawingPriorities: Story = {
               lineWidth: 3,
             }}
           />
-          
+
           {/* TOP layer - draws after plots */}
           <TopLayer />
-          
+
           {/* Custom high priority - draws last */}
           <HighPriorityLayer />
         </CanPlot>
@@ -743,7 +749,7 @@ const BackgroundLayer: React.FC = () => {
       const x2 = valToPos(60, "x");
       const y2 = valToPos(30, "y");
       ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-      
+
       // Add label
       ctx.fillStyle = "#fff";
       ctx.font = "bold 14px sans-serif";
@@ -764,16 +770,16 @@ const BottomLayer: React.FC = () => {
       ctx.fillStyle = "#51cf66dd";
       ctx.strokeStyle = "#2f9e44";
       ctx.lineWidth = 3;
-      
+
       const centerX = valToPos(40, "x");
       const centerY = valToPos(55, "y");
       const radius = 60;
-      
+
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      
+
       // Add label
       ctx.fillStyle = "#fff";
       ctx.font = "bold 14px sans-serif";
@@ -793,26 +799,26 @@ const TopLayer: React.FC = () => {
     ({ getCtx, valToPos }) => {
       const ctx = getCtx();
       ctx.save();
-      
+
       // Draw a large overlapping rectangle
       ctx.fillStyle = "#ffd43bee";
       ctx.strokeStyle = "#f59f00";
       ctx.lineWidth = 3;
-      
+
       const x1 = valToPos(25, "x");
       const y1 = valToPos(80, "y");
       const x2 = valToPos(70, "x");
       const y2 = valToPos(40, "y");
-      
+
       ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
       ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      
+
       // Add label
       ctx.fillStyle = "#000";
       ctx.font = "bold 14px sans-serif";
       ctx.textAlign = "left";
       ctx.fillText("TOP (300)", x1 + 10, y1 + 25);
-      
+
       ctx.restore();
     },
     []
@@ -826,29 +832,30 @@ const HighPriorityLayer: React.FC = () => {
     ({ getCtx, valToPos }) => {
       const ctx = getCtx();
       ctx.save();
-      
+
       // Draw a small rectangle that overlaps everything
       ctx.fillStyle = "#7950f2ee";
       ctx.strokeStyle = "#5f3dc4";
       ctx.lineWidth = 4;
-      
+
       const x1 = valToPos(50, "x");
       const y1 = valToPos(65, "y");
       const x2 = valToPos(85, "x");
       const y2 = valToPos(45, "y");
-      
+
       ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
       ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      
+
       // Label
       ctx.fillStyle = "#fff";
       ctx.font = "bold 14px sans-serif";
       ctx.textAlign = "left";
       ctx.fillText("CUSTOM (350)", x1 + 10, y1 + 25);
-      
+
       ctx.restore();
     },
     []
   );
   return null;
 };
+

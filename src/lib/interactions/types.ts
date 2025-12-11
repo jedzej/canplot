@@ -23,6 +23,7 @@ export type PointerSyncPosition = {
 export type SyncEvent_Move = {
   positions: PointerSyncPosition | null;
   keys: ModifiersKeys;
+  originInteractionsId: string;
 };
 
 export type SyncEvent_DblClick = {
@@ -93,6 +94,7 @@ export type ContextMenuEvent = InteractionsEvent & {
 
 export type MoveEvent = InteractionsEvent & {
   pointer: InteractionsEventPointerPosition | null;
+  source: "own" | "sync";
 };
 
 export type MouseDownEvent = InteractionsEvent & {

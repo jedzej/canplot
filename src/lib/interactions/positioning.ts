@@ -21,21 +21,21 @@ export const makePointerSyncPosition = (
   const effectiveYSyncViaScaleId =
     yViaScaleId ?? frame.scales.find((s) => s.origin === "y")?.id;
 
-  if (!effectiveXSyncViaScaleId || !effectiveYSyncViaScaleId) {
-    return undefined;
-  }
-
   const cssX = event.clientX - rect.left;
-  const x: PointerSyncPosition["x"] = {
-    scaleId: effectiveXSyncViaScaleId,
-    value: posToVal(frame, cssX, effectiveXSyncViaScaleId, "css"),
-  };
+  const x: PointerSyncPosition["x"] = effectiveXSyncViaScaleId
+    ? {
+        scaleId: effectiveXSyncViaScaleId,
+        value: posToVal(frame, cssX, effectiveXSyncViaScaleId, "css"),
+      }
+    : null;
 
   const cssY = event.clientY - rect.top;
-  const y: PointerSyncPosition["y"] = {
-    scaleId: effectiveYSyncViaScaleId,
-    value: posToVal(frame, cssY, effectiveYSyncViaScaleId, "css"),
-  };
+  const y: PointerSyncPosition["y"] = effectiveYSyncViaScaleId
+    ? {
+        scaleId: effectiveYSyncViaScaleId,
+        value: posToVal(frame, cssY, effectiveYSyncViaScaleId, "css"),
+      }
+    : null;
 
   return { pointerSyncPosition: { x, y }, cssX, cssY };
 };

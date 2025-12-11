@@ -7,6 +7,12 @@ import { ChartAreaInteractions } from "../lib/interactions/ChartAreaInteractions
 import { TooltipsX } from "../lib/interactions/TooltipsX";
 import type { PlotScaleConfig } from "../lib/types";
 import { valToPos } from "../lib/helpers";
+import { useState } from "react";
+import type { ClickEvent, MoveEvent } from "../lib/interactions/types";
+import { useDrawEffect, CANPLOT_LAYER } from "../lib/frameContext";
+import { XTicks } from "../lib/plot/Ticks";
+import { makeLinearTicks } from "../lib/tickUtils";
+import { Crosshair } from "../lib";
 
 const meta: Meta<typeof CanPlot> = {
   component: CanPlot,
@@ -947,4 +953,184 @@ export const GroupedBarsTooltip: Story = {
       </div>
     );
   },
+};
+
+// No Y-scale with mouse interactions
+export const NoYScaleWithInteractions: Story = {
+  render: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [mouseX, setMouseX] = useState<number | null>(null);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [clickedX, setClickedX] = useState<number | null>(null);
+
+    const handleMouseMove = (event: MoveEvent) => {
+      if (event.pointer?.scaled.x !== undefined) {
+        setMouseX(event.pointer.scaled.x);
+      }
+    };
+
+    const handleClick = (event: ClickEvent) => {
+      if (event.pointer?.scaled.x !== undefined) {
+        setClickedX(event.pointer.scaled.x);
+      }
+    };
+
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    // Generate data for visual elements at fixed vertical positions
+    const bars = Array.from({ length: 20 }, (_, i) => ({
+      x: i * 5,
+      height: 30 + Math.sin(i / 2) * 20,
+      color: `hsl(${(i * 18) % 360}, 70%, 60%)`,
+    }));
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <div style={{ marginBottom: "20px" }}>
+          <h3 style={{ margin: "0 0 10px 0" }}>No Y-Scale with Mouse Interactions</h3>
+          <p style={{ fontSize: "14px", color: "#666", marginBottom: "15px" }}>
+            This chart has no Y-scale but still supports full mouse interactions. Elements are positioned using canvas coordinates directly.
+          </p>
+          <div style={{ fontSize: "14px", color: "#495057", marginBottom: "10px" }}>
+            <div>Mouse X: {mouseX !== null ? mouseX.toFixed(2) : "—"}</div>
+            <div>Last Click X: {clickedX !== null ? clickedX.toFixed(2) : "—"}</div>
+          </div>
+        </div>
+
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 60,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          <ChartAreaInteractions
+            onMouseMove={handleMouseMove}
+            onClick={handleClick}
+          />
+
+          <XTicks scaleId="x" ticks={makeLinearTicks({})} />
+
+          {/* Custom drawing without Y-scale */}
+          <BarsWithoutYScale bars={bars} mouseX={mouseX} clickedX={clickedX} />
+          
+          {/* Mouse position indicator */}
+          <MouseIndicator mouseX={mouseX} />
+
+          <Crosshair />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+const BarsWithoutYScale: React.FC<{
+  bars: Array<{ x: number; height: number; color: string }>;
+  mouseX: number | null;
+  clickedX: number | null;
+}> = ({ bars, mouseX, clickedX }) => {
+  useDrawEffect(
+    CANPLOT_LAYER.MIDDLE,
+    ({ getCtx, valToPos, getFrame }) => {
+      const ctx = getCtx();
+      const frame = getFrame();
+      ctx.save();
+
+      const chartBottom = frame.chartAreaCanvasPX.y + frame.chartAreaCanvasPX.height;
+      const barWidth = 15;
+
+      for (const bar of bars) {
+        const x = valToPos(bar.x, "x");
+        const barTop = chartBottom - bar.height;
+        
+        // Highlight if near mouse
+        const isNearMouse = mouseX !== null && Math.abs(bar.x - mouseX) < 3;
+        const isClicked = clickedX !== null && Math.abs(bar.x - clickedX) < 3;
+        
+        if (isClicked) {
+          ctx.fillStyle = "#ff6b6b";
+          ctx.strokeStyle = "#c92a2a";
+          ctx.lineWidth = 3;
+        } else if (isNearMouse) {
+          ctx.fillStyle = "#4c6ef5";
+          ctx.strokeStyle = "#364fc7";
+          ctx.lineWidth = 2;
+        } else {
+          ctx.fillStyle = bar.color;
+          ctx.strokeStyle = bar.color;
+          ctx.lineWidth = 1;
+        }
+
+        ctx.fillRect(x - barWidth / 2, barTop, barWidth, bar.height);
+        ctx.strokeRect(x - barWidth / 2, barTop, barWidth, bar.height);
+
+        // Show value on hover
+        if (isNearMouse || isClicked) {
+          ctx.fillStyle = "#000";
+          ctx.font = "12px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(`x: ${bar.x}`, x, barTop - 5);
+        }
+      }
+
+      ctx.restore();
+    },
+    [bars, mouseX, clickedX]
+  );
+  return null;
+};
+
+const MouseIndicator: React.FC<{ mouseX: number | null }> = ({ mouseX }) => {
+  useDrawEffect(
+    CANPLOT_LAYER.TOP,
+    ({ getCtx, valToPos, getFrame }) => {
+      if (mouseX === null) return;
+
+      const ctx = getCtx();
+      const frame = getFrame();
+      ctx.save();
+
+      const x = valToPos(mouseX, "x");
+      const chartTop = frame.chartAreaCanvasPX.y;
+      const chartBottom = frame.chartAreaCanvasPX.y + frame.chartAreaCanvasPX.height;
+
+      // Draw vertical line
+      ctx.strokeStyle = "#7950f2";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(x, chartTop);
+      ctx.lineTo(x, chartBottom);
+      ctx.stroke();
+
+      // Draw label at top
+      ctx.fillStyle = "#7950f2";
+      ctx.fillRect(x - 30, chartTop + 5, 60, 20);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(mouseX.toFixed(1), x, chartTop + 15);
+
+      ctx.restore();
+    },
+    [mouseX]
+  );
+  return null;
 };

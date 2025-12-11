@@ -1,0 +1,1 @@
+import{u as L,b as a}from"./CanPlot-Dt-Hk-bz.js";const l=({layer:f="MIDDLE",data:o,xScaleId:n,yScaleId:s,style:r})=>(L(f,({getCtx:i,clampXPosToChartArea:p,clampYPosToChartArea:u,valToPos:e})=>{const t=i();t.save(),t.beginPath(),a(t,r);for(const c of o){const x=p(e(c.x,n)),D=u(e(c.y,s));t.lineTo(x,D)}t.stroke(),t.restore()},[o,n,s,r]),null);export{l as L};

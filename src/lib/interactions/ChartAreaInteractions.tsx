@@ -67,8 +67,7 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
   innerChildren,
   children,
 }) => {
-  const fallbackInteractionsId = useId();
-  const interactionsId = id || fallbackInteractionsId;
+  const interactionsId = useId();
 
   useGenericInteractionsEvent("dblclick", interactionsId, (event) => {
     onDblClick?.(event);
@@ -98,6 +97,7 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
   return (
     <InteractionsIdContext.Provider value={interactionsId}>
       <ChartAreaInteractionsImpl
+        id={id}
         className={className}
         style={style}
         sync={sync}
@@ -110,11 +110,12 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
 };
 
 const ChartAreaInteractionsImpl: React.FC<{
+  id?: string;
   className?: string;
   style?: React.CSSProperties;
   sync?: ChartAreaInteractionsProps["sync"];
   children?: React.ReactNode;
-}> = ({ className, style, sync, children }) => {
+}> = ({ id, className, style, sync, children }) => {
   const interactionsAreaRef = useRef<HTMLDivElement>(null);
 
   const _frame = useFrameState();
@@ -409,13 +410,14 @@ const ChartAreaInteractionsImpl: React.FC<{
       frame: frameRef.current,
       pointer: positions ?? null,
       keys: event.keys,
+      source: event.originInteractionsId === interactionsId ? "own" : "sync",
     });
   });
 
   return (
     <div
       ref={interactionsAreaRef}
-      id="interactions"
+      id={id}
       className={className}
       style={{
         position: "absolute",
@@ -448,6 +450,7 @@ const ChartAreaInteractionsImpl: React.FC<{
           InteractionsBus.sync_move.dispatchEvent(moveSyncKey, {
             positions: null,
             keys,
+            originInteractionsId: interactionsId,
           });
         });
       }}
@@ -456,6 +459,7 @@ const ChartAreaInteractionsImpl: React.FC<{
           InteractionsBus.sync_move.dispatchEvent(moveSyncKey, {
             positions,
             keys,
+            originInteractionsId: interactionsId,
           });
         });
       }}
