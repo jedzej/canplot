@@ -66,7 +66,10 @@ export const CanPlot = forwardRef<
   );
 });
 
-const Updaters: React.FC<{ frame: PlotDrawFrame; children?: ReactNode }> = ({ frame, children }) => {
+const Updaters: React.FC<{ frame: PlotDrawFrame; children?: ReactNode }> = ({
+  frame,
+  children,
+}) => {
   const drawPropagateStore = useMemo(createDrawPropagateStore, []);
   const [drawVersion, setDrawVersion] = useState(0);
   useLayoutEffect(() => {
@@ -95,7 +98,8 @@ const Updaters: React.FC<{ frame: PlotDrawFrame; children?: ReactNode }> = ({ fr
         cancelAnimationFrame(requestedAnimationFrame);
       }
     };
-  }, [drawVersion, frameRef, drawPropagateStore]);
+  }, [drawVersion, frame, drawPropagateStore]);
+
   return (
     <DrawPropagateContext.Provider value={drawPropagateStore}>
       <FrameContext.Provider value={frame}>
