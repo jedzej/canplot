@@ -6,7 +6,7 @@ export const AxisOverlay: React.FC<
     scaleId: string;
   }
 > = ({ style, children, scaleId, ...rest }) => {
-  const axis = useFrameState((it) => it.getScale(scaleId)?.axis);
+  const axis = useFrameState().getScale(scaleId)?.axis;
 
   if (!axis) {
     return null;

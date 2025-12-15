@@ -91,8 +91,7 @@ const ReactiveChild: React.FC<{ color: string }> = ({ color }) => {
 
   useDrawEffect(
     "TOP",
-    ({ clampYPosToChartArea, getCtx, valToPos }) => {
-      const ctx = getCtx();
+    ({ clampYPosToChartArea, ctx, valToPos }) => {
       const xPos = valToPos(randomNumber, "x", "canvas");
       const x0 = clampYPosToChartArea(-Infinity, "canvas");
       const x1 = clampYPosToChartArea(Infinity, "canvas");
@@ -740,8 +739,7 @@ export const DrawingPriorities: Story = {
 const BackgroundLayer: React.FC = () => {
   useDrawEffect(
     CANPLOT_LAYER.BACKGROUND,
-    ({ getCtx, valToPos }) => {
-      const ctx = getCtx();
+    ({ ctx, valToPos }) => {
       ctx.save();
       ctx.fillStyle = "#4c6ef5aa";
       const x1 = valToPos(15, "x");
@@ -764,8 +762,7 @@ const BackgroundLayer: React.FC = () => {
 const BottomLayer: React.FC = () => {
   useDrawEffect(
     CANPLOT_LAYER.BOTTOM,
-    ({ getCtx, valToPos }) => {
-      const ctx = getCtx();
+    ({ ctx, valToPos }) => {
       ctx.save();
       ctx.fillStyle = "#51cf66dd";
       ctx.strokeStyle = "#2f9e44";
@@ -796,8 +793,7 @@ const BottomLayer: React.FC = () => {
 const TopLayer: React.FC = () => {
   useDrawEffect(
     CANPLOT_LAYER.TOP,
-    ({ getCtx, valToPos }) => {
-      const ctx = getCtx();
+    ({ ctx, valToPos }) => {
       ctx.save();
 
       // Draw a large overlapping rectangle
@@ -829,8 +825,7 @@ const TopLayer: React.FC = () => {
 const HighPriorityLayer: React.FC = () => {
   useDrawEffect(
     350, // Custom priority higher than TOP
-    ({ getCtx, valToPos }) => {
-      const ctx = getCtx();
+    ({ ctx, valToPos }) => {
       ctx.save();
 
       // Draw a small rectangle that overlaps everything

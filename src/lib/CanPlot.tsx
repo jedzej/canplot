@@ -1,4 +1,4 @@
-import {
+import React, {
   useLayoutEffect,
   useRef,
   useState,
@@ -8,17 +8,14 @@ import {
 } from "react";
 import type { PlotConfiguration, PlotDrawFrame, PlotSize, Rect } from "./types";
 import { drawAxes } from "./axes";
-import {
-  CANPLOT_LAYER,
-  createFrameStore,
-  createUpdateRequestStore,
-  FrameContext,
-  UpdateRequestContext,
-  type FrameStoreType,
-  type UpdateRequestStoreType,
-} from "./frameContext";
 import { mergeRefs } from "react-merge-refs";
-import { useStore } from "zustand";
+import {
+  createDrawPropagateStore,
+  DrawPropagateContext,
+} from "./contexts/DrawPropagateContext";
+import { FrameContext } from "./contexts/FrameContext";
+import { UpdateRequestProvider } from "./contexts/RedrawRequestContext";
+import { CANPLOT_LAYER } from "./FrameDrawer";
 
 export const CanPlot = forwardRef<
   HTMLDivElement,
@@ -34,51 +31,11 @@ export const CanPlot = forwardRef<
 
   const plotSize = useSize(rootRef);
 
-  const frameStore = useMemo(createFrameStore, []);
-  const updateRequestStore = useMemo(createUpdateRequestStore, []);
+  const [frame, setFrame] = useState<PlotDrawFrame | null>(() => null);
 
   useLayoutEffect(() => {
-    frameStore.setState({
-      _frame: makeFrame(configuration, plotSize, canvasRef.current),
-    });
-    const state = frameStore.getState();
-    state._notifyListeners(state)
-  }, [configuration, plotSize, canvasRef, frameStore]);
-
-  useLayoutEffect(() => {
-    return frameStore.getState()._subscribe((state) => {
-      const ctx = state._frame?.ctx;
-      if (ctx) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      }
-    }, CANPLOT_LAYER.BACKGROUND);
-  }, [frameStore]);
-
-  useLayoutEffect(() => {
-    return frameStore.getState()._subscribe((state) => {
-      if (state._frame) {
-        drawAxes(state._frame);
-      }
-    }, CANPLOT_LAYER.BOTTOM);
-  }, [frameStore]);
-
-  useLayoutEffect(() => {
-    let requested = false;
-    return updateRequestStore.subscribe(() => {
-      if (requested) {
-        return;
-      }
-      requested = true;
-      window.requestAnimationFrame(() => {
-        requested = false;
-        frameStore.setState((state) => ({
-          _frame: state._frame ? { ...state._frame } : null,
-        }));
-        const state = frameStore.getState();
-        state._notifyListeners(state);
-      });
-    });
-  }, [updateRequestStore, frameStore]);
+    setFrame(makeFrame(configuration, plotSize, canvasRef.current));
+  }, [configuration, plotSize, canvasRef]);
 
   const dpr = window.devicePixelRatio || 1;
 
@@ -104,31 +61,53 @@ export const CanPlot = forwardRef<
           height: `${plotSize.height}px`,
         }}
       />
-      <FrameProvider
-        frameStore={frameStore}
-        updateRequestStore={updateRequestStore}
-      >
-        {children}
-      </FrameProvider>
+      {frame && <Updaters frame={frame}>{children}</Updaters>}
     </div>
   );
 });
 
-const FrameProvider: React.FC<{
-  frameStore: FrameStoreType;
-  updateRequestStore: UpdateRequestStoreType;
-  children: ReactNode;
-}> = ({ frameStore, updateRequestStore, children }) => {
-  const hasFrame = useStore(frameStore, (state) => !!state._frame);
-  if (!hasFrame) {
-    return null;
-  }
+const Updaters: React.FC<{ frame: PlotDrawFrame; children?: ReactNode }> = ({ frame, children }) => {
+  const drawPropagateStore = useMemo(createDrawPropagateStore, []);
+  const [drawVersion, setDrawVersion] = useState(0);
+  useLayoutEffect(() => {
+    frame?.ctx.clearRect(0, 0, frame.ctx.canvas.width, frame.ctx.canvas.height);
+  }, [frame, drawVersion]);
+
+  const frameRef = useRef<PlotDrawFrame | null>(null);
+  frameRef.current = frame;
+
+  useLayoutEffect(() => {
+    drawPropagateStore.subscribe(() => {
+      if (frameRef.current) {
+        drawAxes(frameRef.current!);
+      }
+    }, CANPLOT_LAYER.BOTTOM);
+  }, [drawPropagateStore]);
+
+  useLayoutEffect(() => {
+    let requestedAnimationFrame: number | null = null;
+    requestedAnimationFrame = window.requestAnimationFrame(() => {
+      requestedAnimationFrame = null;
+      drawPropagateStore.notifyListeners();
+    });
+    return () => {
+      if (requestedAnimationFrame) {
+        cancelAnimationFrame(requestedAnimationFrame);
+      }
+    };
+  }, [drawVersion, frameRef, drawPropagateStore]);
   return (
-    <UpdateRequestContext.Provider value={updateRequestStore}>
-      <FrameContext.Provider value={frameStore}>
-        {children}
+    <DrawPropagateContext.Provider value={drawPropagateStore}>
+      <FrameContext.Provider value={frame}>
+        <UpdateRequestProvider
+          onRequestUpdate={() => {
+            setDrawVersion((v) => v + 1);
+          }}
+        >
+          {children}
+        </UpdateRequestProvider>
       </FrameContext.Provider>
-    </UpdateRequestContext.Provider>
+    </DrawPropagateContext.Provider>
   );
 };
 

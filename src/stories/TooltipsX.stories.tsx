@@ -9,7 +9,7 @@ import type { PlotScaleConfig } from "../lib/types";
 import { valToPos } from "../lib/helpers";
 import { useState } from "react";
 import type { ClickEvent, MoveEvent } from "../lib/interactions/types";
-import { useDrawEffect, CANPLOT_LAYER } from "../lib/frameContext";
+import { useDrawEffect } from "../lib/frameContext";
 import { XTicks } from "../lib/plot/Ticks";
 import { makeLinearTicks } from "../lib/tickUtils";
 import { Crosshair } from "../lib";
@@ -140,7 +140,8 @@ export const BasicLineTooltip: Story = {
                         zIndex: 1000,
                       }}
                     >
-                      X: {state.x.toFixed(1)}, Y: {state.points[0].y?.toFixed(1)}
+                      X: {state.x.toFixed(1)}, Y:{" "}
+                      {state.points[0].y?.toFixed(1)}
                     </div>
                   </>
                 );
@@ -275,7 +276,7 @@ export const MultiSeriesLinesTooltip: Story = {
               ]}
               renderTooltip={(state) => {
                 if (!state) return null;
-                
+
                 const pos = valToPos(state.frame, state.x, "x", "css");
 
                 return (
@@ -998,13 +999,21 @@ export const NoYScaleWithInteractions: Story = {
     return (
       <div style={{ padding: "20px" }}>
         <div style={{ marginBottom: "20px" }}>
-          <h3 style={{ margin: "0 0 10px 0" }}>No Y-Scale with Mouse Interactions</h3>
+          <h3 style={{ margin: "0 0 10px 0" }}>
+            No Y-Scale with Mouse Interactions
+          </h3>
           <p style={{ fontSize: "14px", color: "#666", marginBottom: "15px" }}>
-            This chart has no Y-scale but still supports full mouse interactions. Elements are positioned using canvas coordinates directly.
+            This chart has no Y-scale but still supports full mouse
+            interactions. Elements are positioned using canvas coordinates
+            directly.
           </p>
-          <div style={{ fontSize: "14px", color: "#495057", marginBottom: "10px" }}>
+          <div
+            style={{ fontSize: "14px", color: "#495057", marginBottom: "10px" }}
+          >
             <div>Mouse X: {mouseX !== null ? mouseX.toFixed(2) : "—"}</div>
-            <div>Last Click X: {clickedX !== null ? clickedX.toFixed(2) : "—"}</div>
+            <div>
+              Last Click X: {clickedX !== null ? clickedX.toFixed(2) : "—"}
+            </div>
           </div>
         </div>
 
@@ -1029,7 +1038,7 @@ export const NoYScaleWithInteractions: Story = {
 
           {/* Custom drawing without Y-scale */}
           <BarsWithoutYScale bars={bars} mouseX={mouseX} clickedX={clickedX} />
-          
+
           {/* Mouse position indicator */}
           <MouseIndicator mouseX={mouseX} />
 
@@ -1046,23 +1055,22 @@ const BarsWithoutYScale: React.FC<{
   clickedX: number | null;
 }> = ({ bars, mouseX, clickedX }) => {
   useDrawEffect(
-    CANPLOT_LAYER.MIDDLE,
-    ({ getCtx, valToPos, getFrame }) => {
-      const ctx = getCtx();
-      const frame = getFrame();
+    "MIDDLE",
+    ({ ctx, valToPos, frame }) => {
       ctx.save();
 
-      const chartBottom = frame.chartAreaCanvasPX.y + frame.chartAreaCanvasPX.height;
+      const chartBottom =
+        frame.chartAreaCanvasPX.y + frame.chartAreaCanvasPX.height;
       const barWidth = 15;
 
       for (const bar of bars) {
         const x = valToPos(bar.x, "x");
         const barTop = chartBottom - bar.height;
-        
+
         // Highlight if near mouse
         const isNearMouse = mouseX !== null && Math.abs(bar.x - mouseX) < 3;
         const isClicked = clickedX !== null && Math.abs(bar.x - clickedX) < 3;
-        
+
         if (isClicked) {
           ctx.fillStyle = "#ff6b6b";
           ctx.strokeStyle = "#c92a2a";
@@ -1098,17 +1106,16 @@ const BarsWithoutYScale: React.FC<{
 
 const MouseIndicator: React.FC<{ mouseX: number | null }> = ({ mouseX }) => {
   useDrawEffect(
-    CANPLOT_LAYER.TOP,
-    ({ getCtx, valToPos, getFrame }) => {
+    "TOP",
+    ({ ctx, valToPos, frame }) => {
       if (mouseX === null) return;
 
-      const ctx = getCtx();
-      const frame = getFrame();
       ctx.save();
 
       const x = valToPos(mouseX, "x");
       const chartTop = frame.chartAreaCanvasPX.y;
-      const chartBottom = frame.chartAreaCanvasPX.y + frame.chartAreaCanvasPX.height;
+      const chartBottom =
+        frame.chartAreaCanvasPX.y + frame.chartAreaCanvasPX.height;
 
       // Draw vertical line
       ctx.strokeStyle = "#7950f2";

@@ -1,4 +1,5 @@
-import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
+import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles } from "../helpers";
 
 export const BarPlot: React.FC<{
@@ -31,14 +32,13 @@ export const BarPlot: React.FC<{
   useDrawEffect(
     layer,
     ({
-      getCtx,
+      ctx,
       valToPxDistance,
       valToPos,
       clampXPosToChartArea,
       clampYPosToChartArea,
     }) => {
       if (data.length === 0) return;
-      const ctx = getCtx();
 
       ctx.save();
       applyStyles(ctx, style);

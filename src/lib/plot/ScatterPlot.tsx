@@ -1,4 +1,5 @@
-import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
+import {  useDrawEffect } from "../frameContext";
+import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles } from "../helpers";
 
 export const ScatterPlot: React.FC<{
@@ -20,8 +21,7 @@ export const ScatterPlot: React.FC<{
 }> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, radius = 5, style, globalAlpha }) => {
   useDrawEffect(
     layer,
-    ({ getCtx, valToPos, valFits }) => {
-      const ctx = getCtx();
+    ({ ctx, valToPos, valFits }) => {
       ctx.save();
       ctx.beginPath();
       const path = new Path2D();

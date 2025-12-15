@@ -118,10 +118,10 @@ const ChartAreaInteractionsImpl: React.FC<{
 }> = ({ id, className, style, sync, children }) => {
   const interactionsAreaRef = useRef<HTMLDivElement>(null);
 
-  const _frame = useFrameState();
+  const frame = useFrameState().frame;
 
-  const frameRef = useRef(_frame);
-  frameRef.current = _frame;
+  const frameRef = useRef(frame);
+  frameRef.current = frame;
 
   const interactionsId = useContext(InteractionsIdContext);
 
@@ -421,10 +421,10 @@ const ChartAreaInteractionsImpl: React.FC<{
       className={className}
       style={{
         position: "absolute",
-        left: _frame.chartAreaCSS.x,
-        top: _frame.chartAreaCSS.y,
-        width: _frame.chartAreaCSS.width,
-        height: _frame.chartAreaCSS.height,
+        left: frame.chartAreaCSS.x,
+        top: frame.chartAreaCSS.y,
+        width: frame.chartAreaCSS.width,
+        height: frame.chartAreaCSS.height,
         zIndex: 25,
         ...style,
       }}

@@ -1,4 +1,5 @@
-import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
+import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles } from "../helpers";
 
 export const AreaPlot: React.FC<{
@@ -18,7 +19,7 @@ export const AreaPlot: React.FC<{
 }> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
   useDrawEffect(
     layer,
-    ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
+    ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
       for (const datapoint of data) {
         const x = clampXPosToChartArea(valToPos(datapoint.x, xScaleId));
@@ -28,7 +29,6 @@ export const AreaPlot: React.FC<{
         drawPoints.unshift({ x, y: y1 });
       }
 
-      const ctx = getCtx();
       if (drawPoints.length > 0) {
         ctx.save();
         ctx.beginPath();

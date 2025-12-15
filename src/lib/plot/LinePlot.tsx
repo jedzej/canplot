@@ -1,4 +1,5 @@
-import { CANPLOT_LAYER, useDrawEffect } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
+import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles } from "../helpers";
 
 export const LinePlot: React.FC<{
@@ -18,8 +19,7 @@ export const LinePlot: React.FC<{
 }> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
   useDrawEffect(
     layer,
-    ({ getCtx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
-      const ctx = getCtx();
+    ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       ctx.save();
       ctx.beginPath();
       applyStyles(ctx, style);
