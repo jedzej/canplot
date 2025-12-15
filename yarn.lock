@@ -825,6 +825,13 @@
   resolved "https://registry.yarnpkg.com/@types/mdx/-/mdx-2.0.13.tgz#68f6877043d377092890ff5b298152b0a21671bd"
   integrity sha512-+OWZQfAYyio6YkJb3HLxDrvnx6SWWDbC0zVPfBRzUk0/nqoDyf6dNxQi3eArPe8rJ473nobTMQ/8Zk+LxJ+Yuw==
 
+"@types/node@^24.10.0":
+  version "24.10.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-24.10.4.tgz#9d27c032a1b2c42a4eab8fb65c5856a8b8e098c4"
+  integrity sha512-vnDVpYPMzs4wunl27jHrfmwojOGKya0xyM3sH+UE5iv5uPS6vX7UIoh6m+vQc5LGBq52HBKPIn/zcSZVzeDEZg==
+  dependencies:
+    undici-types "~7.16.0"
+
 "@types/react-dom@^19.1.9":
   version "19.2.2"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-19.2.2.tgz#a4cc874797b7ddc9cb180ef0d5dc23f596fc2332"
@@ -1734,11 +1741,6 @@ indent-string@^4.0.0:
   resolved "https://registry.yarnpkg.com/indent-string/-/indent-string-4.0.0.tgz#624f8f4497d619b2d9768531d58f4122854d7251"
   integrity sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==
 
-install@^0.13.0:
-  version "0.13.0"
-  resolved "https://registry.yarnpkg.com/install/-/install-0.13.0.tgz#6af6e9da9dd0987de2ab420f78e60d9c17260776"
-  integrity sha512-zDml/jzr2PKU9I8J/xyZBQn8rPCAY//UOYNmR01XwNwyfhEWObo2SWfSl1+0tm1u6PhxLwDnfsT/6jB7OUxqFA==
-
 is-core-module@^2.16.1:
   version "2.16.1"
   resolved "https://registry.yarnpkg.com/is-core-module/-/is-core-module-2.16.1.tgz#2a98801a849f43e2add644fbb6bc6229b19a4ef4"
@@ -2180,6 +2182,11 @@ react-docgen@^8.0.0:
   dependencies:
     scheduler "^0.27.0"
 
+react-merge-refs@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/react-merge-refs/-/react-merge-refs-3.0.2.tgz#483b4e8029f89d805c4e55c8d22e9b8f77e3b58e"
+  integrity sha512-MSZAfwFfdbEvwkKWP5EI5chuLYnNUxNS7vyS0i1Jp+wtd8J4Ga2ddzhaE68aMol2Z4vCnRM/oGOo1a3V75UPlw==
+
 react-refresh@^0.18.0:
   version "0.18.0"
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.18.0.tgz#2dce97f4fe932a4d8142fa1630e475c1729c8062"
@@ -2522,6 +2529,11 @@ typescript@~5.8.3:
   version "5.8.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.8.3.tgz#92f8a3e5e3cf497356f4178c34cd65a7f5e8440e"
   integrity sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==
+
+undici-types@~7.16.0:
+  version "7.16.0"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.16.0.tgz#ffccdff36aea4884cbfce9a750a0580224f58a46"
+  integrity sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==
 
 universalify@^2.0.0:
   version "2.0.1"

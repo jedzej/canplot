@@ -88,7 +88,6 @@ npm publish
 - **exports**: Configured for both CommonJS and ESM with types
 - **files**: Only includes `dist`, `README.md`, and `LICENSE`
 - **peerDependencies**: React 18 or 19
-- **dependencies**: Only zustand (bundled with the library)
 
 ## What Gets Published
 
