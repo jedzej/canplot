@@ -32,11 +32,16 @@ export const CanPlot = forwardRef<
 
   const plotSize = useSize(rootRef);
 
-  const [frame, setFrame] = useState<PlotDrawFrame | null>(() => null);
+  const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+
+  const frame = useMemo(
+    () => makeFrame(configuration, plotSize, ctx),
+    [configuration, plotSize, ctx]
+  );
 
   useLayoutEffect(() => {
-    setFrame(makeFrame(configuration, plotSize, canvasRef.current));
-  }, [configuration, plotSize, canvasRef]);
+    setCtx(canvasRef.current?.getContext("2d") || null);
+  }, [canvasRef]);
 
   const dpr = window.devicePixelRatio || 1;
 
@@ -153,11 +158,11 @@ const useSize = (ref: React.RefObject<HTMLElement | null>) => {
 const makeFrame = (
   configuration: PlotConfiguration,
   size: PlotSize,
-  canvas: HTMLCanvasElement | undefined | null
+  ctx: CanvasRenderingContext2D | null
 ): PlotDrawFrame | null => {
-  const ctx = canvas?.getContext("2d");
-  if (!ctx) return null;
-
+  if (!ctx) {
+    return null;
+  }
   const dpr = window.devicePixelRatio || 1;
 
   if (size.width === 0 || size.height === 0) {
@@ -205,9 +210,9 @@ const makeFrame = (
   const scales: PlotDrawFrame["scales"] = [];
 
   let currentLeftOffset = configuration.padding.left * dpr;
-  let currentRightOffset = ctx.canvas.width - configuration.padding.right * dpr;
+  let currentRightOffset = size.width * dpr - configuration.padding.right * dpr;
   let currentBottomOffset =
-    ctx.canvas.height - configuration.padding.bottom * dpr;
+    size.height * dpr - configuration.padding.bottom * dpr;
   let currentTopOffset = configuration.padding.top * dpr;
 
   for (const scale of configuration.scales) {
