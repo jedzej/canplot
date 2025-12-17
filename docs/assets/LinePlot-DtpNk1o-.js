@@ -1,1 +1,0 @@
-import{u as a,b}from"./frameContext-DwsuiCxB.js";const m=({layer:i="MIDDLE",data:n,xScaleId:r,yScaleId:s,style:e})=>(a(i,({ctx:o,clampXPosToChartArea:p,clampYPosToChartArea:u,valToPos:t})=>{o.save(),o.beginPath(),b(o,e);for(const f of n){const D=p(t(f.x,r)),L=u(t(f.y,s));o.lineTo(D,L)}o.stroke(),o.restore()},[n,r,s,e]),null);export{m as L};
