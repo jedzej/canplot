@@ -1,5 +1,5 @@
 import React from "react";
-import {  useDrawEffect } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
 
@@ -27,6 +27,9 @@ const SparklinePlotImpl: React.FC<{
       for (const point of data) {
         const x = clampXPosToChartArea(valToPos(point.x, xScaleId));
         const y = clampYPosToChartArea(valToPos(point.y, yScaleId));
+        if (x === null || y === null) {
+          continue;
+        }
         drawPoints.push({ x, y });
       }
       const first = drawPoints.at(0);
@@ -36,6 +39,9 @@ const SparklinePlotImpl: React.FC<{
         return;
       }
       const scaledZeroY = clampYPosToChartArea(valToPos(0, yScaleId));
+      if (scaledZeroY === null) {
+        return;
+      }
 
       ctx.save();
       ctx.beginPath();

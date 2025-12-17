@@ -12,7 +12,15 @@ const XTicksImpl: React.FC<{
   labelGap?: number;
   tickSize?: number;
   ticks: TicksConfig;
-}> = ({ layer = "BOTTOM", scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
+}> = ({
+  layer = "BOTTOM",
+  scaleId,
+  tickStyle,
+  labelStyle,
+  labelGap,
+  tickSize,
+  ticks,
+}) => {
   useDrawEffect(
     layer,
     ({ ctx, valToPos, getScale, frame }) => {
@@ -44,6 +52,9 @@ const XTicksImpl: React.FC<{
 
       for (const { value } of resolvedTicks) {
         const x = valToPos(value, scaleId, "canvas");
+        if (x === null) {
+          continue;
+        }
         ctx.moveTo(x, y0);
         ctx.lineTo(x, y1);
       }
@@ -60,6 +71,9 @@ const XTicksImpl: React.FC<{
       });
       for (const { value, label } of resolvedTicks) {
         const x = valToPos(value, scaleId, "canvas");
+        if (x === null) {
+          continue;
+        }
         const labelLines = label.split("\n");
         for (let j = 0; j < labelLines.length; j++) {
           ctx.fillText(labelLines[j], x, y1 + dpr * 2 + j * multilineGap);
@@ -82,7 +96,15 @@ const YTicksImpl: React.FC<{
   labelGap?: number;
   tickSize?: number;
   ticks: TicksConfig;
-}> = ({ layer = "BOTTOM", scaleId, tickStyle, labelStyle, labelGap, tickSize, ticks }) => {
+}> = ({
+  layer = "BOTTOM",
+  scaleId,
+  tickStyle,
+  labelStyle,
+  labelGap,
+  tickSize,
+  ticks,
+}) => {
   useDrawEffect(
     layer,
     ({ ctx, valToPos, getScale, frame }) => {
@@ -114,6 +136,9 @@ const YTicksImpl: React.FC<{
 
       for (const { value } of resolvedTicks) {
         const y = valToPos(value, scaleId, "canvas");
+        if (y === null) {
+          continue;
+        }
         ctx.moveTo(x0, y);
         ctx.lineTo(x1, y);
       }
@@ -130,6 +155,9 @@ const YTicksImpl: React.FC<{
       });
       for (const { value, label } of resolvedTicks) {
         const y = valToPos(value, scaleId, "canvas");
+        if (y === null) {
+          continue;
+        }
         const labelLines = label.split("\n");
         for (let j = 0; j < labelLines.length; j++) {
           ctx.fillText(` ${labelLines[j]} `, x1, y + j * multilineGap);

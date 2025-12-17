@@ -1085,15 +1085,15 @@ const BarsWithoutYScale: React.FC<{
           ctx.lineWidth = 1;
         }
 
-        ctx.fillRect(x - barWidth / 2, barTop, barWidth, bar.height);
-        ctx.strokeRect(x - barWidth / 2, barTop, barWidth, bar.height);
+        ctx.fillRect(x! - barWidth / 2, barTop, barWidth, bar.height);
+        ctx.strokeRect(x! - barWidth / 2, barTop, barWidth, bar.height);
 
         // Show value on hover
         if (isNearMouse || isClicked) {
           ctx.fillStyle = "#000";
           ctx.font = "12px sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText(`x: ${bar.x}`, x, barTop - 5);
+          ctx.fillText(`x: ${bar.x}`, x!, barTop - 5);
         }
       }
 
@@ -1122,18 +1122,18 @@ const MouseIndicator: React.FC<{ mouseX: number | null }> = ({ mouseX }) => {
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(x, chartTop);
-      ctx.lineTo(x, chartBottom);
+      ctx.moveTo(x!, chartTop);
+      ctx.lineTo(x!, chartBottom);
       ctx.stroke();
 
       // Draw label at top
       ctx.fillStyle = "#7950f2";
-      ctx.fillRect(x - 30, chartTop + 5, 60, 20);
+      ctx.fillRect(x! - 30, chartTop + 5, 60, 20);
       ctx.fillStyle = "#fff";
       ctx.font = "bold 12px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(mouseX.toFixed(1), x, chartTop + 15);
+      ctx.fillText(mouseX.toFixed(1), x!, chartTop + 15);
 
       ctx.restore();
     },

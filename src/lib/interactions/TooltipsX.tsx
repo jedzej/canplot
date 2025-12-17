@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useInteractionsEvent } from "./interactionsBus";
 import type { MoveEvent } from "./types";
-import { valFits, valToPxDistance } from "../helpers";
+import { getScale, valFits, valToPxDistance } from "../helpers";
 import type { PlotDrawFrame } from "../types";
 
 type TooltipState = {
@@ -40,6 +40,10 @@ export const TooltipsX: React.FC<{
     if (rawScaledX === undefined) {
       return null;
     }
+    const xScale = getScale(frame, xScaleId);
+    if (!xScale) {
+      return null;
+    }
     const points: TooltipState["points"] = [];
     let x = rawScaledX;
     for (const series of data) {
@@ -59,9 +63,11 @@ export const TooltipsX: React.FC<{
         }
       }
       const closestPoint = series.points[closestPointIndex ?? -1];
+      const pxDistance = valToPxDistance(frame, closestDistance, xScaleId, "css");
       if (
         !closestPoint ||
-        valToPxDistance(frame, closestDistance, xScaleId, "css") > 30
+        pxDistance === null ||
+        pxDistance > 30
       ) {
         points.push({ seriesId: series.seriesId, y: null });
         continue;

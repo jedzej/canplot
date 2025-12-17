@@ -12,7 +12,10 @@ const AreaPlotImpl: React.FC<{
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
       strokeStyle: CanvasFillStrokeStyles["strokeStyle"];
-    } & Pick<CanvasPathDrawingStyles, "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit">
+    } & Pick<
+      CanvasPathDrawingStyles,
+      "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
+    >
   >;
 }> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
   useDrawEffect(
@@ -20,9 +23,24 @@ const AreaPlotImpl: React.FC<{
     ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
       for (const datapoint of data) {
+        // x
         const x = clampXPosToChartArea(valToPos(datapoint.x, xScaleId));
+        if (x === null) {
+          continue;
+        }
+
+        // y0
         const y0 = clampYPosToChartArea(valToPos(datapoint.y[0], yScaleId));
+        if (y0 === null) {
+          continue;
+        }
+
+        // y1
         const y1 = clampYPosToChartArea(valToPos(datapoint.y[1], yScaleId));
+        if (y1 === null) {
+          continue;
+        }
+
         drawPoints.push({ x, y: y0 });
         drawPoints.unshift({ x, y: y1 });
       }
@@ -40,7 +58,7 @@ const AreaPlotImpl: React.FC<{
         ctx.restore();
       }
     },
-    [data, xScaleId, yScaleId, style],
+    [data, xScaleId, yScaleId, style]
   );
   return null;
 };

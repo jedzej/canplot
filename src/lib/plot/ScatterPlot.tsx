@@ -49,7 +49,7 @@ const ScatterPlotImpl: React.FC<{
         ctx.globalAlpha = globalAlpha;
       }
       for (const point of data) {
-        let x: number, y: number;
+        let x: number | null, y: number | null;
         switch (xStrategy) {
           case "clip":
             if (!valFits(point.x, xScaleId)) {
@@ -57,9 +57,14 @@ const ScatterPlotImpl: React.FC<{
             }
             x = valToPos(point.x, xScaleId);
             break;
-          case "clamp":
+          case "clamp": {
+            const unclampedX = valToPos(point.x, xScaleId);
+            if (unclampedX === null) {
+              continue;
+            }
             x = clampXPosToChartArea(valToPos(point.x, xScaleId), "canvas");
             break;
+          }
         }
         switch (yStrategy) {
           case "clip":
@@ -71,6 +76,9 @@ const ScatterPlotImpl: React.FC<{
           case "clamp":
             y = clampYPosToChartArea(valToPos(point.y, yScaleId), "canvas");
             break;
+        }
+        if(x === null || y === null) {
+          continue;
         }
         path.moveTo(x + radius, y);
         path.arc(x, y, radius, 0, Math.PI * 2);

@@ -120,6 +120,8 @@ export const BasicCloudTooltip: Story = {
                 const posX = valToPos(state.frame, x!, "x", "css");
                 const posY = valToPos(state.frame, y!, "y", "css");
 
+                if (posX === null || posY === null) return null;
+
                 return (
                   <>
                     {/* Crosshair lines */}
@@ -291,6 +293,10 @@ export const MultipleCloudsSeparate: Story = {
                 const posX = valToPos(state.frame, activePoint.x, "x", "css");
                 const posY = valToPos(state.frame, activePoint.y, "y", "css");
 
+                if (posX === null || posY === null) return null;
+
+                if (posX === null || posY === null) return null;
+
                 const colors: Record<string, string> = {
                   "Group A": "#ff6b6b",
                   "Group B": "#51cf66",
@@ -460,7 +466,7 @@ export const CorrelationCloudTooltip: Story = {
 
                 const posX = valToPos(state.frame, point.x!, "x", "css");
                 const posY = valToPos(state.frame, point.y!, "y", "css");
-
+                if (posX === null || posY === null) return null;
                 return (
                   <>
                     {/* Highlight circle around point */}
@@ -582,6 +588,8 @@ export const DenseCloudTooltip: Story = {
                 const y = point.y as number;
                 const posX = valToPos(state.frame, x, "x", "css");
                 const posY = valToPos(state.frame, y, "y", "css");
+
+                if (posX === null || posY === null) return null;
 
                 // Calculate distance from origin
                 const distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -751,6 +759,8 @@ export const OverlappingCloudsTooltip: Story = {
                 const posX = valToPos(state.frame, activePoint.x, "x", "css");
                 const posY = valToPos(state.frame, activePoint.y, "y", "css");
 
+                if (posX === null || posY === null) return null;
+
                 const colors: Record<string, { bg: string; border: string }> = {
                   "Population A": {
                     bg: "rgba(250, 176, 5, 0.95)",
@@ -889,6 +899,8 @@ export const EllipticalCloudTooltip: Story = {
                 if (!point) return null;
                 const posX = valToPos(state.frame, point.x!, "x", "css");
                 const posY = valToPos(state.frame, point.y!, "y", "css");
+
+                if (posX === null || posY === null) return null;
 
                 return (
                   <>

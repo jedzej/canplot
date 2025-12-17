@@ -78,7 +78,6 @@ export const ReactiveUpdates: Story = {
   },
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 const ReactiveChild: React.FC<{ color: string }> = ({ color }) => {
   const [randomNumber, setRandomNumber] = useState(0.5);
 
@@ -97,8 +96,8 @@ const ReactiveChild: React.FC<{ color: string }> = ({ color }) => {
       const x1 = clampYPosToChartArea(Infinity, "canvas");
       ctx.save();
       ctx.beginPath();
-      ctx.moveTo(xPos, x0);
-      ctx.lineTo(xPos, x1);
+      ctx.moveTo(xPos!, x0!);
+      ctx.lineTo(xPos!, x1!);
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.stroke();
@@ -746,12 +745,12 @@ const BackgroundLayer: React.FC = () => {
       const y1 = valToPos(70, "y");
       const x2 = valToPos(60, "x");
       const y2 = valToPos(30, "y");
-      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.fillRect(x1!, y1!, x2! - x1!, y2! - y1!);
 
       // Add label
       ctx.fillStyle = "#fff";
       ctx.font = "bold 14px sans-serif";
-      ctx.fillText("BACKGROUND (100)", x1 + 10, y1 + 25);
+      ctx.fillText("BACKGROUND (100)", x1! + 10, y1! + 25);
       ctx.restore();
     },
     []
@@ -773,7 +772,7 @@ const BottomLayer: React.FC = () => {
       const radius = 60;
 
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.arc(centerX!, centerY!, radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
@@ -781,8 +780,8 @@ const BottomLayer: React.FC = () => {
       ctx.fillStyle = "#fff";
       ctx.font = "bold 14px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("BOTTOM", centerX, centerY - 8);
-      ctx.fillText("(200)", centerX, centerY + 10);
+      ctx.fillText("BOTTOM", centerX!, centerY! - 8);
+      ctx.fillText("(200)", centerX!, centerY! + 10);
       ctx.restore();
     },
     []
@@ -806,14 +805,14 @@ const TopLayer: React.FC = () => {
       const x2 = valToPos(70, "x");
       const y2 = valToPos(40, "y");
 
-      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.fillRect(x1!, y1!, x2! - x1!, y2! - y1!);
+      ctx.strokeRect(x1!, y1!, x2! - x1!, y2! - y1!);
 
       // Add label
       ctx.fillStyle = "#000";
       ctx.font = "bold 14px sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText("TOP (300)", x1 + 10, y1 + 25);
+      ctx.fillText("TOP (300)", x1! + 10, y1! + 25);
 
       ctx.restore();
     },
@@ -838,14 +837,14 @@ const HighPriorityLayer: React.FC = () => {
       const x2 = valToPos(85, "x");
       const y2 = valToPos(45, "y");
 
-      ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.fillRect(x1!, y1!, x2! - x1!, y2! - y1!);
+      ctx.strokeRect(x1!, y1!, x2! - x1!, y2! - y1!);
 
       // Label
       ctx.fillStyle = "#fff";
       ctx.font = "bold 14px sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText("CUSTOM (350)", x1 + 10, y1 + 25);
+      ctx.fillText("CUSTOM (350)", x1! + 10, y1! + 25);
 
       ctx.restore();
     },

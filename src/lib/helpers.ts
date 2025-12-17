@@ -1,4 +1,4 @@
-import type { PlotDrawFrame, Style } from "./types";
+import type { PlotDrawFrame, PlotDrawScaleConfig, Style } from "./types";
 import { clamp } from "./dataUtils";
 
 export const pxToValDistance = (
@@ -6,24 +6,30 @@ export const pxToValDistance = (
   pxDistance: number,
   scaleId: string,
   space: "css" | "canvas"
-) => {
-  const { min, max, origin } = getScale(frame, scaleId);
+): number | null => {
+  const scale = getScale(frame, scaleId);
+  if (!scale) {
+    return null;
+  }
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   const factor =
-    (origin === "x" ? chartArea.width : chartArea.height) / (max - min);
+    (scale.origin === "x" ? chartArea.width : chartArea.height) /
+    (scale.max - scale.min);
   return pxDistance / factor;
 };
 
-export const getScale = (frame: PlotDrawFrame, scaleId: string) => {
-  const scale = frame.scales.find((a) => a.id === scaleId);
-  if (!scale) {
-    throw new Error(`Scale ${scaleId} not found`);
-  }
-  return scale;
+export const getScale = (
+  frame: PlotDrawFrame,
+  scaleId: string
+): PlotDrawScaleConfig | null => {
+  return frame.scales.find((a) => a.id === scaleId) ?? null;
 };
 
-export const applyStyles = (ctx: CanvasRenderingContext2D, style?: Style) => {
+export const applyStyles = (
+  ctx: CanvasRenderingContext2D,
+  style?: Style
+): void => {
   const dpr = window.devicePixelRatio || 1;
   ctx.lineCap = style?.lineCap ?? "butt";
   ctx.lineDashOffset = dpr * (style?.lineDashOffset ?? 0);
@@ -44,12 +50,16 @@ export const valToPxDistance = (
   val: number,
   scaleId: string,
   space: "css" | "canvas"
-) => {
+): number | null => {
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
-  const { min, max, origin } = getScale(frame, scaleId);
+  const scale = getScale(frame, scaleId);
+  if (!scale) {
+    return null;
+  }
   const factor =
-    (origin === "x" ? chartArea.width : chartArea.height) / (max - min);
+    (scale.origin === "x" ? chartArea.width : chartArea.height) /
+    (scale.max - scale.min);
   return val * factor;
 };
 
@@ -58,13 +68,24 @@ export const valToPos = (
   val: number,
   scaleId: string,
   space: "css" | "canvas"
-) => {
-  const { min, origin } = getScale(frame, scaleId);
+): number | null => {
+  const scale = getScale(frame, scaleId);
+  if (!scale) {
+    return null;
+  }
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
-  const relativePosition = valToPxDistance(frame, val - min, scaleId, space);
+  const relativePosition = valToPxDistance(
+    frame,
+    val - scale.min,
+    scaleId,
+    space
+  );
+  if (relativePosition === null) {
+    return null;
+  }
   const result =
-    origin === "x"
+    scale.origin === "x"
       ? clamp(
           chartArea.x + relativePosition,
           chartArea.x - 10 * chartArea.width,
@@ -78,31 +99,28 @@ export const valToPos = (
   return result;
 };
 
-export const clampUnfit = (
+export const clampXPosToChartArea = <T extends number | null>(
   frame: PlotDrawFrame,
-  value: number,
-  scaleId: string
-) => {
-  const { min, max } = getScale(frame, scaleId);
-  return clamp(value, min, max);
-};
-
-export const clampXPosToChartArea = (
-  frame: PlotDrawFrame,
-  value: number,
+  value: T,
   space: "css" | "canvas"
-) => {
+): T | number => {
+  if (value === null) {
+    return null as T;
+  }
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
 
   return clamp(value, chartArea.x, chartArea.x + chartArea.width);
 };
 
-export const clampYPosToChartArea = (
+export const clampYPosToChartArea = <T extends number | null>(
   frame: PlotDrawFrame,
-  value: number,
+  value: T,
   space: "css" | "canvas"
-) => {
+): T | number => {
+  if (value === null) {
+    return null as T;
+  }
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
   return clamp(value, chartArea.y, chartArea.y + chartArea.height);
@@ -110,11 +128,17 @@ export const clampYPosToChartArea = (
 
 export const valFits = (
   frame: PlotDrawFrame,
-  value: number,
+  value: number | null,
   scaleId: string
 ): boolean => {
-  const { min, max } = getScale(frame, scaleId);
-  return value >= min && value <= max;
+  if (value === null) {
+    return false;
+  }
+  const scale = getScale(frame, scaleId);
+  if (!scale) {
+    return false;
+  }
+  return value >= scale.min && value <= scale.max;
 };
 
 export const posToVal = (
@@ -122,16 +146,19 @@ export const posToVal = (
   pos: number,
   scaleId: string,
   space: "css" | "canvas"
-) => {
-  const { min, max, origin } = getScale(frame, scaleId);
+): number | null => {
+  const scale = getScale(frame, scaleId);
+  if (!scale) {
+    return null;
+  }
   const chartArea =
     space === "canvas" ? frame.chartAreaCanvasPX : frame.chartAreaCSS;
 
   const relativePosition =
-    origin === "x"
+    scale.origin === "x"
       ? (pos - chartArea.x) / chartArea.width
       : (chartArea.height - pos + chartArea.y) / chartArea.height;
-  return min + relativePosition * (max - min);
+  return scale.min + relativePosition * (scale.max - scale.min);
 };
 
 export const deepEqual = <T>(a: T, b: T): boolean => {

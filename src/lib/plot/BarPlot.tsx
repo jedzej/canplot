@@ -44,22 +44,39 @@ const BarPlotImpl: React.FC<{
       ctx.save();
       applyStyles(ctx, style);
 
-      const barWidth = valToPxDistance(barWidthRaw, xScaleId);
+      const barWidth = valToPxDistance(barWidthRaw, xScaleId) ?? 0;
       ctx.beginPath();
       for (const datapoint of data) {
         const xCenter = valToPos(datapoint.x, xScaleId);
 
+        if (xCenter === null) {
+          continue;
+        }
+
         // Adjust x position based on bar position
         const x = xCenter - barWidth / 2 + xPositionOffset * barWidth;
 
-        const yBottom = clampYPosToChartArea(valToPos(0, yScaleId));
-        const yTop = clampYPosToChartArea(valToPos(datapoint.y, yScaleId));
+        const yBottom = clampYPosToChartArea(
+          valToPos(0, yScaleId, "canvas"),
+          "canvas"
+        );
+        if (yBottom === null) {
+          continue;
+        }
+
+        const yTop = clampYPosToChartArea(
+          valToPos(datapoint.y, yScaleId, "canvas"),
+          "canvas"
+        );
+        if (yTop === null) {
+          continue;
+        }
 
         const barHeight = yBottom - yTop;
 
-        const compensatedX = clampXPosToChartArea(x);
+        const compensatedX = clampXPosToChartArea(x, "canvas");
         const compensatedWidth =
-          clampXPosToChartArea(x + barWidth) - compensatedX;
+          clampXPosToChartArea(x + barWidth, "canvas") - compensatedX;
 
         if (radius) {
           ctx.roundRect(

@@ -25,8 +25,11 @@ const LinePlotImpl: React.FC<{
       ctx.beginPath();
       applyStyles(ctx, style);
       for (const point of data) {
-        const x = clampXPosToChartArea(valToPos(point.x, xScaleId));
-        const y = clampYPosToChartArea(valToPos(point.y, yScaleId));
+        const x = clampXPosToChartArea(valToPos(point.x, xScaleId, "canvas"));
+        const y = clampYPosToChartArea(valToPos(point.y, yScaleId, "canvas"));
+        if (x === null || y === null) {
+          continue;
+        }
         ctx.lineTo(x, y);
       }
       ctx.stroke();

@@ -6,7 +6,7 @@ import {
   valToPos,
   valToPxDistance,
 } from "./helpers";
-import type { PlotDrawFrame } from "./types";
+import type { PlotDrawFrame, PlotDrawScaleConfig } from "./types";
 
 export const CANPLOT_LAYER = {
   TOP: 400,
@@ -21,7 +21,7 @@ export class FrameDrawer {
   _updateFrame(frame: PlotDrawFrame) {
     this._frame = frame;
   }
-  get frame(){
+  get frame() {
     if (!this._frame) {
       throw new Error("Frame not set in FrameDrawer");
     }
@@ -30,30 +30,36 @@ export class FrameDrawer {
   get ctx() {
     return this.frame.ctx;
   }
-  clampXPosToChartArea = (x: number, space: "canvas" | "css" = "canvas"): number =>{
+  clampXPosToChartArea = <T extends number | null>(
+    x: T,
+    space: "canvas" | "css" = "canvas"
+  ): T | number => {
     return clampXPosToChartArea(this.frame, x, space);
-  }
-  clampYPosToChartArea = (y: number, space: "canvas" | "css" = "canvas"): number =>{
+  };
+  clampYPosToChartArea = <T extends number | null>(
+    y: T,
+    space: "canvas" | "css" = "canvas"
+  ): T | number => {
     return clampYPosToChartArea(this.frame, y, space);
-  }
+  };
   valToPos = (
     value: number,
     scaleId: string,
     space: "canvas" | "css" = "canvas"
-  ): number => {
+  ): number | null => {
     return valToPos(this.frame, value, scaleId, space);
   };
   valToPxDistance = (
     value: number,
     scaleId: string,
     space: "canvas" | "css" = "canvas"
-  ): number => {
+  ): number | null => {
     return valToPxDistance(this.frame, value, scaleId, space);
   };
   valFits = (value: number, scaleId: string): boolean => {
     return valFits(this.frame, value, scaleId);
   };
-  getScale = (scaleId: string): PlotDrawFrame["scales"][number] | undefined => {
+  getScale = (scaleId: string): PlotDrawScaleConfig | null => {
     return getScale(this.frame, scaleId);
   };
 }
