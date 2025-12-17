@@ -77,11 +77,13 @@ export const TooltipsX: React.FC<{
         }
       }
       const closestPoint = series.points[closestPointIndex ?? -1];
-      if (
-        !closestPoint ||
-        valToPxDistance(frame, closestDistanceX, series.xScaleId, "css") > 30 ||
-        valToPxDistance(frame, closestDistanceY, series.yScaleId, "css") > 30
-      ) {
+      const xPxDistance =
+        valToPxDistance(frame, closestDistanceX, series.xScaleId, "css") ??
+        Infinity;
+      const yPxDistance =
+        valToPxDistance(frame, closestDistanceY, series.yScaleId, "css") ??
+        Infinity;
+      if (!closestPoint || xPxDistance > 30 || yPxDistance > 30) {
         points.push({ seriesId: series.seriesId, y: null, x: null });
         continue;
       }

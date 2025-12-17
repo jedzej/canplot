@@ -25,7 +25,7 @@ export const makePointerSyncPosition = (
   const x: PointerSyncPosition["x"] = effectiveXSyncViaScaleId
     ? {
         scaleId: effectiveXSyncViaScaleId,
-        value: posToVal(frame, cssX, effectiveXSyncViaScaleId, "css"),
+        value: posToVal(frame, cssX, effectiveXSyncViaScaleId, "css")!,
       }
     : null;
 
@@ -33,7 +33,7 @@ export const makePointerSyncPosition = (
   const y: PointerSyncPosition["y"] = effectiveYSyncViaScaleId
     ? {
         scaleId: effectiveYSyncViaScaleId,
-        value: posToVal(frame, cssY, effectiveYSyncViaScaleId, "css"),
+        value: posToVal(frame, cssY, effectiveYSyncViaScaleId, "css")!,
       }
     : null;
 
@@ -63,7 +63,7 @@ export const pointerSyncPositionToInteractionsPosition = (
           return [];
         }
 
-        return [[scale.id, posToVal(frame, pos, scale.id, "css")]];
+        return [[scale.id, posToVal(frame, pos, scale.id, "css")!]];
       })
     ),
   };
@@ -73,7 +73,11 @@ export const extrapolateScaledSelectionRange = (
   origin: PlotDrawScaleConfig["origin"],
   selectionRange: ScaledSelectionRange,
   frame: PlotDrawFrame
-): { fromCSS: number; toCSS: number; scaled: ScaledSelectionRange[] } => {
+): {
+  fromCSS: number;
+  toCSS: number;
+  scaled: ScaledSelectionRange[];
+} | null => {
   const fromCSS = valToPos(
     frame,
     selectionRange.from,
@@ -86,6 +90,9 @@ export const extrapolateScaledSelectionRange = (
     selectionRange.scaleId,
     "css"
   );
+  if (fromCSS === null || toCSS === null) {
+    return null;
+  }
   const scaled: ScaledSelectionRange[] = frame.scales.flatMap(
     (scale): ScaledSelectionRange[] => {
       if (scale.origin !== origin) {
@@ -93,6 +100,9 @@ export const extrapolateScaledSelectionRange = (
       }
       const from = posToVal(frame, fromCSS, scale.id, "css");
       const to = posToVal(frame, toCSS, scale.id, "css");
+      if(from === null || to === null) {
+        return [];
+      }
       return [
         {
           scaleId: scale.id,

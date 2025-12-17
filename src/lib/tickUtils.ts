@@ -34,6 +34,10 @@ export const makeLinearTicks = ({
       "canvas"
     );
 
+    if(unnormalizedIncr === null) {
+      return [];
+    }
+
     const effectiveAcceptableIncrements =
       acceptableIncrements ?? DEFAULT_ACCEPTABLE_TICKS_INCREMENTS;
 

@@ -22,7 +22,6 @@ import type {
   PointerSyncPosition,
   SpanSelectEvent,
   SyncEvent_Move,
-  SyncEvent_SpanSelect,
 } from "./types";
 import {
   extrapolateScaledSelectionRange,
@@ -258,7 +257,9 @@ const ChartAreaInteractionsImpl: React.FC<{
           const startCSSY = selectState.yRangeCss.start;
           const endCSSY = cssY;
           const xScale = getScale(frame, positions.x.scaleId);
+          if (!xScale) return;
           const yScale = getScale(frame, positions.y.scaleId);
+          if (!yScale) return;
           selectStateRef.current = {
             xRangeCss: { start: startCSSX, end: endCSSX },
             yRangeCss: { start: startCSSY, end: endCSSY },
@@ -278,46 +279,48 @@ const ChartAreaInteractionsImpl: React.FC<{
             mode = "x";
           }
 
-          const xRange: SyncEvent_SpanSelect["xRange"] = {
-            scaleId: xScale.id,
-            from: posToVal(
-              frame,
-              clampXPosToChartArea(frameRef.current, startCSSX, "css"),
-              xScale.id,
-              "css"
-            ),
+          const xRangeFrom = posToVal(
+            frame,
+            clampXPosToChartArea(frameRef.current, startCSSX, "css"),
+            xScale.id,
+            "css"
+          );
+          if (xRangeFrom === null) return;
 
-            to: posToVal(
-              frame,
-              clampXPosToChartArea(frameRef.current, endCSSX, "css"),
-              xScale.id,
-              "css"
-            ),
-          };
+          const xRangeTo = posToVal(
+            frame,
+            clampXPosToChartArea(frameRef.current, endCSSX, "css"),
+            xScale.id,
+            "css"
+          );
+          if (xRangeTo === null) return;
 
-          const yRange: SyncEvent_SpanSelect["yRange"] = {
-            scaleId: yScale.id,
-            from: posToVal(
-              frame,
-              clampYPosToChartArea(frameRef.current, startCSSY, "css"),
-              yScale.id,
-              "css"
-            ),
+          const yRangeFrom = posToVal(
+            frame,
+            clampYPosToChartArea(frameRef.current, startCSSY, "css"),
+            yScale.id,
+            "css"
+          );
+          if (yRangeFrom === null) return;
 
-            to: posToVal(
-              frame,
-              clampYPosToChartArea(frameRef.current, endCSSY, "css"),
-              yScale.id,
-              "css"
-            ),
-          };
+          const yRangeTo = posToVal(
+            frame,
+            clampYPosToChartArea(frameRef.current, endCSSY, "css"),
+            yScale.id,
+            "css"
+          );
+          if (yRangeTo === null) return;
 
-          const xMappedRange =
-            xRange &&
-            extrapolateScaledSelectionRange("x", xRange, frameRef.current);
-          const yMappedRange =
-            yRange &&
-            extrapolateScaledSelectionRange("y", yRange, frameRef.current);
+          const xMappedRange = extrapolateScaledSelectionRange(
+            "x",
+            { scaleId: xScale.id, from: xRangeFrom, to: xRangeTo },
+            frameRef.current
+          );
+          const yMappedRange = extrapolateScaledSelectionRange(
+            "y",
+            { scaleId: yScale.id, from: yRangeFrom, to: yRangeTo },
+            frameRef.current
+          );
 
           const xRanges = xMappedRange?.scaled;
           const yRanges = yMappedRange?.scaled;
@@ -327,17 +330,17 @@ const ChartAreaInteractionsImpl: React.FC<{
             frame: frameRef.current,
             completed: false,
             x: {
-              css: xMappedRange && {
+              css: xMappedRange ? {
                 from: xMappedRange.fromCSS,
                 to: xMappedRange.toCSS,
-              },
+              } : undefined,
               scaled: xRanges ?? [],
             },
             y: {
-              css: yMappedRange && {
+              css: yMappedRange ? {
                 from: yMappedRange.fromCSS,
                 to: yMappedRange.toCSS,
-              },
+              } : undefined,
               scaled: yRanges ?? [],
             },
             keys,
