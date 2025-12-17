@@ -7,7 +7,6 @@ export * from "./plot/ScatterPlot";
 export * from "./plot/BarPlot";
 export * from "./plot/AreaPlot";
 export * from "./plot/SparklinePlot";
-export * from "./plot/Positioned";
 export * from "./plot/Ticks";
 
 // Interaction components

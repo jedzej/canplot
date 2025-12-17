@@ -1,14 +1,17 @@
-import {  useDrawEffect } from "../frameContext";
+import React from "react";
+import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
-import { applyStyles } from "../helpers";
+import { applyStyles, deepEqual } from "../helpers";
 
-export const ScatterPlot: React.FC<{
+const ScatterPlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: number }>;
   xScaleId: string;
   yScaleId: string;
   radius?: number;
   globalAlpha?: number;
+  xStrategy?: "clip" | "clamp";
+  yStrategy?: "clip" | "clamp";
   style?: Partial<
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
@@ -18,10 +21,26 @@ export const ScatterPlot: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, radius = 5, style, globalAlpha }) => {
+}> = ({
+  layer = "MIDDLE",
+  data,
+  xScaleId,
+  yScaleId,
+  xStrategy = "clip",
+  yStrategy = "clip",
+  radius = 5,
+  style,
+  globalAlpha,
+}) => {
   useDrawEffect(
     layer,
-    ({ ctx, valToPos, valFits }) => {
+    ({
+      ctx,
+      valToPos,
+      valFits,
+      clampXPosToChartArea,
+      clampYPosToChartArea,
+    }) => {
       ctx.save();
       ctx.beginPath();
       const path = new Path2D();
@@ -30,11 +49,29 @@ export const ScatterPlot: React.FC<{
         ctx.globalAlpha = globalAlpha;
       }
       for (const point of data) {
-        if (!valFits(point.x, xScaleId) || !valFits(point.y, yScaleId)) {
-          continue;
+        let x: number, y: number;
+        switch (xStrategy) {
+          case "clip":
+            if (!valFits(point.x, xScaleId)) {
+              continue;
+            }
+            x = valToPos(point.x, xScaleId);
+            break;
+          case "clamp":
+            x = clampXPosToChartArea(valToPos(point.x, xScaleId), "canvas");
+            break;
         }
-        const x = valToPos(point.x, xScaleId);
-        const y = valToPos(point.y, yScaleId);
+        switch (yStrategy) {
+          case "clip":
+            if (!valFits(point.y, yScaleId)) {
+              continue;
+            }
+            y = valToPos(point.y, yScaleId);
+            break;
+          case "clamp":
+            y = clampYPosToChartArea(valToPos(point.y, yScaleId), "canvas");
+            break;
+        }
         path.moveTo(x + radius, y);
         path.arc(x, y, radius, 0, Math.PI * 2);
       }
@@ -46,3 +83,5 @@ export const ScatterPlot: React.FC<{
   );
   return null;
 };
+
+export const ScatterPlot = React.memo(ScatterPlotImpl, deepEqual);

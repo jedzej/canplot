@@ -110,14 +110,11 @@ export const BasicCloudTooltip: Story = {
                 },
               ]}
               renderTooltip={(state) => {
-                if (
-                  !state ||
-                  state.points[0]?.x === null ||
-                  state.points[0]?.y === null
-                )
+                const point = state?.points[0];
+                if (!point || !state || point.x === null || point.y === null) {
                   return null;
+                }
 
-                const point = state.points[0];
                 const x = point.x;
                 const y = point.y;
                 const posX = valToPos(state.frame, x!, "x", "css");

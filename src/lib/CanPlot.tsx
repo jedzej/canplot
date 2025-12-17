@@ -5,6 +5,7 @@ import React, {
   type ReactNode,
   forwardRef,
   useMemo,
+  useCallback,
 } from "react";
 import type { PlotConfiguration, PlotDrawFrame, PlotSize, Rect } from "./types";
 import { drawAxes } from "./axes";
@@ -14,7 +15,7 @@ import {
   DrawPropagateContext,
 } from "./contexts/DrawPropagateContext";
 import { FrameContext } from "./contexts/FrameContext";
-import { UpdateRequestProvider } from "./contexts/RedrawRequestContext";
+import { RedrawRequestContext } from "./contexts/RedrawRequestContext";
 import { CANPLOT_LAYER } from "./FrameDrawer";
 
 export const CanPlot = forwardRef<
@@ -100,17 +101,15 @@ const Updaters: React.FC<{ frame: PlotDrawFrame; children?: ReactNode }> = ({
     };
   }, [drawVersion, frame, drawPropagateStore]);
 
+  const onRequestUpdate = useCallback(() => {
+    setDrawVersion((v) => v + 1);
+  }, [setDrawVersion]);
+
   return (
     <DrawPropagateContext.Provider value={drawPropagateStore}>
-      <FrameContext.Provider value={frame}>
-        <UpdateRequestProvider
-          onRequestUpdate={() => {
-            setDrawVersion((v) => v + 1);
-          }}
-        >
-          {children}
-        </UpdateRequestProvider>
-      </FrameContext.Provider>
+      <RedrawRequestContext.Provider value={onRequestUpdate}>
+        <FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
+      </RedrawRequestContext.Provider>
     </DrawPropagateContext.Provider>
   );
 };

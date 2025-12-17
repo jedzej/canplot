@@ -1,9 +1,10 @@
+import React from "react";
 import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
-import { applyStyles } from "../helpers";
+import { applyStyles, deepEqual } from "../helpers";
 import type { Style, TicksConfig } from "../types";
 
-export const XTicks: React.FC<{
+const XTicksImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   scaleId: string;
   tickStyle?: Style;
@@ -71,7 +72,9 @@ export const XTicks: React.FC<{
   return null;
 };
 
-export const YTicks: React.FC<{
+export const XTicks = React.memo(XTicksImpl, deepEqual);
+
+const YTicksImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   scaleId: string;
   tickStyle?: Style;
@@ -138,3 +141,5 @@ export const YTicks: React.FC<{
   );
   return null;
 };
+
+export const YTicks = React.memo(YTicksImpl, deepEqual);

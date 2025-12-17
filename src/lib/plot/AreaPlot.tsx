@@ -1,8 +1,9 @@
+import React from "react";
 import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
-import { applyStyles } from "../helpers";
+import { applyStyles, deepEqual } from "../helpers";
 
-export const AreaPlot: React.FC<{
+const AreaPlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: [number, number] }>;
   xScaleId: string;
@@ -11,10 +12,7 @@ export const AreaPlot: React.FC<{
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
       strokeStyle: CanvasFillStrokeStyles["strokeStyle"];
-    } & Pick<
-      CanvasPathDrawingStyles,
-      "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
-    >
+    } & Pick<CanvasPathDrawingStyles, "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit">
   >;
 }> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
   useDrawEffect(
@@ -28,12 +26,12 @@ export const AreaPlot: React.FC<{
         drawPoints.push({ x, y: y0 });
         drawPoints.unshift({ x, y: y1 });
       }
-
-      if (drawPoints.length > 0) {
+      const firstPoint = drawPoints[0];
+      if (firstPoint) {
         ctx.save();
         ctx.beginPath();
         applyStyles(ctx, style);
-        ctx.moveTo(drawPoints[0].x, drawPoints[0].y);
+        ctx.moveTo(firstPoint.x, firstPoint.y);
         for (const point of drawPoints) {
           ctx.lineTo(point.x, point.y);
         }
@@ -42,7 +40,9 @@ export const AreaPlot: React.FC<{
         ctx.restore();
       }
     },
-    [data, xScaleId, yScaleId, style]
+    [data, xScaleId, yScaleId, style],
   );
   return null;
 };
+
+export const AreaPlot = React.memo(AreaPlotImpl, deepEqual);

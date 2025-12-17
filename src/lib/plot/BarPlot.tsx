@@ -1,8 +1,9 @@
+import React from "react";
 import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
-import { applyStyles } from "../helpers";
+import { applyStyles, deepEqual } from "../helpers";
 
-export const BarPlot: React.FC<{
+const BarPlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: number }>;
   xPositionOffset: number;
@@ -84,3 +85,5 @@ export const BarPlot: React.FC<{
   );
   return null;
 };
+
+export const BarPlot = React.memo(BarPlotImpl, deepEqual);

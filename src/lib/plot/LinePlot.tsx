@@ -1,8 +1,9 @@
+import React from "react";
 import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
-import { applyStyles } from "../helpers";
+import { applyStyles, deepEqual } from "../helpers";
 
-export const LinePlot: React.FC<{
+const LinePlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: number }>;
   xScaleId: string;
@@ -35,3 +36,5 @@ export const LinePlot: React.FC<{
   );
   return null;
 };
+
+export const LinePlot = React.memo(LinePlotImpl, deepEqual);

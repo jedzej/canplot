@@ -1,8 +1,9 @@
+import React from "react";
 import {  useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
-import { applyStyles } from "../helpers";
+import { applyStyles, deepEqual } from "../helpers";
 
-export const SparklinePlot: React.FC<{
+const SparklinePlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   data: Array<{ x: number; y: number }>;
   xScaleId: string;
@@ -60,3 +61,5 @@ export const SparklinePlot: React.FC<{
   );
   return null;
 };
+
+export const SparklinePlot = React.memo(SparklinePlotImpl, deepEqual);
