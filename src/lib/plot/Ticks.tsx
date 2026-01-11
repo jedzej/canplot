@@ -63,11 +63,14 @@ const XTicksImpl: React.FC<{
 
       // draw tick labels
       ctx.save();
+
       applyStyles(ctx, {
         textBaseline: axis.position === "top" ? "bottom" : "top",
         textAlign: "center",
         ...tickStyle,
         ...labelStyle,
+        // alter font size for DPR
+        font: dprFont(labelStyle?.font ?? tickStyle?.font),
       });
       for (const { value, label } of resolvedTicks) {
         const x = valToPos(value, scaleId, "canvas");
@@ -152,6 +155,8 @@ const YTicksImpl: React.FC<{
         textAlign: axis.position === "left" ? "right" : "left",
         ...tickStyle,
         ...labelStyle,
+        // alter font size for DPR
+        font: dprFont(labelStyle?.font ?? tickStyle?.font),
       });
       for (const { value, label } of resolvedTicks) {
         const y = valToPos(value, scaleId, "canvas");
@@ -171,3 +176,16 @@ const YTicksImpl: React.FC<{
 };
 
 export const YTicks = React.memo(YTicksImpl, deepEqual);
+
+const dprFont = (font: string | undefined) => {
+  if (font) {
+    try {
+      return font.replace(/(\d+)px/, (_, size) => {
+        return `${parseInt(size) * window.devicePixelRatio || 1}px`;
+      });
+    } catch {
+      // ignore
+    }
+  }
+  return font;
+};

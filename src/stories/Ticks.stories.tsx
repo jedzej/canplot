@@ -419,7 +419,9 @@ export const DifferentTickStyles: Story = {
           />
         </CanPlot>
 
-        <h3 style={{ marginTop: "40px" }}>Italic Green Ticks with Serif Font</h3>
+        <h3 style={{ marginTop: "40px" }}>
+          Italic Green Ticks with Serif Font
+        </h3>
         <CanPlot
           style={{ width: "100%", height: "300px" }}
           configuration={{
@@ -1140,9 +1142,7 @@ export const FullyCustomized: Story = {
     return (
       <div style={{ padding: "20px" }}>
         <h3>Fully Customized Ticks</h3>
-        <p>
-          Large ticks with custom colors, bold fonts, and custom spacing
-        </p>
+        <p>Large ticks with custom colors, bold fonts, and custom spacing</p>
         <CanPlot
           style={{ width: "100%", height: "500px" }}
           configuration={{
