@@ -1,5 +1,6 @@
 import {
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -35,18 +36,28 @@ export const useDrawEffect = (
 
   useLayoutEffect(() => {
     // subscribe to updates
-    return drawPropagateContext.subscribe(
+    const unsubscribe = drawPropagateContext.subscribe(
       () => {
         runnerRef.current(frameDrawer);
       },
       typeof layer === "number" ? layer : CANPLOT_LAYER[layer]
     );
+    return () => {
+      unsubscribe();
+    }
   }, [drawPropagateContext, layer, frameDrawer]);
 
   useLayoutEffect(() => {
     updateRequest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateRequest, ...deps]);
+  
+  useEffect(() => {
+    return () => {
+      // request redraw on unmount to clear the layer
+      updateRequest();
+    }
+  }, [updateRequest])
 };
 
 export const useFrameState = () => {
