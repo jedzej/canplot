@@ -299,12 +299,19 @@ export const makeTimeTicks = ({
 } = {}): TicksConfig => {
   return (scale, frame) => {
     const { min: scaleMin, max: scaleMax } = scale;
+    if(!Number.isFinite(scaleMin) || !Number.isFinite(scaleMax)) {
+      return [];
+    }
     const splitsCount = Math.floor(frame.chartAreaCanvasPX.width / space) + 1;
     const range = scaleMax - scaleMin;
     const splitDistance = range / splitsCount;
     const [incrValue, incrUnit] = TIME_INCRS.find(
       (a) => durationToMilliseconds(a) >= splitDistance
     ) ?? [1, "milliseconds"];
+
+    if(!incrValue || !incrUnit) {
+      return [];
+    }
 
     const firstTick = makeFirstTick(scaleMin, [incrValue, incrUnit], timeZone);
     const firstTickOffset = getTimezoneOffsetHours(firstTick, timeZone);
@@ -313,6 +320,9 @@ export const makeTimeTicks = ({
 
     let candidate: number;
     while (true) {
+      if(splits.length > 1000){
+        break;
+      }
       switch (incrUnit) {
         case "milliseconds":
         case "seconds":
