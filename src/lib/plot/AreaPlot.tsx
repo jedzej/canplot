@@ -5,7 +5,7 @@ import { applyStyles, deepEqual } from "../helpers";
 
 const AreaPlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
-  data: Array<{ x: number; y: [number, number] }>;
+  data: ReadonlyArray<{ x: number; y: readonly [number, number] }>;
   xScaleId: string;
   yScaleId: string;
   style?: Partial<
