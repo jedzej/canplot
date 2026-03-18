@@ -24,9 +24,8 @@ export const CanPlot = forwardRef<
     configuration: PlotConfiguration;
     children?: ReactNode;
     style?: React.CSSProperties;
-    className?: string;
-  }
->(({ configuration, children, style, className }, ref) => {
+  } & React.HTMLAttributes<HTMLDivElement>
+>(({ configuration, children, style, ...rest }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -48,13 +47,13 @@ export const CanPlot = forwardRef<
   return (
     <div
       ref={mergeRefs([ref, rootRef])}
-      className={className}
       style={{
         position: "relative",
         overflow: "hidden",
         ...style,
       }}
       data-canplotroot
+      {...rest}
     >
       <canvas
         ref={canvasRef}
