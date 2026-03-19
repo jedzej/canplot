@@ -676,3 +676,104 @@ export const DualYAxis: Story = {
     );
   },
 };
+
+// Line plot with global alpha (transparency)
+export const GlobalAlpha: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 40,
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 20,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          <ChartAreaInteractions
+            sync={{
+              key: "alpha-line",
+              xViaScaleId: "x",
+              yViaScaleId: "y",
+            }}
+          >
+            <Crosshair />
+            <SelectBox makeStyle={() => ({ backgroundColor: "#4499ff22" })} />
+          </ChartAreaInteractions>
+
+          {/* Full opacity (default) */}
+          <LinePlot
+            data={Array.from({ length: 50 }, (_, i) => ({
+              x: i * 2,
+              y: 30 + Math.sin(i / 5) * 25,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#ff6b6b",
+              lineWidth: 4,
+            }}
+            globalAlpha={1}
+          />
+
+          {/* 70% opacity */}
+          <LinePlot
+            data={Array.from({ length: 50 }, (_, i) => ({
+              x: i * 2,
+              y: 50 + Math.cos(i / 4) * 25,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#51cf66",
+              lineWidth: 4,
+            }}
+            globalAlpha={0.7}
+          />
+
+          {/* 40% opacity */}
+          <LinePlot
+            data={Array.from({ length: 50 }, (_, i) => ({
+              x: i * 2,
+              y: 70 + Math.sin(i / 3) * 20,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#4c6ef5",
+              lineWidth: 4,
+            }}
+            globalAlpha={0.4}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
