@@ -123,7 +123,7 @@ const BarPlotImpl: React.FC<{
 
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, style, barWidthRaw, xPositionOffset, radius],
+    [data, xScaleId, yScaleId, style, barWidthRaw, xPositionOffset, radius, globalAlpha],
   );
   return null;
 };
