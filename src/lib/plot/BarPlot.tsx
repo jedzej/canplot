@@ -63,7 +63,7 @@ const BarPlotImpl: React.FC<{
         const xCenter = valToPos(datapoint.x, xScaleId, "canvas");
 
         if (xCenter === null) {
-          return [];
+          continue;
         }
 
         // Adjust x position based on bar position
@@ -74,7 +74,7 @@ const BarPlotImpl: React.FC<{
           "canvas",
         );
         if (yTop === null) {
-          return [];
+          continue;
         }
 
         const barHeight = yBottom - yTop;
