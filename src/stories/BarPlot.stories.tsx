@@ -835,3 +835,132 @@ export const Performance: Story = {
     );
   },
 };
+
+// Bar plot with global alpha (transparency)
+export const GlobalAlpha: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 12,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 40,
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    const data1 = [
+      { x: 1, y: 70 },
+      { x: 2, y: 85 },
+      { x: 3, y: 60 },
+      { x: 4, y: 75 },
+      { x: 5, y: 90 },
+      { x: 6, y: 65 },
+      { x: 7, y: 80 },
+      { x: 8, y: 55 },
+      { x: 9, y: 70 },
+      { x: 10, y: 85 },
+    ];
+
+    const data2 = [
+      { x: 1, y: 50 },
+      { x: 2, y: 65 },
+      { x: 3, y: 80 },
+      { x: 4, y: 55 },
+      { x: 5, y: 70 },
+      { x: 6, y: 85 },
+      { x: 7, y: 60 },
+      { x: 8, y: 75 },
+      { x: 9, y: 50 },
+      { x: 10, y: 65 },
+    ];
+
+    const data3 = [
+      { x: 1, y: 30 },
+      { x: 2, y: 45 },
+      { x: 3, y: 60 },
+      { x: 4, y: 35 },
+      { x: 5, y: 50 },
+      { x: 6, y: 45 },
+      { x: 7, y: 40 },
+      { x: 8, y: 55 },
+      { x: 9, y: 30 },
+      { x: 10, y: 45 },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 20,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          {/* Full opacity (default) */}
+          <BarPlot
+            data={data1}
+            xScaleId="x"
+            yScaleId="y"
+            barWidth={0.8}
+            xPositionOffset={0}
+            style={{
+              fillStyle: "#ff6b6b",
+              strokeStyle: "#c92a2a",
+              lineWidth: 1,
+            }}
+            globalAlpha={1}
+          />
+
+          {/* 60% opacity */}
+          <BarPlot
+            data={data2}
+            xScaleId="x"
+            yScaleId="y"
+            barWidth={0.8}
+            xPositionOffset={0}
+            style={{
+              fillStyle: "#51cf66",
+              strokeStyle: "#2b8a3e",
+              lineWidth: 1,
+            }}
+            globalAlpha={0.6}
+          />
+
+          {/* 30% opacity */}
+          <BarPlot
+            data={data3}
+            xScaleId="x"
+            yScaleId="y"
+            barWidth={0.8}
+            xPositionOffset={0}
+            style={{
+              fillStyle: "#4c6ef5",
+              strokeStyle: "#364fc7",
+              lineWidth: 1,
+            }}
+            globalAlpha={0.3}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};

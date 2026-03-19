@@ -10,6 +10,7 @@ const BarPlotImpl: React.FC<{
   xScaleId: string;
   yScaleId: string;
   barWidth: number;
+  globalAlpha?: number;
   radius?: number;
   style?: Partial<
     {
@@ -27,6 +28,7 @@ const BarPlotImpl: React.FC<{
   style,
   barWidth: barWidthRaw,
   xPositionOffset,
+  globalAlpha,
   radius,
   layer = "MIDDLE",
 }) => {
@@ -91,6 +93,9 @@ const BarPlotImpl: React.FC<{
 
       ctx.save();
       applyStyles(ctx, style);
+      if (globalAlpha !== undefined) {
+        ctx.globalAlpha = globalAlpha;
+      }
 
       if (style?.fillStyle) {
         for (const p of points) {

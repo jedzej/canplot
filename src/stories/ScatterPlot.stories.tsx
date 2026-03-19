@@ -5,7 +5,7 @@ import { ChartAreaInteractions } from "../lib/interactions/ChartAreaInteractions
 import { Crosshair } from "../lib/interactions/CrossHair";
 import { SelectBox } from "../lib/interactions/SelectBox";
 import type { PlotScaleConfig } from "../lib/types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MoveEvent } from "../lib/interactions/types";
 
 const meta: Meta<typeof CanPlot> = {
@@ -745,6 +745,136 @@ export const PointsOverLimit: Story = {
             </div>
           )}
         </div>
+      </div>
+    );
+  },
+};
+
+// Performance test with many points and reactive updates
+export const Performance: Story = {
+  render: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [data, setData] = useState(() =>
+      Array.from({ length: 1000 }, () => ({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+      }))
+    );
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setData((prev) =>
+          prev.map((point) => ({
+            x: Math.max(0, Math.min(100, point.x + (Math.random() - 0.5) * 2)),
+            y: Math.max(0, Math.min(100, point.y + (Math.random() - 0.5) * 2)),
+          }))
+        );
+      }, 16);
+      return () => clearInterval(interval);
+    }, []);
+
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 40,
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <p style={{ marginBottom: "10px" }}>
+          Rendering 1000 points across 5 series with random colors and alpha, updates every 16ms (~60fps)
+        </p>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 20,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          <ScatterPlot
+            data={data.slice(0, 200)}
+            xScaleId="x"
+            yScaleId="y"
+            radius={3}
+            style={{
+              fillStyle: "#ff6b6b",
+              strokeStyle: "#c92a2a",
+              lineWidth: 1,
+            }}
+            globalAlpha={0.8}
+          />
+          <ScatterPlot
+            data={data.slice(200, 400)}
+            xScaleId="x"
+            yScaleId="y"
+            radius={3}
+            style={{
+              fillStyle: "#51cf66",
+              strokeStyle: "#2b8a3e",
+              lineWidth: 1,
+            }}
+            globalAlpha={0.6}
+          />
+          <ScatterPlot
+            data={data.slice(400, 600)}
+            xScaleId="x"
+            yScaleId="y"
+            radius={3}
+            style={{
+              fillStyle: "#4c6ef5",
+              strokeStyle: "#364fc7",
+              lineWidth: 1,
+            }}
+            globalAlpha={0.5}
+          />
+          <ScatterPlot
+            data={data.slice(600, 800)}
+            xScaleId="x"
+            yScaleId="y"
+            radius={3}
+            style={{
+              fillStyle: "#ffd43b",
+              strokeStyle: "#fab005",
+              lineWidth: 1,
+            }}
+            globalAlpha={0.7}
+          />
+          <ScatterPlot
+            data={data.slice(800, 1000)}
+            xScaleId="x"
+            yScaleId="y"
+            radius={3}
+            style={{
+              fillStyle: "#a855f7",
+              strokeStyle: "#7c3aed",
+              lineWidth: 1,
+            }}
+            globalAlpha={0.4}
+          />
+        </CanPlot>
       </div>
     );
   },

@@ -42,52 +42,67 @@ const ScatterPlotImpl: React.FC<{
       clampYPosToChartArea,
     }) => {
       ctx.save();
-      ctx.beginPath();
-      const path = new Path2D();
       applyStyles(ctx, style);
+
       if (globalAlpha !== undefined) {
         ctx.globalAlpha = globalAlpha;
       }
+
+      const points = [];
+
       for (const point of data) {
-        let x: number | null, y: number | null;
-        switch (xStrategy) {
-          case "clip":
-            if (!valFits(point.x, xScaleId)) {
-              continue;
-            }
-            x = valToPos(point.x, xScaleId);
-            break;
-          case "clamp": {
-            const unclampedX = valToPos(point.x, xScaleId);
-            if (unclampedX === null) {
-              continue;
-            }
-            x = clampXPosToChartArea(valToPos(point.x, xScaleId), "canvas");
-            break;
-          }
+        let x: number | null = null;
+        let y: number | null = null;
+
+        // X
+        const rawX = valToPos(point.x, xScaleId);
+        if (rawX === null) continue;
+
+        if (xStrategy === "clip") {
+          if (!valFits(point.x, xScaleId)) continue;
+          x = rawX;
+        } else {
+          x = clampXPosToChartArea(rawX, "canvas");
         }
-        switch (yStrategy) {
-          case "clip":
-            if (!valFits(point.y, yScaleId)) {
-              continue;
-            }
-            y = valToPos(point.y, yScaleId);
-            break;
-          case "clamp":
-            y = clampYPosToChartArea(valToPos(point.y, yScaleId), "canvas");
-            break;
+
+        // Y
+        const rawY = valToPos(point.y, yScaleId);
+        if (rawY === null) continue;
+
+        if (yStrategy === "clip") {
+          if (!valFits(point.y, yScaleId)) continue;
+          y = rawY;
+        } else {
+          y = clampYPosToChartArea(rawY, "canvas");
         }
-        if(x === null || y === null) {
-          continue;
-        }
-        path.moveTo(x + radius, y);
-        path.arc(x, y, radius, 0, Math.PI * 2);
+
+        if (x === null || y === null) continue;
+
+        points.push({ x, y });
       }
-      ctx.fill(path);
-      ctx.stroke(path);
+
+      // FILL (per point)
+      if (style?.fillStyle) {
+        for (const p of points) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // STROKE (batch)
+      if (style?.strokeStyle) {
+        ctx.beginPath();
+        for (const p of points) {
+          ctx.moveTo(p.x + radius, p.y); // ważne dla poprawnego stroke
+          ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        }
+        ctx.stroke();
+      }
+
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, radius, style, globalAlpha]
+    [data, xScaleId, yScaleId, radius, style, globalAlpha],
   );
   return null;
 };
