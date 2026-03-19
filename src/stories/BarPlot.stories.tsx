@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CanPlot } from "../lib/CanPlot";
 import { BarPlot } from "../lib/plot/BarPlot";
@@ -746,6 +746,88 @@ export const RoundedCorners: Story = {
               fillStyle: "#7950f2",
               strokeStyle: "#5f3dc4",
               lineWidth: 2,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Performance test with many bars and reactive updates
+export const Performance: Story = {
+  render: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [data, setData] = useState(() =>
+      Array.from({ length: 1000 }, (_, i) => ({
+        x: i,
+        y: Math.random() * 100,
+      }))
+    );
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setData((prev) =>
+          prev.map((point) => ({
+            ...point,
+            y: Math.max(0, Math.min(100, point.y + (Math.random() - 0.5) * 10)),
+          }))
+        );
+      }, 16);
+      return () => clearInterval(interval);
+    }, []);
+
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 1000,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 40,
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <p style={{ marginBottom: "10px" }}>
+          Rendering 1000 bars with updates every 16ms (~60fps)
+        </p>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 20,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          <BarPlot
+            data={data}
+            xScaleId="x"
+            yScaleId="y"
+            barWidth={0.8}
+            xPositionOffset={0}
+            style={{
+              fillStyle: "#4c6ef5",
+              strokeStyle: "#364fc7",
+              lineWidth: 0,
             }}
           />
         </CanPlot>
