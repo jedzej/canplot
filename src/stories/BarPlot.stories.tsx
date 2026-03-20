@@ -754,6 +754,7 @@ export const RoundedCorners: Story = {
   },
 };
 
+
 // Performance test with many bars and reactive updates
 export const Performance: Story = {
   render: () => {
