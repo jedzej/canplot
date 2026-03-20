@@ -20,7 +20,15 @@ const LinePlotImpl: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style, globalAlpha, xGapWidth }) => {
+}> = ({
+  layer = "MIDDLE",
+  data,
+  xScaleId,
+  yScaleId,
+  style,
+  globalAlpha,
+  xGapWidth,
+}) => {
   useDrawEffect(
     layer,
     ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
@@ -35,18 +43,26 @@ const LinePlotImpl: React.FC<{
         ctx.globalAlpha = globalAlpha;
       }
       let lastX: number | null = null;
-      for(const point of data){
-        const x = clampXPosToChartArea(valToPos(point.x, xScaleId, "canvas"));
-        const y = clampYPosToChartArea(valToPos(point.y, yScaleId, "canvas"));
-        if (x === null || y === null) {
+      for (const point of data) {
+        const xPos = clampXPosToChartArea(
+          valToPos(point.x, xScaleId, "canvas"),
+        );
+        const yPos = clampYPosToChartArea(
+          valToPos(point.y, yScaleId, "canvas"),
+        );
+        if (xPos === null || yPos === null) {
           continue;
         }
-        if (lastX !== null && xGapWidth !== undefined && x - lastX > xGapWidth) {
-          ctx.moveTo(x, y);
+        if (
+          lastX !== null &&
+          xGapWidth !== undefined &&
+          point.x - lastX > xGapWidth
+        ) {
+          ctx.moveTo(xPos, yPos);
         } else {
-          ctx.lineTo(x, y);
+          ctx.lineTo(xPos, yPos);
         }
-        lastX = x;
+        lastX = point.x;
       }
       ctx.stroke();
       if (oldLineDash) {
@@ -54,7 +70,7 @@ const LinePlotImpl: React.FC<{
       }
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth]
+    [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth],
   );
   return null;
 };

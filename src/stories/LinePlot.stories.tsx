@@ -6,6 +6,7 @@ import { ChartAreaInteractions } from "../lib/interactions/ChartAreaInteractions
 import { Crosshair } from "../lib/interactions/CrossHair";
 import { SelectBox } from "../lib/interactions/SelectBox";
 import type { PlotScaleConfig } from "../lib/types";
+import { makeLinearTicks, XTicks } from "../lib";
 
 const meta: Meta<typeof CanPlot> = {
   component: CanPlot,
@@ -860,87 +861,115 @@ export const LineDash: Story = {
   },
 };
 
-// Data with gaps (missing segments)
+// Data with gaps — increasing gap widths
 export const Gaps: Story = {
   render: () => {
+    // 6 segments (10 points each), separated by gaps of 2, 4, 6, 8, 10 data units.
+    // xGapWidth=5 → gaps ≤5 are bridged (2, 4), gaps >5 create visual breaks (6, 8, 10).
+    const SEG_LEN = 10;
+    const GAP_SIZES = [2, 4, 6, 8, 10];
+    const X_GAP_WIDTH = 5;
+
+    // Build segment start positions: each segment ends at start+SEG_LEN-1,
+    // next segment starts after the gap.
+    const segStarts: number[] = [0];
+    for (const g of GAP_SIZES) {
+      segStarts.push(segStarts.at(-1)! + SEG_LEN + g);
+    }
+    // segStarts = [0, 12, 26, 42, 60, 80]
+    // gaps (first pt to first pt of next): 12, 14, 16, 18, 20 — nope, let me recalc
+    // seg ends at start+9; next starts at start+9+gap+1 so delta between last and first = gap+1?
+    // Actually: last pt x = start+9, next first pt x = next_start.
+    // delta = next_start - (start+9). We want delta == gap.
+    // So next_start = start + 9 + gap + 1 = start + SEG_LEN + gap.
+    // Correct: segStarts[i+1] = segStarts[i] + SEG_LEN + GAP_SIZES[i]
+
+    const makeData = (yBase: number) =>
+      segStarts.flatMap((s) =>
+        Array.from({ length: SEG_LEN }, (_, i) => ({
+          x: s + i,
+          y: yBase + s,
+        }))
+      );
+
+    const maxX = segStarts.at(-1)! + SEG_LEN;
+
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
         axis: { position: "bottom", size: 40 },
         origin: "x",
         min: 0,
-        max: 100,
+        max: maxX + 1,
       },
       {
         id: "y",
         axis: { position: "left", size: 50 },
         origin: "y",
-        min: -20,
-        max: 120,
+        min: 0,
+        max: 150,
       },
-    ];
-
-    // Three segments with deliberate large x-jumps between them
-    const segment = (xStart: number, yOffset: number) =>
-      Array.from({ length: 20 }, (_, i) => ({
-        x: xStart + i,
-        y: yOffset + Math.sin(i / 3) * 15,
-      }));
-
-    const dataWithGaps = [
-      ...segment(0, 80),   // x: 0–19
-      ...segment(35, 80),  // x: 35–54  (gap 19→35, +16 units)
-      ...segment(70, 80),  // x: 70–89  (gap 54→70, +16 units)
-    ];
-
-    const dataWithGaps2 = [
-      ...segment(0, 30),
-      ...segment(35, 30),
-      ...segment(70, 30),
     ];
 
     return (
       <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-        <h3 style={{ marginBottom: "4px" }}>Gaps via xGapWidth</h3>
+        <h3 style={{ marginBottom: "4px" }}>Gaps — increasing gap sizes ({GAP_SIZES.join(", ")} data units)</h3>
         <p style={{ color: "#666", fontSize: "13px", margin: "0 0 12px" }}>
-          Data has jumps of ~16 units between segments.{" "}
-          <code>xGapWidth</code> (canvas px) controls whether those jumps render
-          as bridged lines or visual gaps.
+          <code>xGapWidth={X_GAP_WIDTH}</code> (data units) — gaps ≤ {X_GAP_WIDTH} are bridged;
+          gaps &gt; {X_GAP_WIDTH} create visual breaks.
         </p>
 
         <CanPlot
-          style={{ width: "100%", height: "360px" }}
+          style={{ width: "100%", height: "380px" }}
           configuration={{
             padding: { bottom: 20, left: 20, right: 20, top: 20 },
             scales,
           }}
         >
-          {/* Top pair: no xGapWidth → connected across the jump */}
+          <XTicks scaleId="x" ticks={makeLinearTicks()} />
+
+          {/* Top — no xGapWidth: all segments bridged */}
           <LinePlot
-            data={dataWithGaps}
+            data={makeData(50)}
             xScaleId="x"
             yScaleId="y"
             style={{ strokeStyle: "#f03e3e", lineWidth: 2 }}
           />
 
-          {/* Bottom pair: xGapWidth=50 → line breaks at the jump */}
+          {/* Bottom — xGapWidth=5: small gaps bridged, large gaps break */}
           <LinePlot
-            data={dataWithGaps2}
+            data={makeData(15)}
             xScaleId="x"
             yScaleId="y"
-            xGapWidth={50}
+            xGapWidth={X_GAP_WIDTH}
             style={{ strokeStyle: "#4c6ef5", lineWidth: 2 }}
           />
         </CanPlot>
 
-        <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px" }}>
+        <div
+          style={{
+            marginTop: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+            fontSize: "13px",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <svg width={40} height={12}><line x1={0} y1={6} x2={40} y2={6} stroke="#f03e3e" strokeWidth={2} /></svg>
-            <span style={{ color: "#444" }}>No <code>xGapWidth</code> — bridged across jump</span>
+            <svg width={40} height={12}>
+              <line x1={0} y1={6} x2={40} y2={6} stroke="#f03e3e" strokeWidth={2} />
+            </svg>
+            <span style={{ color: "#444" }}>No <code>xGapWidth</code> — all segments bridged</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <svg width={40} height={12}><line x1={0} y1={6} x2={14} y2={6} stroke="#4c6ef5" strokeWidth={2} /><line x1={26} y1={6} x2={40} y2={6} stroke="#4c6ef5" strokeWidth={2} /></svg>
-            <span style={{ color: "#444" }}><code>xGapWidth=50</code> — breaks at jump</span>
+            <svg width={40} height={12}>
+              <line x1={0} y1={6} x2={14} y2={6} stroke="#4c6ef5" strokeWidth={2} />
+              <line x1={26} y1={6} x2={40} y2={6} stroke="#4c6ef5" strokeWidth={2} />
+            </svg>
+            <span style={{ color: "#444" }}>
+              <code>xGapWidth={X_GAP_WIDTH}</code> — gaps of {GAP_SIZES.filter((g) => g <= X_GAP_WIDTH).join(", ")} bridged;
+              gaps of {GAP_SIZES.filter((g) => g > X_GAP_WIDTH).join(", ")} break
+            </span>
           </div>
         </div>
       </div>
