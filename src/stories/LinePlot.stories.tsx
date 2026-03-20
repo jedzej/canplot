@@ -859,3 +859,91 @@ export const LineDash: Story = {
     );
   },
 };
+
+// Data with gaps (missing segments)
+export const Gaps: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 40 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 50 },
+        origin: "y",
+        min: -20,
+        max: 120,
+      },
+    ];
+
+    // Three segments with deliberate large x-jumps between them
+    const segment = (xStart: number, yOffset: number) =>
+      Array.from({ length: 20 }, (_, i) => ({
+        x: xStart + i,
+        y: yOffset + Math.sin(i / 3) * 15,
+      }));
+
+    const dataWithGaps = [
+      ...segment(0, 80),   // x: 0–19
+      ...segment(35, 80),  // x: 35–54  (gap 19→35, +16 units)
+      ...segment(70, 80),  // x: 70–89  (gap 54→70, +16 units)
+    ];
+
+    const dataWithGaps2 = [
+      ...segment(0, 30),
+      ...segment(35, 30),
+      ...segment(70, 30),
+    ];
+
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h3 style={{ marginBottom: "4px" }}>Gaps via xGapWidth</h3>
+        <p style={{ color: "#666", fontSize: "13px", margin: "0 0 12px" }}>
+          Data has jumps of ~16 units between segments.{" "}
+          <code>xGapWidth</code> (canvas px) controls whether those jumps render
+          as bridged lines or visual gaps.
+        </p>
+
+        <CanPlot
+          style={{ width: "100%", height: "360px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 20, top: 20 },
+            scales,
+          }}
+        >
+          {/* Top pair: no xGapWidth → connected across the jump */}
+          <LinePlot
+            data={dataWithGaps}
+            xScaleId="x"
+            yScaleId="y"
+            style={{ strokeStyle: "#f03e3e", lineWidth: 2 }}
+          />
+
+          {/* Bottom pair: xGapWidth=50 → line breaks at the jump */}
+          <LinePlot
+            data={dataWithGaps2}
+            xScaleId="x"
+            yScaleId="y"
+            xGapWidth={50}
+            style={{ strokeStyle: "#4c6ef5", lineWidth: 2 }}
+          />
+        </CanPlot>
+
+        <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <svg width={40} height={12}><line x1={0} y1={6} x2={40} y2={6} stroke="#f03e3e" strokeWidth={2} /></svg>
+            <span style={{ color: "#444" }}>No <code>xGapWidth</code> — bridged across jump</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <svg width={40} height={12}><line x1={0} y1={6} x2={14} y2={6} stroke="#4c6ef5" strokeWidth={2} /><line x1={26} y1={6} x2={40} y2={6} stroke="#4c6ef5" strokeWidth={2} /></svg>
+            <span style={{ color: "#444" }}><code>xGapWidth=50</code> — breaks at jump</span>
+          </div>
+        </div>
+      </div>
+    );
+  },
+};

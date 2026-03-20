@@ -9,6 +9,7 @@ const LinePlotImpl: React.FC<{
   xScaleId: string;
   yScaleId: string;
   globalAlpha?: number;
+  xGapWidth?: number;
   style?: Partial<
     {
       lineDash: number[];
@@ -19,7 +20,7 @@ const LinePlotImpl: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style, globalAlpha }) => {
+}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style, globalAlpha, xGapWidth }) => {
   useDrawEffect(
     layer,
     ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
@@ -33,13 +34,19 @@ const LinePlotImpl: React.FC<{
       if (globalAlpha !== undefined) {
         ctx.globalAlpha = globalAlpha;
       }
-      for (const point of data) {
+      let lastX: number | null = null;
+      for(const point of data){
         const x = clampXPosToChartArea(valToPos(point.x, xScaleId, "canvas"));
         const y = clampYPosToChartArea(valToPos(point.y, yScaleId, "canvas"));
         if (x === null || y === null) {
           continue;
         }
-        ctx.lineTo(x, y);
+        if (lastX !== null && xGapWidth !== undefined && x - lastX > xGapWidth) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+        lastX = x;
       }
       ctx.stroke();
       if (oldLineDash) {
@@ -47,7 +54,7 @@ const LinePlotImpl: React.FC<{
       }
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, style, globalAlpha]
+    [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth]
   );
   return null;
 };
