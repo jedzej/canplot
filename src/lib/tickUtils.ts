@@ -31,10 +31,10 @@ export const makeLinearTicks = ({
       frame,
       effectiveSpace,
       scale.id,
-      "canvas"
+      "canvas",
     );
 
-    if(unnormalizedIncr === null) {
+    if (unnormalizedIncr === null) {
       return [];
     }
 
@@ -233,7 +233,7 @@ function getTimezoneOffsetHours(atTime: Date | number, timeZone: string) {
 const makeFirstTick = (
   minDate: number,
   incr: Duration,
-  timeZone: string = "UTC"
+  timeZone: string = "UTC",
 ): number => {
   const [incrValue, incrUnit] = incr;
   let result = new Date(minDate);
@@ -243,30 +243,37 @@ const makeFirstTick = (
   switch (incrUnit) {
     case "milliseconds":
       result.setUTCMilliseconds(
-        Math.ceil(result.getUTCMilliseconds() / incrValue) * incrValue
+        Math.ceil(result.getUTCMilliseconds() / incrValue) * incrValue,
       );
       break;
     case "seconds":
       result.setUTCSeconds(
         Math.ceil(result.getUTCSeconds() / incrValue) * incrValue,
-        0
+        0,
       );
       break;
     case "minutes":
       result.setUTCMinutes(
         Math.ceil((result.getTime() % hour) / minute / incrValue) * incrValue,
         0,
-        0
+        0,
       );
       break;
-    case "hours":
+    case "hours": {
+      const offsetHours = getTimezoneOffsetHours(result, timeZone);
+
       result.setUTCHours(
-        Math.ceil((result.getTime() % day) / hour / incrValue) * incrValue,
+        Math.ceil(
+          ((result.getTime() + offsetHours * hour) % day) / hour / incrValue,
+        ) *
+          incrValue -
+          offsetHours,
         0,
         0,
-        0
+        0,
       );
       break;
+    }
     case "days":
     case "months":
     case "years":
@@ -299,36 +306,45 @@ export const makeTimeTicks = ({
 } = {}): TicksConfig => {
   return (scale, frame) => {
     const { min: scaleMin, max: scaleMax } = scale;
-    if(!Number.isFinite(scaleMin) || !Number.isFinite(scaleMax)) {
+    if (!Number.isFinite(scaleMin) || !Number.isFinite(scaleMax)) {
       return [];
     }
     const splitsCount = Math.floor(frame.chartAreaCanvasPX.width / space) + 1;
     const range = scaleMax - scaleMin;
     const splitDistance = range / splitsCount;
     const [incrValue, incrUnit] = TIME_INCRS.find(
-      (a) => durationToMilliseconds(a) >= splitDistance
+      (a) => durationToMilliseconds(a) >= splitDistance,
     ) ?? [1, "milliseconds"];
 
-    if(!incrValue || !incrUnit) {
+    if (!incrValue || !incrUnit) {
       return [];
     }
 
     const firstTick = makeFirstTick(scaleMin, [incrValue, incrUnit], timeZone);
     const firstTickOffset = getTimezoneOffsetHours(firstTick, timeZone);
 
+    console.log(firstTickOffset, new Date(firstTick));
+
     const splits: number[] = [firstTick];
 
     let candidate: number;
     while (true) {
-      if(splits.length > 1000){
-        break;
+      if (splits.length > 100) {
+        return [];
       }
       switch (incrUnit) {
         case "milliseconds":
         case "seconds":
         case "minutes":
         case "hours": {
-          candidate = addUTC(firstTick, [splits.length * incrValue, incrUnit]);
+          const tickNoDST = addUTC(firstTick, [
+            splits.length * incrValue,
+            incrUnit,
+          ]);
+          candidate = addUTC(tickNoDST, [
+            firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
+            "hours",
+          ]);
           break;
         }
         case "days": {
@@ -349,7 +365,7 @@ export const makeTimeTicks = ({
               splits.length * incrValue,
               incrUnit,
             ]),
-            [-firstTickOffset, "hours"]
+            [-firstTickOffset, "hours"],
           );
           candidate = addUTC(tickNoDST, [
             firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
@@ -361,7 +377,9 @@ export const makeTimeTicks = ({
       if (candidate > scaleMax) {
         break;
       }
-      splits.push(candidate);
+      if (splits[splits.length - 1] !== candidate) {
+        splits.push(candidate);
+      }
     }
 
     return (
@@ -378,7 +396,7 @@ export const makeTimeTicks = ({
 const isTimeFormatPartDifferent = (
   a: Intl.DateTimeFormatPart[],
   b: Intl.DateTimeFormatPart[],
-  type: Intl.DateTimeFormatPart["type"]
+  type: Intl.DateTimeFormatPart["type"],
 ) => {
   return (
     a.find((candidate) => candidate.type === type)?.value !==
@@ -462,13 +480,13 @@ export const makeTimeTickFormat = ({
           if (showSeconds) {
             const s = curr.label.find((a) => a.type === "second")?.value;
             const ms = curr.label.find(
-              (a) => a.type === "fractionalSecond"
+              (a) => a.type === "fractionalSecond",
             )?.value;
             secondsPart = `:${s}` + (showMilliseconds ? `.${ms}` : "");
           }
           visibleParts.push(
             `${h}:${m}${secondsPart}` +
-              (showTimezone && newTimeZoneName ? ` ${tz}` : "")
+              (showTimezone && newTimeZoneName ? ` ${tz}` : ""),
           );
         }
         if (newDay || newMonth) {
@@ -478,7 +496,7 @@ export const makeTimeTickFormat = ({
               newDay && curr.label.find((a) => a.type === "day")?.value,
             ]
               .filter(Boolean)
-              .join(" ")
+              .join(" "),
           );
         }
         if (newYear) {

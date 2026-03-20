@@ -911,7 +911,7 @@ export const DifferentAxisPositions: Story = {
 // Time ticks with different styles
 export const TimeTicksWithStyles: Story = {
   render: () => {
-    const refPoint = Date.parse("2025-11-01T12:00:00Z");
+    const refPoint = Date.parse("2025-11-01T06:30:00Z");
     const scales: PlotScaleConfig[] = [
       {
         id: "t",
@@ -952,7 +952,7 @@ export const TimeTicksWithStyles: Story = {
         >
           <XTicks
             scaleId="t"
-            ticks={makeTimeTicks({ timeZone: "UTC" })}
+            ticks={makeTimeTicks({ timeZone: "Europe/Warsaw" })}
             tickSize={12}
             tickStyle={{
               strokeStyle: "#1098ad",
@@ -1194,6 +1194,73 @@ export const FullyCustomized: Story = {
             style={{
               strokeStyle: "#7048e8",
               lineWidth: 3,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Time ticks wide range: year 1500 to 2500 (performance test)
+export const TimeTicksWideRange: Story = {
+  render: () => {
+    const minTime = Date.parse("1500-01-01T00:00:00Z");
+    const maxTime = Date.parse("2500-01-01T00:00:00Z");
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "t",
+        axis: {
+          position: "bottom",
+          size: 80,
+        },
+        origin: "x",
+        min: minTime,
+        max: maxTime,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 60,
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3>Time Ticks — Wide Range (year 1500 to 2500)</h3>
+        <p style={{ color: "#666", fontSize: "14px" }}>
+          1000-year span to test tick generation performance.
+        </p>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 20,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          <XTicks scaleId="t" ticks={makeTimeTicks({ timeZone: "UTC" })} />
+          <YTicks scaleId="y" ticks={makeLinearTicks()} />
+
+          <LinePlot
+            data={[
+              { x: minTime, y: 20 },
+              { x: maxTime, y: 80 },
+            ]}
+            xScaleId="t"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#4c6ef5",
+              lineWidth: 2,
             }}
           />
         </CanPlot>
