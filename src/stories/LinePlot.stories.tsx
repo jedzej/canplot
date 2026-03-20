@@ -777,3 +777,85 @@ export const GlobalAlpha: Story = {
     );
   },
 };
+
+// Line dash patterns
+export const LineDash: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 40 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 50 },
+        origin: "y",
+        min: -10,
+        max: 110,
+      },
+    ];
+
+    const wave = (offset: number) =>
+      Array.from({ length: 100 }, (_, i) => ({
+        x: i,
+        y: offset + Math.sin(i / 8) * 12,
+      }));
+
+    const patterns: { label: string; lineDash: number[]; color: string }[] = [
+      { label: "solid  ([])", lineDash: [], color: "#4c6ef5" },
+      { label: "dashed  ([8, 4])", lineDash: [8, 4], color: "#f03e3e" },
+      { label: "dotted  ([2, 4])", lineDash: [2, 4], color: "#2f9e44" },
+      { label: "dash-dot  ([10, 4, 2, 4])", lineDash: [10, 4, 2, 4], color: "#e67700" },
+      { label: "long dash  ([16, 6])", lineDash: [16, 6], color: "#9c36b5" },
+      { label: "sparse dots  ([2, 12])", lineDash: [2, 12], color: "#0c8599" },
+    ];
+
+    const spacing = 100 / (patterns.length + 1);
+
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h3 style={{ marginBottom: "12px" }}>Line Dash Patterns</h3>
+        <CanPlot
+          style={{ width: "100%", height: "420px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 140, top: 20 },
+            scales,
+          }}
+        >
+          {patterns.map(({ lineDash, color }, idx) => (
+            <LinePlot
+              key={idx}
+              data={wave(spacing * (idx + 1))}
+              xScaleId="x"
+              yScaleId="y"
+              style={{ strokeStyle: color, lineWidth: 2, lineDash }}
+            />
+          ))}
+        </CanPlot>
+
+        {/* Legend */}
+        <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+          {patterns.map(({ label, lineDash, color }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px" }}>
+              <svg width={60} height={12}>
+                <line
+                  x1={0}
+                  y1={6}
+                  x2={60}
+                  y2={6}
+                  stroke={color}
+                  strokeWidth={2}
+                  strokeDasharray={lineDash.join(" ")}
+                />
+              </svg>
+              <span style={{ color: "#444" }}>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
+};

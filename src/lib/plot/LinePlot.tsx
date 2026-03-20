@@ -11,6 +11,7 @@ const LinePlotImpl: React.FC<{
   globalAlpha?: number;
   style?: Partial<
     {
+      lineDash: number[];
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
       strokeStyle: CanvasFillStrokeStyles["strokeStyle"];
     } & Pick<
@@ -25,6 +26,10 @@ const LinePlotImpl: React.FC<{
       ctx.save();
       ctx.beginPath();
       applyStyles(ctx, style);
+      const oldLineDash = ctx.getLineDash();
+      if (style?.lineDash) {
+        ctx.setLineDash(style.lineDash);
+      }
       if (globalAlpha !== undefined) {
         ctx.globalAlpha = globalAlpha;
       }
@@ -37,6 +42,9 @@ const LinePlotImpl: React.FC<{
         ctx.lineTo(x, y);
       }
       ctx.stroke();
+      if (oldLineDash) {
+        ctx.setLineDash(oldLineDash);
+      }
       ctx.restore();
     },
     [data, xScaleId, yScaleId, style, globalAlpha]
