@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useRef, useState } from "react";
 import { CanPlot } from "../lib/CanPlot";
+import { ChartAreaInteractions } from "../lib/interactions/ChartAreaInteractions";
+import type { MouseDownEvent, MoveEvent } from "../lib/interactions/types";
 import { LinePlot } from "../lib/plot/LinePlot";
 import { XTicks, YTicks } from "../lib/plot/Ticks";
 import { makeLinearTicks, makeTimeTicks } from "../lib/tickUtils";
@@ -1264,6 +1267,188 @@ export const TimeTicksWideRange: Story = {
             }}
           />
         </CanPlot>
+      </div>
+    );
+  },
+};
+
+const PRESETS: { label: string; min: number; max: number }[] = [
+  {
+    label: "1 hour",
+    min: Date.parse("2025-06-15T11:00:00Z"),
+    max: Date.parse("2025-06-15T12:00:00Z"),
+  },
+  {
+    label: "1 day",
+    min: Date.parse("2025-06-15T00:00:00Z"),
+    max: Date.parse("2025-06-16T00:00:00Z"),
+  },
+  {
+    label: "1 month",
+    min: Date.parse("2025-06-01T00:00:00Z"),
+    max: Date.parse("2025-07-01T00:00:00Z"),
+  },
+  {
+    label: "1 year",
+    min: Date.parse("2025-01-01T00:00:00Z"),
+    max: Date.parse("2026-01-01T00:00:00Z"),
+  },
+  {
+    label: "10 years",
+    min: Date.parse("2015-01-01T00:00:00Z"),
+    max: Date.parse("2025-01-01T00:00:00Z"),
+  },
+  {
+    label: "100 years",
+    min: Date.parse("1925-01-01T00:00:00Z"),
+    max: Date.parse("2025-01-01T00:00:00Z"),
+  },
+  {
+    label: "1000 years",
+    min: Date.parse("1500-01-01T00:00:00Z"),
+    max: Date.parse("2500-01-01T00:00:00Z"),
+  },
+];
+
+// Interactive time ticks: scroll to zoom, drag to pan
+export const TimeTicksInteractive: Story = {
+  render: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [range, setRange] = useState(PRESETS[3]);
+
+    // Keep a ref so event handlers always see the latest range without stale closures
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const rangeRef = useRef(range);
+    rangeRef.current = range;
+
+    // Drag state: start cssX + start range
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const dragRef = useRef<{
+      cssX: number;
+      chartWidth: number;
+      min: number;
+      max: number;
+    } | null>(null);
+
+    // Last known pointer time (for zoom centering)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const pointerTimeRef = useRef<number | null>(null);
+
+    const handleMouseDown = (event: MouseDownEvent) => {
+      const { cssX } = event.pointer;
+      const chartWidth = event.frame.chartAreaCSS.width;
+      if (cssX != null && chartWidth > 0) {
+        dragRef.current = {
+          cssX,
+          chartWidth,
+          min: rangeRef.current.min,
+          max: rangeRef.current.max,
+        };
+      }
+    };
+
+    const handleMouseMove = (event: MoveEvent) => {
+      if (!event.pointer) return;
+      const { cssX } = event.pointer;
+
+      // Update pointer time for zoom centering
+      const scaledTime = event.pointer.scaled["t"];
+      if (scaledTime != null) pointerTimeRef.current = scaledTime;
+
+      // Pan while dragging
+      if (dragRef.current && cssX != null) {
+        const { cssX: startX, chartWidth, min, max } = dragRef.current;
+        const span = max - min;
+        const delta = ((cssX - startX) / chartWidth) * span;
+        setRange({ label: "custom", min: min - delta, max: max - delta });
+      }
+    };
+
+    const handleDocumentMouseUp = () => {
+      dragRef.current = null;
+    };
+
+    const handleWheel = (e: React.WheelEvent) => {
+      e.preventDefault();
+      const { min, max } = rangeRef.current;
+      const span = max - min;
+      const zoomFactor = e.deltaY > 0 ? 1.25 : 1 / 1.25;
+      const center = pointerTimeRef.current ?? (min + max) / 2;
+      const ratio = Math.max(0, Math.min(1, (center - min) / span));
+      const newSpan = span * zoomFactor;
+      setRange({
+        label: "custom",
+        min: center - ratio * newSpan,
+        max: center + (1 - ratio) * newSpan,
+      });
+    };
+
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "t",
+        axis: { position: "bottom", size: 80 },
+        origin: "x",
+        min: range.min,
+        max: range.max,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 60 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h3 style={{ marginBottom: "4px" }}>Time Ticks — Interactive Zoom &amp; Pan</h3>
+        <p style={{ color: "#666", fontSize: "13px", margin: "0 0 12px" }}>
+          Scroll to zoom · Drag to pan
+        </p>
+
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
+          {PRESETS.map((p) => (
+            <button
+              key={p.label}
+              onClick={() => setRange(p)}
+              style={{
+                padding: "4px 10px",
+                borderRadius: "4px",
+                border: "1px solid #ccc",
+                background: range.label === p.label ? "#4c6ef5" : "#f8f9fa",
+                color: range.label === p.label ? "#fff" : "#333",
+                cursor: "pointer",
+                fontSize: "13px",
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* onWheel on the wrapper — prevent page scroll while hovering the chart */}
+        <div onWheel={handleWheel} style={{ userSelect: "none", cursor: dragRef.current ? "grabbing" : "grab" }}>
+          <CanPlot
+            style={{ width: "100%", height: "400px" }}
+            configuration={{
+              padding: { bottom: 20, left: 20, right: 20, top: 20 },
+              scales,
+            }}
+          >
+            <ChartAreaInteractions
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onDocumentMouseUp={handleDocumentMouseUp}
+            />
+            <XTicks scaleId="t" ticks={makeTimeTicks({ timeZone: "UTC" })} />
+            <YTicks scaleId="y" ticks={makeLinearTicks()} />
+          </CanPlot>
+        </div>
+
+        <p style={{ fontSize: "12px", color: "#888", marginTop: "8px" }}>
+          {new Date(range.min).toISOString()} &rarr; {new Date(range.max).toISOString()}
+        </p>
       </div>
     );
   },

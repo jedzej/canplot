@@ -274,7 +274,16 @@ const makeFirstTick = (
       );
       break;
     }
-    case "days":
+    case "days": {
+      setTimeToMidnight();
+      result.setUTCDate(
+        1,
+      );
+      while (result.getTime() < minDate) {
+        result = new Date(addUTC(result, [incrValue, incrUnit]));
+      }
+      break;
+    }
     case "months":
     case "years":
       if (incrUnit === "months") {
@@ -323,7 +332,7 @@ export const makeTimeTicks = ({
     const firstTick = makeFirstTick(scaleMin, [incrValue, incrUnit], timeZone);
     const firstTickOffset = getTimezoneOffsetHours(firstTick, timeZone);
 
-    console.log(firstTickOffset, new Date(firstTick));
+    // console.log(firstTickOffset, new Date(firstTick));
 
     const splits: number[] = [firstTick];
 
