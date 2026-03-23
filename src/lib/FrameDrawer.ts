@@ -6,7 +6,11 @@ import {
   valToPos,
   valToPxDistance,
 } from "./helpers";
-import type { PlotDrawFrame, PlotDrawScaleConfig } from "./types";
+import type {
+  OutlierStrategy,
+  PlotDrawFrame,
+  PlotDrawScaleConfig,
+} from "./types";
 
 export const CANPLOT_LAYER = {
   TOP: 400,
@@ -32,27 +36,27 @@ export class FrameDrawer {
   }
   clampXPosToChartArea = <T extends number | null>(
     x: T,
-    space: "canvas" | "css" = "canvas"
+    space: "canvas" | "css" = "canvas",
   ): T | number => {
     return clampXPosToChartArea(this.frame, x, space);
   };
   clampYPosToChartArea = <T extends number | null>(
     y: T,
-    space: "canvas" | "css" = "canvas"
+    space: "canvas" | "css" = "canvas",
   ): T | number => {
     return clampYPosToChartArea(this.frame, y, space);
   };
   valToPos = (
     value: number,
     scaleId: string,
-    space: "canvas" | "css" = "canvas"
+    space: "canvas" | "css" = "canvas",
   ): number | null => {
     return valToPos(this.frame, value, scaleId, space);
   };
   valToPxDistance = (
     value: number,
     scaleId: string,
-    space: "canvas" | "css" = "canvas"
+    space: "canvas" | "css" = "canvas",
   ): number | null => {
     return valToPxDistance(this.frame, value, scaleId, space);
   };
@@ -61,5 +65,31 @@ export class FrameDrawer {
   };
   getScale = (scaleId: string): PlotDrawScaleConfig | null => {
     return getScale(this.frame, scaleId);
+  };
+  valToPosWithStrategy = (
+    value: number,
+    scaleId: string,
+    space: "canvas" | "css" = "canvas",
+    strategy: OutlierStrategy,
+  ): number | null => {
+    const scale = this.getScale(scaleId);
+    if (!scale) return null;
+
+    if (strategy === "clip") {
+      if (!valFits(this.frame, value, scaleId)) {
+        return null;
+      }
+      return valToPos(this.frame, value, scaleId, space);
+    }
+    if (scale.origin === "x") {
+      return this.clampXPosToChartArea(
+        valToPos(this.frame, value, scaleId, space),
+        space,
+      );
+    }
+    return this.clampYPosToChartArea(
+      valToPos(this.frame, value, scaleId, space),
+      space,
+    );
   };
 }

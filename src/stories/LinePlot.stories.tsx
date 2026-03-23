@@ -976,3 +976,423 @@ export const Gaps: Story = {
     );
   },
 };
+
+// Demonstrates xStrategy and yStrategy with "clip" vs "clamp"
+export const OutlierStrategies: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 40 },
+        origin: "x",
+        min: 20,
+        max: 80,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 50 },
+        origin: "y",
+        min: 20,
+        max: 80,
+      },
+    ];
+
+    // Data that intentionally extends beyond the scale boundaries
+    const data = [
+      { x: 0, y: 50 },
+      { x: 10, y: 70 },
+      { x: 20, y: 30 },
+      { x: 30, y: 90 },
+      { x: 40, y: 10 },
+      { x: 50, y: 60 },
+      { x: 60, y: 5 },
+      { x: 70, y: 95 },
+      { x: 80, y: 40 },
+      { x: 90, y: 55 },
+      { x: 100, y: 20 },
+    ];
+
+    const strategies = [
+      {
+        label: 'xStrategy="clip" / yStrategy="clip" (default)',
+        xStrategy: "clip" as const,
+        yStrategy: "clip" as const,
+        color: "#4c6ef5",
+        description: "Out-of-range segments are hidden entirely",
+      },
+      {
+        label: 'xStrategy="clamp" / yStrategy="clamp"',
+        xStrategy: "clamp" as const,
+        yStrategy: "clamp" as const,
+        color: "#f03e3e",
+        description: "Out-of-range values are clamped to the boundary",
+      },
+      {
+        label: 'xStrategy="clip" / yStrategy="clamp"',
+        xStrategy: "clip" as const,
+        yStrategy: "clamp" as const,
+        color: "#37b24d",
+        description: "X clipped, Y clamped to boundary",
+      },
+      {
+        label: 'xStrategy="clamp" / yStrategy="clip"',
+        xStrategy: "clamp" as const,
+        yStrategy: "clip" as const,
+        color: "#f59f00",
+        description: "X clamped to boundary, Y clipped",
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h3 style={{ marginBottom: "4px" }}>
+          Outlier Strategies — clip vs clamp
+        </h3>
+        <p style={{ color: "#666", fontSize: "13px", margin: "0 0 16px" }}>
+          Scale range is [20, 80] on both axes. The data extends from 0–100 so
+          several points fall outside the visible range. Each strategy
+          combination handles out-of-bounds points differently.
+        </p>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+          }}
+        >
+          {strategies.map((s) => (
+            <div key={s.label}>
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  marginBottom: "2px",
+                  color: s.color,
+                }}
+              >
+                {s.label}
+              </div>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#888",
+                  marginBottom: "8px",
+                }}
+              >
+                {s.description}
+              </div>
+              <CanPlot
+                style={{ width: "100%", height: "250px" }}
+                configuration={{
+                  padding: { bottom: 20, left: 20, right: 20, top: 20 },
+                  scales,
+                }}
+              >
+                <XTicks scaleId="x" ticks={makeLinearTicks()} />
+                <LinePlot
+                  data={data}
+                  xScaleId="x"
+                  yScaleId="y"
+                  xStrategy={s.xStrategy}
+                  yStrategy={s.yStrategy}
+                  style={{ strokeStyle: s.color, lineWidth: 2 }}
+                />
+                <ScatterPlot
+                  data={data}
+                  xScaleId="x"
+                  yScaleId="y"
+                  xStrategy={s.xStrategy}
+                  yStrategy={s.yStrategy}
+                  radius={3}
+                  style={{ fillStyle: s.color }}
+                />
+              </CanPlot>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  },
+};
+
+// Side-by-side comparison: clip vs clamp on the X axis only
+export const XStrategyComparison: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 40 },
+        origin: "x",
+        min: 20,
+        max: 80,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 50 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    const data = Array.from({ length: 25 }, (_, i) => ({
+      x: i * 4,
+      y: 50 + Math.sin(i * 0.5) * 40,
+    }));
+
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h3 style={{ marginBottom: "4px" }}>
+          X Strategy — clip vs clamp
+        </h3>
+        <p style={{ color: "#666", fontSize: "13px", margin: "0 0 16px" }}>
+          X scale range is [20, 80]. Data extends from 0–96. Compare how each
+          strategy handles out-of-range X values.
+        </p>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px", color: "#4c6ef5" }}>
+              xStrategy="clip" — out-of-range X segments hidden
+            </div>
+            <CanPlot
+              style={{ width: "100%", height: "300px" }}
+              configuration={{
+                padding: { bottom: 20, left: 20, right: 20, top: 20 },
+                scales,
+              }}
+            >
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <LinePlot
+                data={data}
+                xScaleId="x"
+                yScaleId="y"
+                xStrategy="clip"
+                yStrategy="clip"
+                style={{ strokeStyle: "#4c6ef5", lineWidth: 2 }}
+              />
+            </CanPlot>
+          </div>
+          <div>
+            <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px", color: "#f03e3e" }}>
+              xStrategy="clamp" — out-of-range X pinned to boundary
+            </div>
+            <CanPlot
+              style={{ width: "100%", height: "300px" }}
+              configuration={{
+                padding: { bottom: 20, left: 20, right: 20, top: 20 },
+                scales,
+              }}
+            >
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <LinePlot
+                data={data}
+                xScaleId="x"
+                yScaleId="y"
+                xStrategy="clamp"
+                yStrategy="clip"
+                style={{ strokeStyle: "#f03e3e", lineWidth: 2 }}
+              />
+            </CanPlot>
+          </div>
+        </div>
+      </div>
+    );
+  },
+};
+
+// Side-by-side comparison: clip vs clamp on the Y axis only
+export const YStrategyComparison: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 40 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 50 },
+        origin: "y",
+        min: 20,
+        max: 80,
+      },
+    ];
+
+    const data = Array.from({ length: 25 }, (_, i) => ({
+      x: i * 4,
+      y: 50 + Math.sin(i * 0.4) * 45,
+    }));
+
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h3 style={{ marginBottom: "4px" }}>
+          Y Strategy — clip vs clamp
+        </h3>
+        <p style={{ color: "#666", fontSize: "13px", margin: "0 0 16px" }}>
+          Y scale range is [20, 80]. The sine wave peaks exceed the boundaries.
+          Both charts use <code>xGapWidth=5</code> so that clipped points
+          produce visible line breaks.
+        </p>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px", color: "#4c6ef5" }}>
+              yStrategy="clip" — clipped points break the line (gaps)
+            </div>
+            <CanPlot
+              style={{ width: "100%", height: "300px" }}
+              configuration={{
+                padding: { bottom: 20, left: 20, right: 20, top: 20 },
+                scales,
+              }}
+            >
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <LinePlot
+                data={data}
+                xScaleId="x"
+                yScaleId="y"
+                xStrategy="clip"
+                yStrategy="clip"
+                xGapWidth={5}
+                style={{ strokeStyle: "#4c6ef5", lineWidth: 2 }}
+              />
+            </CanPlot>
+          </div>
+          <div>
+            <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px", color: "#f03e3e" }}>
+              yStrategy="clamp" — out-of-range Y pinned (flat plateaus)
+            </div>
+            <CanPlot
+              style={{ width: "100%", height: "300px" }}
+              configuration={{
+                padding: { bottom: 20, left: 20, right: 20, top: 20 },
+                scales,
+              }}
+            >
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <LinePlot
+                data={data}
+                xScaleId="x"
+                yScaleId="y"
+                xStrategy="clip"
+                yStrategy="clamp"
+                xGapWidth={5}
+                style={{ strokeStyle: "#f03e3e", lineWidth: 2 }}
+              />
+            </CanPlot>
+          </div>
+        </div>
+      </div>
+    );
+  },
+};
+
+// Both axes: clip/clip vs clamp/clamp
+export const ClipVsClamp: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 40 },
+        origin: "x",
+        min: 20,
+        max: 80,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 50 },
+        origin: "y",
+        min: 20,
+        max: 80,
+      },
+    ];
+
+    const data = Array.from({ length: 25 }, (_, i) => ({
+      x: i * 4,
+      y: 50 + Math.sin(i * 0.4) * 45,
+    }));
+
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h3 style={{ marginBottom: "4px" }}>
+          Clip vs Clamp — both axes
+        </h3>
+        <p style={{ color: "#666", fontSize: "13px", margin: "0 0 16px" }}>
+          Both X and Y scale ranges are [20, 80]. Data extends beyond on both
+          axes. <code>xGapWidth=5</code> is used so clipped gaps are visible.
+        </p>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px", color: "#4c6ef5" }}>
+              xStrategy="clip" / yStrategy="clip" — out-of-range segments hidden
+            </div>
+            <CanPlot
+              style={{ width: "100%", height: "300px" }}
+              configuration={{
+                padding: { bottom: 20, left: 20, right: 20, top: 20 },
+                scales,
+              }}
+            >
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <LinePlot
+                data={data}
+                xScaleId="x"
+                yScaleId="y"
+                xStrategy="clip"
+                yStrategy="clip"
+                xGapWidth={5}
+                style={{ strokeStyle: "#4c6ef5", lineWidth: 2 }}
+              />
+            </CanPlot>
+          </div>
+          <div>
+            <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px", color: "#f03e3e" }}>
+              xStrategy="clamp" / yStrategy="clamp" — values pinned to boundaries
+            </div>
+            <CanPlot
+              style={{ width: "100%", height: "300px" }}
+              configuration={{
+                padding: { bottom: 20, left: 20, right: 20, top: 20 },
+                scales,
+              }}
+            >
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <LinePlot
+                data={data}
+                xScaleId="x"
+                yScaleId="y"
+                xStrategy="clamp"
+                yStrategy="clamp"
+                xGapWidth={5}
+                style={{ strokeStyle: "#f03e3e", lineWidth: 2 }}
+              />
+            </CanPlot>
+          </div>
+        </div>
+      </div>
+    );
+  },
+};

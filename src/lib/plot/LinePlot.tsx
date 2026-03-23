@@ -2,6 +2,7 @@ import React from "react";
 import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
+import type { OutlierStrategy } from "../types";
 
 const LinePlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
@@ -10,6 +11,8 @@ const LinePlotImpl: React.FC<{
   yScaleId: string;
   globalAlpha?: number;
   xGapWidth?: number;
+  xStrategy?: OutlierStrategy;
+  yStrategy?: OutlierStrategy;
   style?: Partial<
     {
       lineDash: number[];
@@ -28,10 +31,12 @@ const LinePlotImpl: React.FC<{
   style,
   globalAlpha,
   xGapWidth,
+  xStrategy = "clip",
+  yStrategy = "clip",
 }) => {
   useDrawEffect(
     layer,
-    ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
+    ({ ctx, valToPosWithStrategy }) => {
       ctx.save();
       ctx.beginPath();
       applyStyles(ctx, style);
@@ -44,12 +49,9 @@ const LinePlotImpl: React.FC<{
       }
       let lastX: number | null = null;
       for (const point of data) {
-        const xPos = clampXPosToChartArea(
-          valToPos(point.x, xScaleId, "canvas"),
-        );
-        const yPos = clampYPosToChartArea(
-          valToPos(point.y, yScaleId, "canvas"),
-        );
+        const xPos = valToPosWithStrategy(point.x, xScaleId, "canvas", xStrategy);
+        const yPos = valToPosWithStrategy(point.y, yScaleId, "canvas", yStrategy);
+
         if (xPos === null || yPos === null) {
           continue;
         }
@@ -70,7 +72,7 @@ const LinePlotImpl: React.FC<{
       }
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth],
+    [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth, xStrategy, yStrategy],
   );
   return null;
 };

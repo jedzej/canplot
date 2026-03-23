@@ -66,7 +66,11 @@ export type TicksConfig =
   | { value: number; label: string }[]
   | ((
       scale: PlotDrawScaleConfig & { axis: PlotDrawAxis },
-      frame: PlotDrawFrame
+      frame: PlotDrawFrame,
     ) => { value: number; label: string }[]);
 
-export type TicksFormatter = (ticks: number[]) => { value: number; label: string }[];
+export type TicksFormatter = (
+  ticks: number[],
+) => { value: number; label: string }[];
+
+export type OutlierStrategy = "clip" | "clamp";

@@ -2,6 +2,7 @@ import React from "react";
 import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
+import type { OutlierStrategy } from "../types";
 
 const ScatterPlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
@@ -10,8 +11,8 @@ const ScatterPlotImpl: React.FC<{
   yScaleId: string;
   radius?: number;
   globalAlpha?: number;
-  xStrategy?: "clip" | "clamp";
-  yStrategy?: "clip" | "clamp";
+  xStrategy?: OutlierStrategy;
+  yStrategy?: OutlierStrategy;
   style?: Partial<
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
@@ -36,10 +37,7 @@ const ScatterPlotImpl: React.FC<{
     layer,
     ({
       ctx,
-      valToPos,
-      valFits,
-      clampXPosToChartArea,
-      clampYPosToChartArea,
+      valToPosWithStrategy,
     }) => {
       ctx.save();
       applyStyles(ctx, style);
@@ -51,34 +49,12 @@ const ScatterPlotImpl: React.FC<{
       const points = [];
 
       for (const point of data) {
-        let x: number | null = null;
-        let y: number | null = null;
+        const xPos = valToPosWithStrategy(point.x, xScaleId, "canvas", xStrategy);
+        const yPos = valToPosWithStrategy(point.y, yScaleId, "canvas", yStrategy);
 
-        // X
-        const rawX = valToPos(point.x, xScaleId);
-        if (rawX === null) continue;
+        if (xPos === null || yPos === null) continue;
 
-        if (xStrategy === "clip") {
-          if (!valFits(point.x, xScaleId)) continue;
-          x = rawX;
-        } else {
-          x = clampXPosToChartArea(rawX, "canvas");
-        }
-
-        // Y
-        const rawY = valToPos(point.y, yScaleId);
-        if (rawY === null) continue;
-
-        if (yStrategy === "clip") {
-          if (!valFits(point.y, yScaleId)) continue;
-          y = rawY;
-        } else {
-          y = clampYPosToChartArea(rawY, "canvas");
-        }
-
-        if (x === null || y === null) continue;
-
-        points.push({ x, y });
+        points.push({ x: xPos, y: yPos });
       }
 
       // FILL (per point)
@@ -102,7 +78,7 @@ const ScatterPlotImpl: React.FC<{
 
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, radius, style, globalAlpha],
+    [data, xScaleId, yScaleId, radius, style, globalAlpha, xStrategy, yStrategy],
   );
   return null;
 };
