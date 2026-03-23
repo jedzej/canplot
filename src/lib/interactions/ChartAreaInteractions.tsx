@@ -87,7 +87,6 @@ export const ChartAreaInteractions: React.FC<ChartAreaInteractionsProps> = ({
     onDocumentMouseUp?.(event);
   });
   useGenericInteractionsEvent("spanselect", interactionsId, (event) => {
-    console.log(event);
     onSpanSelect?.(event);
   });
   useGenericInteractionsEvent("contextmenu", interactionsId, (event) => {
@@ -191,9 +190,9 @@ const ChartAreaInteractionsImpl: React.FC<{
   useEffect(() => {
     const mouseUpListener = (event: MouseEvent) => {
       const lastSpanSelectSyncEvent = lastSpanSelectEventRef.current;
+      selectStateRef.current = null;
+      lastSpanSelectEventRef.current = null;
       if (lastSpanSelectSyncEvent) {
-        selectStateRef.current = null;
-        lastSpanSelectEventRef.current = null;
         InteractionsBus.spanselect.dispatchEvent(interactionsId, {
           ...lastSpanSelectSyncEvent,
           completed: true,
