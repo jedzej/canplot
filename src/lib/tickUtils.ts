@@ -337,8 +337,8 @@ export const makeTimeTicks = ({
     const splits: number[] = [firstTick];
 
     let candidate: number;
-    while (true) {
-      if (splits.length > 100) {
+    for(let tickNumber = 1; ; tickNumber++) {
+      if (tickNumber > 100) {
         return [];
       }
       switch (incrUnit) {
@@ -347,7 +347,7 @@ export const makeTimeTicks = ({
         case "minutes":
         case "hours": {
           const tickNoDST = addUTC(firstTick, [
-            splits.length * incrValue,
+            tickNumber * incrValue,
             incrUnit,
           ]);
           candidate = addUTC(tickNoDST, [
@@ -358,7 +358,7 @@ export const makeTimeTicks = ({
         }
         case "days": {
           const tickNoDST = addUTC(firstTick, [
-            splits.length * incrValue,
+            tickNumber * incrValue,
             incrUnit,
           ]);
           candidate = addUTC(tickNoDST, [
@@ -371,7 +371,7 @@ export const makeTimeTicks = ({
         case "years": {
           const tickNoDST = addUTC(
             addUTC(addUTC(firstTick, [firstTickOffset, "hours"]), [
-              splits.length * incrValue,
+              tickNumber * incrValue,
               incrUnit,
             ]),
             [-firstTickOffset, "hours"],

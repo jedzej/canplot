@@ -1441,7 +1441,7 @@ export const TimeTicksInteractive: Story = {
               onMouseMove={handleMouseMove}
               onDocumentMouseUp={handleDocumentMouseUp}
             />
-            <XTicks scaleId="t" ticks={makeTimeTicks({ timeZone: "UTC" })} />
+            <XTicks scaleId="t" ticks={makeTimeTicks({ timeZone: "Europe/Warsaw" })} />
             <YTicks scaleId="y" ticks={makeLinearTicks()} />
           </CanPlot>
         </div>
@@ -1449,6 +1449,322 @@ export const TimeTicksInteractive: Story = {
         <p style={{ fontSize: "12px", color: "#888", marginTop: "8px" }}>
           {new Date(range.min).toISOString()} &rarr; {new Date(range.max).toISOString()}
         </p>
+      </div>
+    );
+  },
+};
+
+// DST time ranges: fixed ranges across summer and autumn DST transitions
+// in various time zones, producing different tick splits
+
+const DST_SCENARIOS: {
+  title: string;
+  timeZone: string;
+  min: string;
+  max: string;
+}[] = [
+  // ── EU (Europe/Warsaw) spring forward: March 30, 2025 at 2:00 AM local ──
+  {
+    title: "Warsaw — 2h across spring-forward",
+    timeZone: "Europe/Warsaw",
+    min: "2025-03-30T00:00:00Z",
+    max: "2025-03-30T02:00:00Z",
+  },
+  {
+    title: "Warsaw — 6h across spring-forward",
+    timeZone: "Europe/Warsaw",
+    min: "2025-03-29T22:00:00Z",
+    max: "2025-03-30T04:00:00Z",
+  },
+  {
+    title: "Warsaw — 24h across spring-forward",
+    timeZone: "Europe/Warsaw",
+    min: "2025-03-29T12:00:00Z",
+    max: "2025-03-30T12:00:00Z",
+  },
+  {
+    title: "Warsaw — 3d across spring-forward",
+    timeZone: "Europe/Warsaw",
+    min: "2025-03-29T00:00:00Z",
+    max: "2025-04-01T00:00:00Z",
+  },
+  {
+    title: "Warsaw — 1w across spring-forward",
+    timeZone: "Europe/Warsaw",
+    min: "2025-03-26T00:00:00Z",
+    max: "2025-04-02T00:00:00Z",
+  },
+  // ── EU (Europe/Warsaw) fall back: October 26, 2025 at 3:00 AM local ──
+  {
+    title: "Warsaw — 2h across fall-back",
+    timeZone: "Europe/Warsaw",
+    min: "2025-10-26T00:00:00Z",
+    max: "2025-10-26T02:00:00Z",
+  },
+  {
+    title: "Warsaw — 6h across fall-back",
+    timeZone: "Europe/Warsaw",
+    min: "2025-10-25T22:00:00Z",
+    max: "2025-10-26T04:00:00Z",
+  },
+  {
+    title: "Warsaw — 24h across fall-back",
+    timeZone: "Europe/Warsaw",
+    min: "2025-10-25T12:00:00Z",
+    max: "2025-10-26T12:00:00Z",
+  },
+  {
+    title: "Warsaw — 3d across fall-back",
+    timeZone: "Europe/Warsaw",
+    min: "2025-10-25T00:00:00Z",
+    max: "2025-10-28T00:00:00Z",
+  },
+  {
+    title: "Warsaw — 1w across fall-back",
+    timeZone: "Europe/Warsaw",
+    min: "2025-10-22T00:00:00Z",
+    max: "2025-10-29T00:00:00Z",
+  },
+  // ── UK (Europe/London) spring forward: March 30, 2025 at 1:00 AM local ──
+  {
+    title: "London — 2h across spring-forward",
+    timeZone: "Europe/London",
+    min: "2025-03-30T00:00:00Z",
+    max: "2025-03-30T02:00:00Z",
+  },
+  {
+    title: "London — 6h across spring-forward",
+    timeZone: "Europe/London",
+    min: "2025-03-29T22:00:00Z",
+    max: "2025-03-30T04:00:00Z",
+  },
+  {
+    title: "London — 24h across spring-forward",
+    timeZone: "Europe/London",
+    min: "2025-03-29T12:00:00Z",
+    max: "2025-03-30T12:00:00Z",
+  },
+  // ── UK (Europe/London) fall back: October 26, 2025 at 2:00 AM local ──
+  {
+    title: "London — 2h across fall-back",
+    timeZone: "Europe/London",
+    min: "2025-10-26T00:00:00Z",
+    max: "2025-10-26T02:00:00Z",
+  },
+  {
+    title: "London — 6h across fall-back",
+    timeZone: "Europe/London",
+    min: "2025-10-25T22:00:00Z",
+    max: "2025-10-26T04:00:00Z",
+  },
+  {
+    title: "London — 24h across fall-back",
+    timeZone: "Europe/London",
+    min: "2025-10-25T12:00:00Z",
+    max: "2025-10-26T12:00:00Z",
+  },
+  // ── US Eastern (America/New_York) spring forward: March 9, 2025 at 2:00 AM ──
+  {
+    title: "New York — 2h across spring-forward",
+    timeZone: "America/New_York",
+    min: "2025-03-09T06:00:00Z",
+    max: "2025-03-09T08:00:00Z",
+  },
+  {
+    title: "New York — 6h across spring-forward",
+    timeZone: "America/New_York",
+    min: "2025-03-09T04:00:00Z",
+    max: "2025-03-09T10:00:00Z",
+  },
+  {
+    title: "New York — 24h across spring-forward",
+    timeZone: "America/New_York",
+    min: "2025-03-08T12:00:00Z",
+    max: "2025-03-09T12:00:00Z",
+  },
+  {
+    title: "New York — 3d across spring-forward",
+    timeZone: "America/New_York",
+    min: "2025-03-08T00:00:00Z",
+    max: "2025-03-11T00:00:00Z",
+  },
+  // ── US Eastern (America/New_York) fall back: November 2, 2025 at 2:00 AM ──
+  {
+    title: "New York — 2h across fall-back",
+    timeZone: "America/New_York",
+    min: "2025-11-02T05:00:00Z",
+    max: "2025-11-02T07:00:00Z",
+  },
+  {
+    title: "New York — 6h across fall-back",
+    timeZone: "America/New_York",
+    min: "2025-11-02T03:00:00Z",
+    max: "2025-11-02T09:00:00Z",
+  },
+  {
+    title: "New York — 24h across fall-back",
+    timeZone: "America/New_York",
+    min: "2025-11-01T12:00:00Z",
+    max: "2025-11-02T12:00:00Z",
+  },
+  {
+    title: "New York — 1w across fall-back",
+    timeZone: "America/New_York",
+    min: "2025-10-29T00:00:00Z",
+    max: "2025-11-05T00:00:00Z",
+  },
+  // ── US Pacific (America/Los_Angeles) spring forward: March 9, 2025 at 2:00 AM ──
+  {
+    title: "Los Angeles — 2h across spring-forward",
+    timeZone: "America/Los_Angeles",
+    min: "2025-03-09T09:00:00Z",
+    max: "2025-03-09T11:00:00Z",
+  },
+  {
+    title: "Los Angeles — 6h across spring-forward",
+    timeZone: "America/Los_Angeles",
+    min: "2025-03-09T07:00:00Z",
+    max: "2025-03-09T13:00:00Z",
+  },
+  {
+    title: "Los Angeles — 24h across spring-forward",
+    timeZone: "America/Los_Angeles",
+    min: "2025-03-08T12:00:00Z",
+    max: "2025-03-09T12:00:00Z",
+  },
+  // ── US Pacific (America/Los_Angeles) fall back: November 2, 2025 at 2:00 AM ──
+  {
+    title: "Los Angeles — 2h across fall-back",
+    timeZone: "America/Los_Angeles",
+    min: "2025-11-02T08:00:00Z",
+    max: "2025-11-02T10:00:00Z",
+  },
+  {
+    title: "Los Angeles — 6h across fall-back",
+    timeZone: "America/Los_Angeles",
+    min: "2025-11-02T06:00:00Z",
+    max: "2025-11-02T12:00:00Z",
+  },
+  {
+    title: "Los Angeles — 24h across fall-back",
+    timeZone: "America/Los_Angeles",
+    min: "2025-11-01T12:00:00Z",
+    max: "2025-11-02T12:00:00Z",
+  },
+  // ── Australia (Australia/Sydney) spring forward: October 5, 2025 at 2:00 AM AEST ──
+  {
+    title: "Sydney — 2h across spring-forward",
+    timeZone: "Australia/Sydney",
+    min: "2025-10-04T15:00:00Z",
+    max: "2025-10-04T17:00:00Z",
+  },
+  {
+    title: "Sydney — 6h across spring-forward",
+    timeZone: "Australia/Sydney",
+    min: "2025-10-04T13:00:00Z",
+    max: "2025-10-04T19:00:00Z",
+  },
+  {
+    title: "Sydney — 24h across spring-forward",
+    timeZone: "Australia/Sydney",
+    min: "2025-10-04T04:00:00Z",
+    max: "2025-10-05T04:00:00Z",
+  },
+  // ── Australia (Australia/Sydney) fall back: April 6, 2025 at 3:00 AM AEDT ──
+  {
+    title: "Sydney — 2h across fall-back",
+    timeZone: "Australia/Sydney",
+    min: "2025-04-05T15:00:00Z",
+    max: "2025-04-05T17:00:00Z",
+  },
+  {
+    title: "Sydney — 6h across fall-back",
+    timeZone: "Australia/Sydney",
+    min: "2025-04-05T13:00:00Z",
+    max: "2025-04-05T19:00:00Z",
+  },
+  {
+    title: "Sydney — 24h across fall-back",
+    timeZone: "Australia/Sydney",
+    min: "2025-04-05T04:00:00Z",
+    max: "2025-04-06T04:00:00Z",
+  },
+  // ── Wider spans across DST (month-level) ──
+  {
+    title: "Warsaw — 1 month across spring-forward",
+    timeZone: "Europe/Warsaw",
+    min: "2025-03-01T00:00:00Z",
+    max: "2025-04-01T00:00:00Z",
+  },
+  {
+    title: "Warsaw — 1 month across fall-back",
+    timeZone: "Europe/Warsaw",
+    min: "2025-10-01T00:00:00Z",
+    max: "2025-11-01T00:00:00Z",
+  },
+  {
+    title: "New York — 1 month across spring-forward",
+    timeZone: "America/New_York",
+    min: "2025-03-01T00:00:00Z",
+    max: "2025-04-01T00:00:00Z",
+  },
+  {
+    title: "New York — 1 month across fall-back",
+    timeZone: "America/New_York",
+    min: "2025-10-01T00:00:00Z",
+    max: "2025-11-01T00:00:00Z",
+  },
+];
+
+export const DSTTimeRanges: Story = {
+  render: () => {
+    return (
+      <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
+        <h2 style={{ marginBottom: "4px" }}>DST Transition Tick Ranges</h2>
+        <p style={{ color: "#666", fontSize: "13px", margin: "0 0 24px" }}>
+          Fixed time ranges across summer (spring-forward) and autumn
+          (fall-back) DST changes in various time zones. No data — only ticks.
+        </p>
+        {DST_SCENARIOS.map((scenario, i) => {
+          const min = Date.parse(scenario.min);
+          const max = Date.parse(scenario.max);
+          const scaleId = `t${i}`;
+          const scales: PlotScaleConfig[] = [
+            {
+              id: scaleId,
+              axis: { position: "bottom", size: 80 },
+              origin: "x",
+              min,
+              max,
+            },
+          ];
+          return (
+            <div key={i} style={{ marginBottom: "32px" }}>
+              <h4 style={{ margin: "0 0 2px" }}>{scenario.title}</h4>
+              <p
+                style={{
+                  color: "#888",
+                  fontSize: "12px",
+                  margin: "0 0 6px",
+                }}
+              >
+                {scenario.min} → {scenario.max} ({scenario.timeZone})
+              </p>
+              <CanPlot
+                style={{ width: "100%", height: "80px" }}
+                configuration={{
+                  padding: { bottom: 0, left: 10, right: 10, top: 0 },
+                  scales,
+                }}
+              >
+                <XTicks
+                  scaleId={scaleId}
+                  ticks={makeTimeTicks({ timeZone: scenario.timeZone })}
+                />
+              </CanPlot>
+            </div>
+          );
+        })}
       </div>
     );
   },
