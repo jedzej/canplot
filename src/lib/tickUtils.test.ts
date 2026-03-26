@@ -379,6 +379,149 @@ describe("makeTimeTicks — DST transitions", () => {
       expect(str).toMatch(/00:00:00$/);
     }
   });
+
+  it("keeps ticks on round hours during fall-back even with slightly wider gap", () => {
+    // 24h across fall-back: Nov 2, 2:00 AM EDT → 1:00 AM EST
+    // With 2h ticks, fall-back creates a 3h gap (2h + 1h DST shift) which is
+    // acceptable to keep all ticks on round even hours.
+    const timeZone = "America/New_York";
+    const min = utc("2025-11-01T12:00:00Z"); // 8:00 AM EDT
+    const max = utc("2025-11-02T12:00:00Z"); // 7:00 AM EST
+    // chartWidth=720, space=60 → splitsCount=13 → splitDistance≈6.6M ms → 2-hour ticks
+    const ticks = callTimeTicks(min, max, timeZone, 60, 720);
+    expect(ticks.length).toBeGreaterThan(5);
+    // All ticks must land on even hours (multiples of 2)
+    const tzStrings = toTZStrings(ticks, timeZone);
+    for (const str of tzStrings) {
+      const hourMatch = str.match(/(\d{2}):(\d{2}):(\d{2})$/);
+      expect(hourMatch).not.toBeNull();
+      const localHour = parseInt(hourMatch![1], 10);
+      expect(localHour % 2).toBe(0);
+      expect(hourMatch![2]).toBe("00");
+      expect(hourMatch![3]).toBe("00");
+    }
+    // Ticks must be strictly increasing with no duplicates
+    const values = ticks.map((t) => t.value);
+    expect(new Set(values).size).toBe(values.length);
+    for (let i = 1; i < values.length; i++) {
+      expect(values[i]).toBeGreaterThan(values[i - 1]);
+    }
+  });
+
+  it("first tick appears near range start for 3d spring-forward scenario", () => {
+    // From the storybook: 3d across spring-forward
+    // 2025-03-08T00:00:00Z → 2025-03-11T00:00:00Z (America/New_York)
+    // The first tick should appear within a few hours of range start, not 25h later
+    const timeZone = "America/New_York";
+    const min = utc("2025-03-08T00:00:00Z"); // March 7 19:00 EST
+    const max = utc("2025-03-11T00:00:00Z"); // March 10 20:00 EDT
+    const ticks = callTimeTicks(min, max, timeZone, 60, 600);
+    expect(ticks.length).toBeGreaterThan(5);
+    // With 3-day range, 600px chart, 60px space → 8-hour ticks.
+    // First tick should be within 1 increment (8h) of range start, not 25h+ later
+    const maxFirstTickDelay = 8 * 3600000;
+    expect(ticks[0].value - min).toBeLessThanOrEqual(maxFirstTickDelay);
+    // Ticks should be evenly spaced (no outsized gaps)
+    const maxAllowedGap = 8.5 * 3600000;
+    for (let i = 1; i < ticks.length; i++) {
+      const gap = ticks[i].value - ticks[i - 1].value;
+      expect(gap).toBeLessThanOrEqual(maxAllowedGap);
+    }
+  });
+
+  it("1w fall-back: all hourly ticks land on round local hours", () => {
+    // From storybook: "New York — 1w across fall-back"
+    // 2025-10-29T00:00:00Z → 2025-11-05T00:00:00Z (America/New_York)
+    // Ticks at the fall-back transition must land on grid-aligned local hours,
+    // not on odd hours like 3:00 AM when the grid is every 4h.
+    const timeZone = "America/New_York";
+    const min = utc("2025-10-29T00:00:00Z");
+    const max = utc("2025-11-05T00:00:00Z");
+    // chartWidth=3600, space=60 → splitsCount=61 → splitDistance≈2.75h → 3h ticks
+    // chartWidth=4800, space=60 → splitsCount=81 → splitDistance≈2.07h → 3h ticks
+    // chartWidth=7200, space=60 → splitsCount=121 → splitDistance≈1.39h → 2h ticks
+    // Use 7200 to get 2h ticks, then also test 4800 for 3h ticks
+    for (const chartWidth of [7200, 4800]) {
+      const ticks = callTimeTicks(min, max, timeZone, 60, chartWidth);
+      expect(ticks.length).toBeGreaterThan(20);
+      // Determine the actual tick increment
+      const incrMs = ticks[1].value - ticks[0].value;
+      const incrHours = Math.round(incrMs / 3600000);
+      // All ticks must land on local hours that are multiples of the increment
+      const tzStrings = toTZStrings(ticks, timeZone);
+      for (const str of tzStrings) {
+        const hourMatch = str.match(/(\d{2}):(\d{2}):(\d{2})$/);
+        expect(hourMatch).not.toBeNull();
+        const localHour = parseInt(hourMatch![1], 10);
+        expect(localHour % incrHours).toBe(0);
+        expect(hourMatch![2]).toBe("00");
+        expect(hourMatch![3]).toBe("00");
+      }
+    }
+  });
+
+  it("Warsaw 3d fall-back: all hourly ticks land on round local hours", () => {
+    // Europe/Warsaw fall-back: Oct 26, 2025, 3:00 CEST → 2:00 CET
+    // Range: Oct 25 00:00Z → Oct 28 00:00Z
+    const timeZone = "Europe/Warsaw";
+    const min = utc("2025-10-25T00:00:00Z");
+    const max = utc("2025-10-28T00:00:00Z");
+    for (const chartWidth of [3600, 2400]) {
+      const ticks = callTimeTicks(min, max, timeZone, 60, chartWidth);
+      expect(ticks.length).toBeGreaterThan(10);
+      const incrMs = ticks[1].value - ticks[0].value;
+      const incrHours = Math.round(incrMs / 3600000);
+      const tzStrings = toTZStrings(ticks, timeZone);
+      for (const str of tzStrings) {
+        const hourMatch = str.match(/(\d{2}):(\d{2}):(\d{2})$/);
+        expect(hourMatch).not.toBeNull();
+        const localHour = parseInt(hourMatch![1], 10);
+        expect(localHour % incrHours).toBe(0);
+        expect(hourMatch![2]).toBe("00");
+        expect(hourMatch![3]).toBe("00");
+      }
+    }
+  });
+
+  it("1 month across spring-forward: daily ticks cover every day", () => {
+    // From storybook: "New York — 1 month across spring-forward"
+    // 2025-03-01T00:00:00Z → 2025-04-01T00:00:00Z
+    // Spring-forward: March 9, 2:00 AM EST → 3:00 AM EDT
+    // All 31 days of March must appear as ticks at midnight local time.
+    const timeZone = "America/New_York";
+    const min = utc("2025-03-01T00:00:00Z");
+    const max = utc("2025-04-01T00:00:00Z");
+    // Large chart width with small space to get daily ticks
+    const ticks = callTimeTicks(min, max, timeZone, 60, 2400);
+    const tzStrings = toTZStrings(ticks, timeZone);
+    // All ticks must land on midnight
+    for (const str of tzStrings) {
+      expect(str).toMatch(/00:00:00$/);
+    }
+    // Extract day numbers
+    const days = tzStrings.map((s) => parseInt(s.split("/")[0], 10));
+    // Every day from 1 to 31 should appear
+    for (let d = 1; d <= 31; d++) {
+      expect(days).toContain(d);
+    }
+  });
+
+  it("CET ~16d range: no ticks before scale min", () => {
+    // Reported bug: with 12h ticks, first/second ticks jumped before scale min
+    // due to makeFirstTick modular arithmetic landing on an earlier grid point
+    const timeZone = "Europe/Berlin";
+    const min = utc("2027-03-28T22:25:08.411Z");
+    const max = utc("2027-04-13T23:41:16.359Z");
+    // chartWidth=2400 produces 12h ticks which triggered the bug
+    for (const chartWidth of [600, 1200, 2400]) {
+      const ticks = callTimeTicks(min, max, timeZone, 60, chartWidth);
+      expect(ticks.length).toBeGreaterThan(0);
+      for (const t of ticks) {
+        expect(t.value).toBeGreaterThanOrEqual(min);
+        expect(t.value).toBeLessThanOrEqual(max);
+      }
+    }
+  });
 });
 
 // ============================================================

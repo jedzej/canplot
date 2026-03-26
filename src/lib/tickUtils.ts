@@ -229,11 +229,36 @@ const addUTC = (date: number | Date, delta: Duration): number => {
   }
 };
 
+const tzOffsetFmt = new Map<string, Intl.DateTimeFormat>();
+
 function getTimezoneOffsetHours(atTime: Date | number, timeZone: string) {
+  let fmt = tzOffsetFmt.get(timeZone);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    });
+    tzOffsetFmt.set(timeZone, fmt);
+  }
   const date = new Date(atTime);
-  const localizedTime = new Date(date.toLocaleString("en-US", { timeZone }));
-  const utcTime = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
-  return (localizedTime.getTime() - utcTime.getTime()) / (60 * 60 * 1000);
+  const parts = fmt.formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPart["type"]) =>
+    parseInt(parts.find((p) => p.type === type)!.value, 10);
+  const localAsUTC = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
+  return (localAsUTC - date.getTime()) / (60 * 60 * 1000);
 }
 
 const makeFirstTick = (
@@ -278,6 +303,16 @@ const makeFirstTick = (
         0,
         0,
       );
+      // When local time is in the previous UTC day (negative offsets),
+      // setUTCHours can overshoot by a full day. Correct it.
+      if (result.getTime() - minDate >= day) {
+        result.setUTCDate(result.getUTCDate() - 1);
+      }
+      // The modular arithmetic can land on a grid point earlier in the day.
+      // Advance by one increment until we're at or past minDate.
+      while (result.getTime() < minDate) {
+        result = new Date(addUTC(result, [incrValue, "hours"]));
+      }
       break;
     }
     case "days": {
@@ -322,7 +357,7 @@ export const makeTimeTicks = ({
     if (!Number.isFinite(scaleMin) || !Number.isFinite(scaleMax)) {
       return [];
     }
-    const splitsCount = Math.floor(frame.chartAreaCanvasPX.width / space) + 1;
+    const splitsCount = Math.floor(frame.chartAreaCSS.width / space) + 1;
     const range = scaleMax - scaleMin;
     const splitDistance = range / splitsCount;
     const [incrValue, incrUnit] = TIME_INCRS.find(
@@ -340,6 +375,18 @@ export const makeTimeTicks = ({
 
     const splits: number[] = [firstTick];
 
+    // For hours ticks, use Intl.DateTimeFormat directly to read the local hour.
+    // This avoids the fragile double-parse in getTimezoneOffsetHours which can
+    // break during DST transitions when the system timezone matches the chart timezone.
+    const hourFmt =
+      incrUnit === "hours"
+        ? new Intl.DateTimeFormat("en-US", {
+            timeZone,
+            hour: "numeric",
+            hourCycle: "h23",
+          })
+        : null;
+
     let candidate: number;
     for (let tickNumber = 1; ; tickNumber++) {
       if (tickNumber > 100) {
@@ -353,17 +400,25 @@ export const makeTimeTicks = ({
           break;
         }
         case "hours": {
-          const tickNoDST = addUTC(firstTick, [
-            tickNumber * incrValue,
-            incrUnit,
-          ]);
-          const comp =
-            firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone);
-          if (Math.abs(comp) >= incrValue) {
-            // DST transition spans the full increment: skip compensation to avoid gaps
-            candidate = tickNoDST;
-          } else {
-            candidate = addUTC(tickNoDST, [comp, "hours"]);
+          // Walk from the previous tick one UTC hour at a time.
+          // Accept the first hour whose local time is grid-aligned
+          // and far enough from the previous tick.
+          const prev = splits[splits.length - 1];
+          const minGap = incrValue * hour * 0.75;
+          candidate = scaleMax + 1; // default: will break outer loop
+          for (let h = 1; h <= incrValue + 3; h++) {
+            const c = addUTC(prev, [h, "hours"]);
+            if (c - prev < minGap) continue;
+            const localHour = parseInt(
+              hourFmt!
+                .formatToParts(new Date(c))
+                .find((p) => p.type === "hour")!.value,
+              10,
+            );
+            if (localHour % incrValue === 0) {
+              candidate = c;
+              break;
+            }
           }
           break;
         }
