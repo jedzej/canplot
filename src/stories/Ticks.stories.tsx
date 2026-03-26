@@ -1753,7 +1753,7 @@ export const DSTTimeRanges: Story = {
               <CanPlot
                 style={{ width: "100%", height: "80px" }}
                 configuration={{
-                  padding: { bottom: 0, left: 10, right: 10, top: 0 },
+                  padding: { bottom: 0, left: 100, right: 100, top: 0 },
                   scales,
                 }}
               >

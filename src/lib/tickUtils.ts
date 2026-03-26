@@ -41,17 +41,23 @@ export const makeLinearTicks = ({
     const effectiveAcceptableIncrements =
       acceptableIncrements ?? DEFAULT_ACCEPTABLE_TICKS_INCREMENTS;
 
-    const incr =
-      effectiveAcceptableIncrements.find((a) => a > unnormalizedIncr) ??
-      effectiveAcceptableIncrements.at(-1) ??
-      1;
+    const incr = effectiveAcceptableIncrements.find(
+      (a) => a > unnormalizedIncr,
+    );
+
+    if (incr === undefined || incr <= 0) {
+      return [];
+    }
 
     let curr = scaleMin;
     if (Math.abs(curr % incr) > Number.EPSILON) {
       const alignBy = (incr - (curr % incr)) % incr;
       curr += alignBy;
     }
-    while (curr <= scaleMax && ticks.length < 1000) {
+    while (curr <= scaleMax) {
+      if (ticks.length >= 1000) {
+        return [];
+      }
       ticks.push(curr);
       curr += incr;
     }
@@ -276,9 +282,7 @@ const makeFirstTick = (
     }
     case "days": {
       setTimeToMidnight();
-      result.setUTCDate(
-        1,
-      );
+      result.setUTCDate(1);
       while (result.getTime() < minDate) {
         result = new Date(addUTC(result, [incrValue, incrUnit]));
       }
@@ -337,23 +341,30 @@ export const makeTimeTicks = ({
     const splits: number[] = [firstTick];
 
     let candidate: number;
-    for(let tickNumber = 1; ; tickNumber++) {
+    for (let tickNumber = 1; ; tickNumber++) {
       if (tickNumber > 100) {
         return [];
       }
       switch (incrUnit) {
         case "milliseconds":
         case "seconds":
-        case "minutes":
+        case "minutes": {
+          candidate = addUTC(firstTick, [tickNumber * incrValue, incrUnit]);
+          break;
+        }
         case "hours": {
           const tickNoDST = addUTC(firstTick, [
             tickNumber * incrValue,
             incrUnit,
           ]);
-          candidate = addUTC(tickNoDST, [
-            firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone),
-            "hours",
-          ]);
+          const comp =
+            firstTickOffset - getTimezoneOffsetHours(tickNoDST, timeZone);
+          if (Math.abs(comp) >= incrValue) {
+            // DST transition spans the full increment: skip compensation to avoid gaps
+            candidate = tickNoDST;
+          } else {
+            candidate = addUTC(tickNoDST, [comp, "hours"]);
+          }
           break;
         }
         case "days": {
