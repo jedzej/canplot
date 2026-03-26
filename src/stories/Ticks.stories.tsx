@@ -1716,6 +1716,384 @@ const DST_SCENARIOS: {
   },
 ];
 
+// Default grid lines on both axes
+export const GridDefault: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 60 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 60 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3>Default Grid</h3>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 20, top: 20 },
+            scales,
+          }}
+        >
+          <XTicks scaleId="x" ticks={makeLinearTicks()} withGrid />
+          <YTicks scaleId="y" ticks={makeLinearTicks()} withGrid />
+
+          <LinePlot
+            data={Array.from({ length: 20 }, (_, i) => ({
+              x: i * 5,
+              y: 50 + Math.sin(i / 2) * 30,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#4c6ef5",
+              lineWidth: 2,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Styled grid lines with custom colors and dashed patterns
+export const GridStyled: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 60 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 60 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3>Styled Grid — Dashed &amp; Colored</h3>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 20, top: 20 },
+            scales,
+          }}
+        >
+          <XTicks
+            scaleId="x"
+            ticks={makeLinearTicks()}
+            withGrid
+            gridStyle={{
+              strokeStyle: "rgba(76, 110, 245, 0.3)",
+              lineWidth: 1,
+            }}
+          />
+          <YTicks
+            scaleId="y"
+            ticks={makeLinearTicks()}
+            withGrid
+            gridStyle={{
+              strokeStyle: "rgba(76, 110, 245, 0.3)",
+              lineWidth: 1,
+            }}
+          />
+
+          <LinePlot
+            data={Array.from({ length: 20 }, (_, i) => ({
+              x: i * 5,
+              y: 50 + Math.sin(i / 2) * 30,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#4c6ef5",
+              lineWidth: 2,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Grid on Y axis only (horizontal lines)
+export const GridYOnly: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 60 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 60 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3>Grid on Y Axis Only (Horizontal Lines)</h3>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 20, top: 20 },
+            scales,
+          }}
+        >
+          <XTicks scaleId="x" ticks={makeLinearTicks()} />
+          <YTicks
+            scaleId="y"
+            ticks={makeLinearTicks()}
+            withGrid
+            gridStyle={{
+              strokeStyle: "#dee2e6",
+              lineWidth: 1,
+            }}
+          />
+
+          <LinePlot
+            data={Array.from({ length: 20 }, (_, i) => ({
+              x: i * 5,
+              y: 50 + Math.sin(i / 2) * 30,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#e03131",
+              lineWidth: 2,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Grid on X axis only (vertical lines)
+export const GridXOnly: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 60 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 60 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3>Grid on X Axis Only (Vertical Lines)</h3>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 20, top: 20 },
+            scales,
+          }}
+        >
+          <XTicks
+            scaleId="x"
+            ticks={makeLinearTicks()}
+            withGrid
+            gridStyle={{
+              strokeStyle: "#dee2e6",
+              lineWidth: 1,
+            }}
+          />
+          <YTicks scaleId="y" ticks={makeLinearTicks()} />
+
+          <LinePlot
+            data={Array.from({ length: 20 }, (_, i) => ({
+              x: i * 5,
+              y: 50 + Math.sin(i / 2) * 30,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#2f9e44",
+              lineWidth: 2,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Different grid style per axis
+export const GridDifferentStyles: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: { position: "bottom", size: 60 },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 60 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3>Different Grid Styles per Axis</h3>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 20, top: 20 },
+            scales,
+          }}
+        >
+          <XTicks
+            scaleId="x"
+            ticks={makeLinearTicks()}
+            withGrid
+            gridStyle={{
+              strokeStyle: "rgba(255, 107, 107, 0.4)",
+              lineWidth: 2,
+            }}
+            tickStyle={{ strokeStyle: "#ff6b6b" }}
+            labelStyle={{ fillStyle: "#ff6b6b" }}
+          />
+          <YTicks
+            scaleId="y"
+            ticks={makeLinearTicks()}
+            withGrid
+            gridStyle={{
+              strokeStyle: "rgba(76, 110, 245, 0.4)",
+              lineWidth: 1,
+            }}
+            tickStyle={{ strokeStyle: "#4c6ef5" }}
+            labelStyle={{ fillStyle: "#4c6ef5" }}
+          />
+
+          <LinePlot
+            data={Array.from({ length: 20 }, (_, i) => ({
+              x: i * 5,
+              y: 50 + Math.sin(i / 2) * 30,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#7950f2",
+              lineWidth: 2,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Dense grid with time ticks
+export const GridWithTimeTicks: Story = {
+  render: () => {
+    const refPoint = Date.parse("2025-11-01T06:30:00Z");
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "t",
+        axis: { position: "bottom", size: 80 },
+        origin: "x",
+        min: refPoint - 1000 * 60 * 60 * 24 * 7,
+        max: refPoint,
+      },
+      {
+        id: "y",
+        axis: { position: "left", size: 60 },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3>Grid with Time Ticks</h3>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: { bottom: 20, left: 20, right: 20, top: 20 },
+            scales,
+          }}
+        >
+          <XTicks
+            scaleId="t"
+            ticks={makeTimeTicks({ timeZone: "Europe/Warsaw" })}
+            withGrid
+            gridStyle={{
+              strokeStyle: "rgba(0, 0, 0, 0.08)",
+              lineWidth: 1,
+            }}
+          />
+          <YTicks
+            scaleId="y"
+            ticks={makeLinearTicks()}
+            withGrid
+            gridStyle={{
+              strokeStyle: "rgba(0, 0, 0, 0.08)",
+              lineWidth: 1,
+            }}
+          />
+
+          <LinePlot
+            data={Array.from({ length: 100 }, (_, i) => ({
+              x:
+                refPoint -
+                1000 * 60 * 60 * 24 * 7 +
+                (i * 1000 * 60 * 60 * 24 * 7) / 100,
+              y: 50 + Math.sin(i / 10) * 20 + Math.random() * 10,
+            }))}
+            xScaleId="t"
+            yScaleId="y"
+            style={{
+              strokeStyle: "#1098ad",
+              lineWidth: 2,
+            }}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
 export const DSTTimeRanges: Story = {
   render: () => {
     return (

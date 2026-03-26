@@ -7,6 +7,8 @@ import type { Style, TicksConfig } from "../types";
 const XTicksImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   scaleId: string;
+  withGrid?: boolean;
+  gridStyle?: Style;
   tickStyle?: Style;
   labelStyle?: Style;
   labelGap?: number;
@@ -15,6 +17,8 @@ const XTicksImpl: React.FC<{
 }> = ({
   layer = "BOTTOM",
   scaleId,
+  withGrid,
+  gridStyle,
   tickStyle,
   labelStyle,
   labelGap,
@@ -61,6 +65,25 @@ const XTicksImpl: React.FC<{
       ctx.stroke();
       ctx.restore();
 
+      // draw grid lines
+      if (withGrid) {
+        ctx.save();
+        applyStyles(ctx, {
+          ...gridStyle,
+        });
+        ctx.beginPath();
+        for (const { value } of resolvedTicks) {
+          const x = valToPos(value, scaleId, "canvas");
+          if (x === null) {
+            continue;
+          }
+          ctx.moveTo(x, frame.chartAreaCanvasPX.y);
+          ctx.lineTo(x, frame.chartAreaCanvasPX.y + frame.chartAreaCanvasPX.height);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
       // draw tick labels
       ctx.save();
 
@@ -84,7 +107,7 @@ const XTicksImpl: React.FC<{
       }
       ctx.restore();
     },
-    [ticks, scaleId, tickStyle, labelStyle]
+    [ticks, scaleId, tickStyle, labelStyle, withGrid, gridStyle]
   );
   return null;
 };
@@ -94,6 +117,8 @@ export const XTicks = React.memo(XTicksImpl, deepEqual);
 const YTicksImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
   scaleId: string;
+  withGrid?: boolean;
+  gridStyle?: Style;
   tickStyle?: Style;
   labelStyle?: Style;
   labelGap?: number;
@@ -102,6 +127,8 @@ const YTicksImpl: React.FC<{
 }> = ({
   layer = "BOTTOM",
   scaleId,
+  withGrid,
+  gridStyle,
   tickStyle,
   labelStyle,
   labelGap,
@@ -148,6 +175,25 @@ const YTicksImpl: React.FC<{
       ctx.stroke();
       ctx.restore();
 
+      if(withGrid) {
+        // draw grid lines
+        ctx.save();
+        applyStyles(ctx, {
+          ...gridStyle,
+        });
+        ctx.beginPath();
+        for (const { value } of resolvedTicks) {
+          const y = valToPos(value, scaleId, "canvas");
+          if (y === null) {
+            continue;
+          }
+          ctx.moveTo(frame.chartAreaCanvasPX.x, y);
+          ctx.lineTo(frame.chartAreaCanvasPX.x + frame.chartAreaCanvasPX.width, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
       // draw tick labels
       ctx.save();
       applyStyles(ctx, {
@@ -170,7 +216,7 @@ const YTicksImpl: React.FC<{
       }
       ctx.restore();
     },
-    [ticks, scaleId, tickStyle, labelStyle]
+    [ticks, scaleId, tickStyle, labelStyle, withGrid, gridStyle]
   );
   return null;
 };
