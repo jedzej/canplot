@@ -1,5 +1,5 @@
 import React from "react";
-import { useDrawEffect } from "../frameContext";
+import { useCachedDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
 import type { OutlierStrategy } from "../types";
@@ -34,7 +34,7 @@ const LinePlotImpl: React.FC<{
   xStrategy = "clip",
   yStrategy = "clip",
 }) => {
-  useDrawEffect(
+  useCachedDrawEffect(
     layer,
     ({ ctx, valToPosWithStrategy }) => {
       ctx.save();

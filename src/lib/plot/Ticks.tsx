@@ -1,5 +1,5 @@
 import React from "react";
-import { useDrawEffect } from "../frameContext";
+import { useCachedDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
 import type { Style, TicksConfig } from "../types";
@@ -25,7 +25,7 @@ const XTicksImpl: React.FC<{
   tickSize,
   ticks,
 }) => {
-  useDrawEffect(
+  useCachedDrawEffect(
     layer,
     ({ ctx, valToPos, getScale, frame }) => {
       const scale = getScale(scaleId);
@@ -135,7 +135,7 @@ const YTicksImpl: React.FC<{
   tickSize,
   ticks,
 }) => {
-  useDrawEffect(
+  useCachedDrawEffect(
     layer,
     ({ ctx, valToPos, getScale, frame }) => {
       const scale = getScale(scaleId);
