@@ -18,9 +18,9 @@ const AreaPlotImpl: React.FC<{
     >
   >;
 }> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
-  useDrawEffect(
+  useDrawEffect({
     layer,
-    ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
+    runner: ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
       for (const datapoint of data) {
         // x
@@ -58,8 +58,8 @@ const AreaPlotImpl: React.FC<{
         ctx.restore();
       }
     },
-    [data, xScaleId, yScaleId, style]
-  );
+    deps: [data, xScaleId, yScaleId, style],
+  });
   return null;
 };
 

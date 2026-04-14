@@ -96,9 +96,9 @@ const HeavyLayerUncached: React.FC<{ drawCountRef: React.RefObject<number> }> = 
 const HeavyLayerCached: React.FC<{ drawCountRef: React.RefObject<number> }> = ({
   drawCountRef,
 }) => {
-  useDrawEffect(
-    "BOTTOM",
-    ({ ctx, valToPos }) => {
+  useDrawEffect({
+    layer: "BOTTOM",
+    runner: ({ ctx, valToPos }) => {
       drawCountRef.current++;
       ctx.save();
       ctx.globalAlpha = 0.15;
@@ -115,8 +115,8 @@ const HeavyLayerCached: React.FC<{ drawCountRef: React.RefObject<number> }> = ({
       }
       ctx.restore();
     },
-    [] // static deps — runner called only once, then bitmap is reused
-  );
+    deps: [], // static deps — runner called only once, then bitmap is reused
+  });
   return null;
 };
 
@@ -156,9 +156,9 @@ const AnimatedCursor: React.FC<{speed: number}> = ({ speed }) => {
 // ----- Static line (for cached demo) -----
 
 const StaticLine: React.FC = () => {
-  useDrawEffect(
-    "MIDDLE",
-    ({ ctx, valToPos }) => {
+  useDrawEffect({
+    layer: "MIDDLE",
+    runner: ({ ctx, valToPos }) => {
       ctx.save();
       ctx.beginPath();
       ctx.strokeStyle = "#2563eb";
@@ -172,8 +172,8 @@ const StaticLine: React.FC = () => {
       ctx.stroke();
       ctx.restore();
     },
-    []
-  );
+    deps: [],
+  });
   return null;
 };
 
@@ -260,9 +260,9 @@ export const CachedWithDepsChange: Story = {
 };
 
 const CachedLine: React.FC<{ color: string }> = ({ color }) => {
-  useDrawEffect(
-    "MIDDLE",
-    ({ ctx, valToPos }) => {
+  useDrawEffect({
+    layer: "MIDDLE",
+    runner: ({ ctx, valToPos }) => {
       ctx.save();
       ctx.beginPath();
       ctx.strokeStyle = color;
@@ -276,8 +276,8 @@ const CachedLine: React.FC<{ color: string }> = ({ color }) => {
       ctx.stroke();
       ctx.restore();
     },
-    [color]
-  );
+    deps: [color],
+  });
   return null;
 };
 
@@ -306,9 +306,9 @@ export const CachedStaticWithAnimatedOverlay: Story = {
 // ----- Translucent overlay bands -----
 
 const AlphaOverlay: React.FC = () => {
-  useDrawEffect(
-    "TOP",
-    ({ ctx, valToPos, clampYPosToChartArea }) => {
+  useDrawEffect({
+    layer: "TOP",
+    runner: ({ ctx, valToPos, clampYPosToChartArea }) => {
       const y0 = clampYPosToChartArea(-Infinity, "canvas") as number;
       const y1 = clampYPosToChartArea(Infinity, "canvas") as number;
 
@@ -331,8 +331,8 @@ const AlphaOverlay: React.FC = () => {
       }
       ctx.restore();
     },
-    []
-  );
+    deps: [],
+  });
   return null;
 };
 

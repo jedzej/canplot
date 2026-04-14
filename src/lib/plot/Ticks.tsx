@@ -25,9 +25,9 @@ const XTicksImpl: React.FC<{
   tickSize,
   ticks,
 }) => {
-  useDrawEffect(
+  useDrawEffect({
     layer,
-    ({ ctx, valToPos, getScale, frame }) => {
+    runner: ({ ctx, valToPos, getScale, frame }) => {
       const scale = getScale(scaleId);
       if (!scale || !scale.axis || scale.origin !== "x") return;
       const axis = scale.axis;
@@ -107,8 +107,8 @@ const XTicksImpl: React.FC<{
       }
       ctx.restore();
     },
-    [ticks, scaleId, tickStyle, labelStyle, withGrid, gridStyle]
-  );
+    deps: [ticks, scaleId, tickStyle, labelStyle, withGrid, gridStyle],
+  });
   return null;
 };
 
@@ -135,9 +135,9 @@ const YTicksImpl: React.FC<{
   tickSize,
   ticks,
 }) => {
-  useDrawEffect(
+  useDrawEffect({
     layer,
-    ({ ctx, valToPos, getScale, frame }) => {
+    runner: ({ ctx, valToPos, getScale, frame }) => {
       const scale = getScale(scaleId);
       if (!scale || !scale.axis || scale.origin !== "y") return;
       const axis = scale.axis;
@@ -216,8 +216,8 @@ const YTicksImpl: React.FC<{
       }
       ctx.restore();
     },
-    [ticks, scaleId, tickStyle, labelStyle, withGrid, gridStyle]
-  );
+    deps: [ticks, scaleId, tickStyle, labelStyle, withGrid, gridStyle],
+  });
   return null;
 };
 

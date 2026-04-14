@@ -33,9 +33,9 @@ const ScatterPlotImpl: React.FC<{
   style,
   globalAlpha,
 }) => {
-  useDrawEffect(
+  useDrawEffect({
     layer,
-    ({
+    runner: ({
       ctx,
       valToPosWithStrategy,
     }) => {
@@ -78,8 +78,8 @@ const ScatterPlotImpl: React.FC<{
 
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, radius, style, globalAlpha, xStrategy, yStrategy],
-  );
+    deps: [data, xScaleId, yScaleId, radius, style, globalAlpha, xStrategy, yStrategy],
+  });
   return null;
 };
 

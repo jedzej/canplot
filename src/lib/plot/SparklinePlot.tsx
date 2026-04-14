@@ -19,9 +19,9 @@ const SparklinePlotImpl: React.FC<{
     >
   >;
 }> = ({ layer = "MIDDLE", data, stroked, xScaleId, yScaleId, style }) => {
-  useDrawEffect(
+  useDrawEffect({
     layer,
-    ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
+    runner: ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
 
       for (const point of data) {
@@ -63,8 +63,8 @@ const SparklinePlotImpl: React.FC<{
       }
       ctx.restore();
     },
-    [data, stroked, xScaleId, yScaleId, style]
-  );
+    deps: [data, stroked, xScaleId, yScaleId, style],
+  });
   return null;
 };
 

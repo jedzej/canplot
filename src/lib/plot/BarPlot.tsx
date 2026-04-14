@@ -32,9 +32,9 @@ const BarPlotImpl: React.FC<{
   radius,
   layer = "MIDDLE",
 }) => {
-  useDrawEffect(
+  useDrawEffect({
     layer,
-    ({
+    runner: ({
       ctx,
       valToPxDistance,
       valToPos,
@@ -123,8 +123,8 @@ const BarPlotImpl: React.FC<{
 
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, style, barWidthRaw, xPositionOffset, radius, globalAlpha],
-  );
+    deps: [data, xScaleId, yScaleId, style, barWidthRaw, xPositionOffset, radius, globalAlpha],
+  });
   return null;
 };
 

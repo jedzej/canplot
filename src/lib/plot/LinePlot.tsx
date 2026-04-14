@@ -34,9 +34,9 @@ const LinePlotImpl: React.FC<{
   xStrategy = "clip",
   yStrategy = "clip",
 }) => {
-  useDrawEffect(
+  useDrawEffect({
     layer,
-    ({ ctx, valToPosWithStrategy }) => {
+    runner: ({ ctx, valToPosWithStrategy }) => {
       ctx.save();
       ctx.beginPath();
       applyStyles(ctx, style);
@@ -72,8 +72,8 @@ const LinePlotImpl: React.FC<{
       }
       ctx.restore();
     },
-    [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth, xStrategy, yStrategy],
-  );
+    deps: [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth, xStrategy, yStrategy],
+  });
   return null;
 };
 

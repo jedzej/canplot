@@ -15,7 +15,7 @@ export const useDrawEffectNoCache = (
   layer: number | keyof typeof CANPLOT_LAYER,
   runner: (params: FrameDrawer) => void,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deps: ReadonlyArray<any>
+  deps: ReadonlyArray<any>,
 ) => {
   const frame = useContext(FrameContext);
   const updateRequest = useContext(RedrawRequestContext);
@@ -40,38 +40,48 @@ export const useDrawEffectNoCache = (
       () => {
         runnerRef.current(frameDrawer);
       },
-      typeof layer === "number" ? layer : CANPLOT_LAYER[layer]
+      typeof layer === "number" ? layer : CANPLOT_LAYER[layer],
     );
     return () => {
       unsubscribe();
-    }
+    };
   }, [drawPropagateContext, layer, frameDrawer]);
 
   useLayoutEffect(() => {
     updateRequest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateRequest, ...deps]);
-  
+
   useEffect(() => {
     return () => {
       // request redraw on unmount to clear the layer
       updateRequest();
-    }
-  }, [updateRequest])
+    };
+  }, [updateRequest]);
 };
 
-export const useDrawEffect = (
-  layer: number | keyof typeof CANPLOT_LAYER,
-  runner: (params: FrameDrawer) => void,
+export const useDrawEffect = ({
+  layer,
+  runner,
+  globalAlpha,
+  globalCompositeOperation,
+  deps,
+}: {
+  layer: number | keyof typeof CANPLOT_LAYER;
+  runner: (params: FrameDrawer) => void;
+  globalAlpha?: number;
+  globalCompositeOperation?: GlobalCompositeOperation;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deps: ReadonlyArray<any>
-) => {
+  deps: ReadonlyArray<any>;
+}) => {
   const frame = useContext(FrameContext);
   const updateRequest = useContext(RedrawRequestContext);
   const drawPropagateContext = useContext(DrawPropagateContext);
 
   if (!frame || !updateRequest) {
-    throw new Error("useCachedDrawEffect must be used within a CanPlot component");
+    throw new Error(
+      "useCachedDrawEffect must be used within a CanPlot component",
+    );
   }
 
   const [frameDrawer] = useState(() => new FrameDrawer());
@@ -108,22 +118,16 @@ export const useDrawEffect = (
           offscreen.canvas.width !== canvasWidth ||
           offscreen.canvas.height !== canvasHeight
         ) {
-          const canvas =
-            offscreen?.canvas ?? document.createElement("canvas");
+          const canvas = offscreen?.canvas ?? document.createElement("canvas");
           canvas.width = canvasWidth;
           canvas.height = canvasHeight;
-          const ctx = canvas.getContext("2d")!;
-          offscreenRef.current = { canvas, ctx };
+          const offscreenCtx = canvas.getContext("2d")!;
+          offscreenRef.current = { canvas, ctx: offscreenCtx };
           needsRedrawRef.current = true;
         }
 
         if (needsRedrawRef.current) {
-          offscreenRef.current!.ctx.clearRect(
-            0,
-            0,
-            canvasWidth,
-            canvasHeight
-          );
+          offscreenRef.current!.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
           offscreenFrameDrawer._updateFrame({
             ...frameDrawer.frame,
             ctx: offscreenRef.current!.ctx,
@@ -133,20 +137,26 @@ export const useDrawEffect = (
         }
 
         // Copy cached bitmap to main canvas
+        const oldGlobalAlpha = frameDrawer.ctx.globalAlpha;
+        const oldGlobalCompositeOperation = frameDrawer.ctx.globalCompositeOperation;
+        frameDrawer.ctx.globalAlpha = globalAlpha ?? 1;
+        frameDrawer.ctx.globalCompositeOperation = globalCompositeOperation ?? "source-over";
         frameDrawer.ctx.drawImage(offscreenRef.current!.canvas, 0, 0);
+        frameDrawer.ctx.globalAlpha = oldGlobalAlpha;
+        frameDrawer.ctx.globalCompositeOperation = oldGlobalCompositeOperation;
       },
-      typeof layer === "number" ? layer : CANPLOT_LAYER[layer]
+      typeof layer === "number" ? layer : CANPLOT_LAYER[layer],
     );
     return () => {
       unsubscribe();
     };
-  }, [drawPropagateContext, layer, frameDrawer, offscreenFrameDrawer]);
+  }, [drawPropagateContext, layer, frameDrawer, offscreenFrameDrawer, globalAlpha, globalCompositeOperation]);
 
   useLayoutEffect(() => {
     needsRedrawRef.current = true;
     updateRequest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateRequest, scaleLimitsKey, ...deps]);
+  }, [updateRequest, scaleLimitsKey, globalAlpha, globalCompositeOperation, ...deps]);
 
   useEffect(() => {
     return () => {
