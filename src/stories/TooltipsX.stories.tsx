@@ -9,7 +9,7 @@ import type { PlotScaleConfig } from "../lib/types";
 import { valToPos } from "../lib/helpers";
 import { useState } from "react";
 import type { ClickEvent, MoveEvent } from "../lib/interactions/types";
-import { useDrawEffect } from "../lib/frameContext";
+import { useDrawEffectNoCache } from "../lib/frameContext";
 import { XTicks } from "../lib/plot/Ticks";
 import { makeLinearTicks } from "../lib/tickUtils";
 import { Crosshair } from "../lib";
@@ -1054,7 +1054,7 @@ const BarsWithoutYScale: React.FC<{
   mouseX: number | null;
   clickedX: number | null;
 }> = ({ bars, mouseX, clickedX }) => {
-  useDrawEffect(
+  useDrawEffectNoCache(
     "MIDDLE",
     ({ ctx, valToPos, frame }) => {
       ctx.save();
@@ -1105,7 +1105,7 @@ const BarsWithoutYScale: React.FC<{
 };
 
 const MouseIndicator: React.FC<{ mouseX: number | null }> = ({ mouseX }) => {
-  useDrawEffect(
+  useDrawEffectNoCache(
     "TOP",
     ({ ctx, valToPos, frame }) => {
       if (mouseX === null) return;

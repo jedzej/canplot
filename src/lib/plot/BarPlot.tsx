@@ -1,5 +1,5 @@
 import React from "react";
-import { useCachedDrawEffect } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
 
@@ -32,7 +32,7 @@ const BarPlotImpl: React.FC<{
   radius,
   layer = "MIDDLE",
 }) => {
-  useCachedDrawEffect(
+  useDrawEffect(
     layer,
     ({
       ctx,

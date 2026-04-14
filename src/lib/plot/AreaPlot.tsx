@@ -1,5 +1,5 @@
 import React from "react";
-import { useCachedDrawEffect } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
 
@@ -18,7 +18,7 @@ const AreaPlotImpl: React.FC<{
     >
   >;
 }> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
-  useCachedDrawEffect(
+  useDrawEffect(
     layer,
     ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];

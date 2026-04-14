@@ -11,7 +11,7 @@ import { FrameContext } from "./contexts/FrameContext";
 import { RedrawRequestContext } from "./contexts/RedrawRequestContext";
 import { DrawPropagateContext } from "./contexts/DrawPropagateContext";
 
-export const useDrawEffect = (
+export const useDrawEffectNoCache = (
   layer: number | keyof typeof CANPLOT_LAYER,
   runner: (params: FrameDrawer) => void,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,7 +60,7 @@ export const useDrawEffect = (
   }, [updateRequest])
 };
 
-export const useCachedDrawEffect = (
+export const useDrawEffect = (
   layer: number | keyof typeof CANPLOT_LAYER,
   runner: (params: FrameDrawer) => void,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

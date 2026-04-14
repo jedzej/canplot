@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CanPlot } from "../lib/CanPlot";
 import type { PlotScaleConfig } from "../lib/types";
 import type React from "react";
-import { useDrawEffect, CANPLOT_LAYER } from "../lib";
+import { useDrawEffectNoCache, CANPLOT_LAYER } from "../lib";
 import { useEffect, useState } from "react";
 import { LinePlot } from "../lib/plot/LinePlot";
 import { ScatterPlot } from "../lib/plot/ScatterPlot";
@@ -88,7 +88,7 @@ const ReactiveChild: React.FC<{ color: string }> = ({ color }) => {
     return () => clearInterval(interval);
   }, []);
 
-  useDrawEffect(
+  useDrawEffectNoCache(
     "TOP",
     ({ clampYPosToChartArea, ctx, valToPos }) => {
       const xPos = valToPos(randomNumber, "x", "canvas");
@@ -736,7 +736,7 @@ export const DrawingPriorities: Story = {
 };
 
 const BackgroundLayer: React.FC = () => {
-  useDrawEffect(
+  useDrawEffectNoCache(
     CANPLOT_LAYER.BACKGROUND,
     ({ ctx, valToPos }) => {
       ctx.save();
@@ -759,7 +759,7 @@ const BackgroundLayer: React.FC = () => {
 };
 
 const BottomLayer: React.FC = () => {
-  useDrawEffect(
+  useDrawEffectNoCache(
     CANPLOT_LAYER.BOTTOM,
     ({ ctx, valToPos }) => {
       ctx.save();
@@ -790,7 +790,7 @@ const BottomLayer: React.FC = () => {
 };
 
 const TopLayer: React.FC = () => {
-  useDrawEffect(
+  useDrawEffectNoCache(
     CANPLOT_LAYER.TOP,
     ({ ctx, valToPos }) => {
       ctx.save();
@@ -822,7 +822,7 @@ const TopLayer: React.FC = () => {
 };
 
 const HighPriorityLayer: React.FC = () => {
-  useDrawEffect(
+  useDrawEffectNoCache(
     350, // Custom priority higher than TOP
     ({ ctx, valToPos }) => {
       ctx.save();

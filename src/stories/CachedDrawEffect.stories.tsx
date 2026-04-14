@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CanPlot } from "../lib/CanPlot";
 import type { PlotScaleConfig } from "../lib/types";
 import type React from "react";
-import { useDrawEffect, useCachedDrawEffect } from "../lib";
+import { useDrawEffectNoCache, useDrawEffect } from "../lib";
 import { useEffect, useRef, useState } from "react";
 
 const meta: Meta<typeof CanPlot> = {
@@ -66,7 +66,7 @@ const DrawCounter: React.FC<{ label: string; countRef: React.RefObject<number> }
 const HeavyLayerUncached: React.FC<{ drawCountRef: React.RefObject<number> }> = ({
   drawCountRef,
 }) => {
-  useDrawEffect(
+  useDrawEffectNoCache(
     "BOTTOM",
     ({ ctx, valToPos }) => {
       drawCountRef.current++;
@@ -96,7 +96,7 @@ const HeavyLayerUncached: React.FC<{ drawCountRef: React.RefObject<number> }> = 
 const HeavyLayerCached: React.FC<{ drawCountRef: React.RefObject<number> }> = ({
   drawCountRef,
 }) => {
-  useCachedDrawEffect(
+  useDrawEffect(
     "BOTTOM",
     ({ ctx, valToPos }) => {
       drawCountRef.current++;
@@ -132,7 +132,7 @@ const AnimatedCursor: React.FC<{speed: number}> = ({ speed }) => {
     return () => clearInterval(id);
   }, []);
 
-  useDrawEffect(
+  useDrawEffectNoCache(
     "TOP",
     ({ ctx, valToPos, clampYPosToChartArea }) => {
       const x = valToPos(xVal, "x", "canvas");
@@ -156,7 +156,7 @@ const AnimatedCursor: React.FC<{speed: number}> = ({ speed }) => {
 // ----- Static line (for cached demo) -----
 
 const StaticLine: React.FC = () => {
-  useCachedDrawEffect(
+  useDrawEffect(
     "MIDDLE",
     ({ ctx, valToPos }) => {
       ctx.save();
@@ -260,7 +260,7 @@ export const CachedWithDepsChange: Story = {
 };
 
 const CachedLine: React.FC<{ color: string }> = ({ color }) => {
-  useCachedDrawEffect(
+  useDrawEffect(
     "MIDDLE",
     ({ ctx, valToPos }) => {
       ctx.save();
@@ -306,7 +306,7 @@ export const CachedStaticWithAnimatedOverlay: Story = {
 // ----- Translucent overlay bands -----
 
 const AlphaOverlay: React.FC = () => {
-  useCachedDrawEffect(
+  useDrawEffect(
     "TOP",
     ({ ctx, valToPos, clampYPosToChartArea }) => {
       const y0 = clampYPosToChartArea(-Infinity, "canvas") as number;

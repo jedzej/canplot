@@ -1,5 +1,5 @@
 import React from "react";
-import { useCachedDrawEffect } from "../frameContext";
+import { useDrawEffect } from "../frameContext";
 import type { CANPLOT_LAYER } from "../FrameDrawer";
 import { applyStyles, deepEqual } from "../helpers";
 import type { OutlierStrategy } from "../types";
@@ -33,7 +33,7 @@ const ScatterPlotImpl: React.FC<{
   style,
   globalAlpha,
 }) => {
-  useCachedDrawEffect(
+  useDrawEffect(
     layer,
     ({
       ctx,
