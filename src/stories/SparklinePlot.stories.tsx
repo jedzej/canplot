@@ -1205,3 +1205,105 @@ export const DashboardStyle: Story = {
     );
   },
 };
+
+// Sparkline plots with global alpha (transparency)
+export const GlobalAlpha: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        origin: "x",
+        min: 0,
+        max: 100,
+        axis: null,
+      },
+      {
+        id: "y",
+        origin: "y",
+        min: 0,
+        max: 100,
+        axis: null,
+      },
+    ];
+
+    const data1 = Array.from({ length: 40 }, (_, i) => ({
+      x: i * 2.5,
+      y: 50 + Math.sin(i / 4) * 30,
+    }));
+
+    const data2 = Array.from({ length: 40 }, (_, i) => ({
+      x: i * 2.5,
+      y: 50 + Math.cos(i / 3) * 30,
+    }));
+
+    const data3 = Array.from({ length: 40 }, (_, i) => ({
+      x: i * 2.5,
+      y: 40 + Math.sin(i / 5) * 25 + Math.cos(i / 2) * 10,
+    }));
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <div style={{ marginBottom: 12, fontFamily: "monospace", fontSize: 13 }}>
+          Three overlapping sparklines at different alpha levels
+        </div>
+        <div
+          style={{
+            padding: "10px",
+            background: "#f8f9fa",
+            borderRadius: "8px",
+          }}
+        >
+          <CanPlot
+            style={{ width: "100%", height: "120px" }}
+            configuration={{
+              padding: { bottom: 5, left: 5, right: 5, top: 5 },
+              scales,
+            }}
+          >
+            {/* Full opacity */}
+            <SparklinePlot
+              data={data1}
+              xScaleId="x"
+              yScaleId="y"
+              stroked
+              style={{
+                strokeStyle: "#ff6b6b",
+                lineWidth: 1.5,
+                fillStyle: "#ff6b6b",
+              }}
+              globalAlpha={1}
+            />
+
+            {/* 60% opacity */}
+            <SparklinePlot
+              data={data2}
+              xScaleId="x"
+              yScaleId="y"
+              stroked
+              style={{
+                strokeStyle: "#51cf66",
+                lineWidth: 1.5,
+                fillStyle: "#51cf66",
+              }}
+              globalAlpha={0.6}
+            />
+
+            {/* 30% opacity */}
+            <SparklinePlot
+              data={data3}
+              xScaleId="x"
+              yScaleId="y"
+              stroked
+              style={{
+                strokeStyle: "#4c6ef5",
+                lineWidth: 1.5,
+                fillStyle: "#4c6ef5",
+              }}
+              globalAlpha={0.3}
+            />
+          </CanPlot>
+        </div>
+      </div>
+    );
+  },
+};

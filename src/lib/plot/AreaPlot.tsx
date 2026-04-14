@@ -8,6 +8,7 @@ const AreaPlotImpl: React.FC<{
   data: ReadonlyArray<{ x: number; y: readonly [number, number] }>;
   xScaleId: string;
   yScaleId: string;
+  globalAlpha?: number;
   style?: Partial<
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
@@ -17,9 +18,10 @@ const AreaPlotImpl: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style }) => {
+}> = ({ layer = "MIDDLE", data, xScaleId, yScaleId, style, globalAlpha }) => {
   useDrawEffect({
     layer,
+    globalAlpha,
     runner: ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
       for (const datapoint of data) {

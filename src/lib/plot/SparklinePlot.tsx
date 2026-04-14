@@ -9,6 +9,7 @@ const SparklinePlotImpl: React.FC<{
   xScaleId: string;
   yScaleId: string;
   stroked?: boolean;
+  globalAlpha?: number;
   style?: Partial<
     {
       fillStyle: CanvasFillStrokeStyles["fillStyle"];
@@ -18,9 +19,10 @@ const SparklinePlotImpl: React.FC<{
       "lineCap" | "lineDashOffset" | "lineJoin" | "lineWidth" | "miterLimit"
     >
   >;
-}> = ({ layer = "MIDDLE", data, stroked, xScaleId, yScaleId, style }) => {
+}> = ({ layer = "MIDDLE", data, stroked, xScaleId, yScaleId, style, globalAlpha }) => {
   useDrawEffect({
     layer,
+    globalAlpha,
     runner: ({ ctx, clampXPosToChartArea, clampYPosToChartArea, valToPos }) => {
       const drawPoints: Array<{ x: number; y: number }> = [];
 

@@ -518,3 +518,93 @@ export const ConfidenceBands: Story = {
     );
   },
 };
+
+// Area plot with global alpha (transparency)
+export const GlobalAlpha: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 40,
+        },
+        origin: "y",
+        min: 0,
+        max: 100,
+      },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 20,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          {/* Full opacity */}
+          <AreaPlot
+            data={Array.from({ length: 50 }, (_, i) => ({
+              x: i * 2,
+              y: [20 + Math.sin(i / 5) * 15, 50 + Math.sin(i / 5) * 15] as const,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              fillStyle: "#ff6b6b",
+            }}
+            globalAlpha={1}
+          />
+
+          {/* 60% opacity */}
+          <AreaPlot
+            data={Array.from({ length: 50 }, (_, i) => ({
+              x: i * 2,
+              y: [35 + Math.cos(i / 4) * 15, 65 + Math.cos(i / 4) * 15] as const,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              fillStyle: "#51cf66",
+            }}
+            globalAlpha={0.6}
+          />
+
+          {/* 30% opacity */}
+          <AreaPlot
+            data={Array.from({ length: 50 }, (_, i) => ({
+              x: i * 2,
+              y: [50 + Math.sin(i / 3) * 15, 80 + Math.sin(i / 3) * 15] as const,
+            }))}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              fillStyle: "#0033ff",
+            }}
+            globalAlpha={0.3}
+          />
+
+          <XTicks scaleId="x" ticks={makeLinearTicks()} />
+          <YTicks scaleId="y" ticks={makeLinearTicks()} />
+        </CanPlot>
+      </div>
+    );
+  },
+};

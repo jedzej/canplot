@@ -35,22 +35,26 @@ const ScatterPlotImpl: React.FC<{
 }) => {
   useDrawEffect({
     layer,
-    runner: ({
-      ctx,
-      valToPosWithStrategy,
-    }) => {
+    globalAlpha,
+    runner: ({ ctx, valToPosWithStrategy }) => {
       ctx.save();
       applyStyles(ctx, style);
-
-      if (globalAlpha !== undefined) {
-        ctx.globalAlpha = globalAlpha;
-      }
 
       const points = [];
 
       for (const point of data) {
-        const xPos = valToPosWithStrategy(point.x, xScaleId, "canvas", xStrategy);
-        const yPos = valToPosWithStrategy(point.y, yScaleId, "canvas", yStrategy);
+        const xPos = valToPosWithStrategy(
+          point.x,
+          xScaleId,
+          "canvas",
+          xStrategy,
+        );
+        const yPos = valToPosWithStrategy(
+          point.y,
+          yScaleId,
+          "canvas",
+          yStrategy,
+        );
 
         if (xPos === null || yPos === null) continue;
 
@@ -78,7 +82,7 @@ const ScatterPlotImpl: React.FC<{
 
       ctx.restore();
     },
-    deps: [data, xScaleId, yScaleId, radius, style, globalAlpha, xStrategy, yStrategy],
+    deps: [data, xScaleId, yScaleId, radius, style, xStrategy, yStrategy],
   });
   return null;
 };

@@ -34,6 +34,7 @@ const BarPlotImpl: React.FC<{
 }) => {
   useDrawEffect({
     layer,
+    globalAlpha,
     runner: ({
       ctx,
       valToPxDistance,
@@ -93,9 +94,6 @@ const BarPlotImpl: React.FC<{
 
       ctx.save();
       applyStyles(ctx, style);
-      if (globalAlpha !== undefined) {
-        ctx.globalAlpha = globalAlpha;
-      }
 
       if (style?.fillStyle) {
         for (const p of points) {
@@ -123,7 +121,15 @@ const BarPlotImpl: React.FC<{
 
       ctx.restore();
     },
-    deps: [data, xScaleId, yScaleId, style, barWidthRaw, xPositionOffset, radius, globalAlpha],
+    deps: [
+      data,
+      xScaleId,
+      yScaleId,
+      style,
+      barWidthRaw,
+      xPositionOffset,
+      radius,
+    ],
   });
   return null;
 };

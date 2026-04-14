@@ -36,6 +36,7 @@ const LinePlotImpl: React.FC<{
 }) => {
   useDrawEffect({
     layer,
+    globalAlpha,
     runner: ({ ctx, valToPosWithStrategy }) => {
       ctx.save();
       ctx.beginPath();
@@ -44,13 +45,20 @@ const LinePlotImpl: React.FC<{
       if (style?.lineDash) {
         ctx.setLineDash(style.lineDash);
       }
-      if (globalAlpha !== undefined) {
-        ctx.globalAlpha = globalAlpha;
-      }
       let lastX: number | null = null;
       for (const point of data) {
-        const xPos = valToPosWithStrategy(point.x, xScaleId, "canvas", xStrategy);
-        const yPos = valToPosWithStrategy(point.y, yScaleId, "canvas", yStrategy);
+        const xPos = valToPosWithStrategy(
+          point.x,
+          xScaleId,
+          "canvas",
+          xStrategy,
+        );
+        const yPos = valToPosWithStrategy(
+          point.y,
+          yScaleId,
+          "canvas",
+          yStrategy,
+        );
 
         if (xPos === null || yPos === null) {
           continue;
@@ -72,7 +80,7 @@ const LinePlotImpl: React.FC<{
       }
       ctx.restore();
     },
-    deps: [data, xScaleId, yScaleId, style, globalAlpha, xGapWidth, xStrategy, yStrategy],
+    deps: [data, xScaleId, yScaleId, style, xGapWidth, xStrategy, yStrategy],
   });
   return null;
 };
