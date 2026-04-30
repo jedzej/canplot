@@ -5,11 +5,9 @@ import { applyStyles, deepEqual } from "../helpers";
 
 const BarPlotImpl: React.FC<{
   layer?: number | keyof typeof CANPLOT_LAYER;
-  data: Array<{ x: number; y: number }>;
-  xPositionOffset: number;
+  data: Array<{ x: readonly [number, number]; y: number }>;
   xScaleId: string;
   yScaleId: string;
-  barWidth: number;
   globalAlpha?: number;
   radius?: number;
   style?: Partial<
@@ -26,8 +24,6 @@ const BarPlotImpl: React.FC<{
   xScaleId,
   yScaleId,
   style,
-  barWidth: barWidthRaw,
-  xPositionOffset,
   globalAlpha,
   radius,
   layer = "MIDDLE",
@@ -35,59 +31,37 @@ const BarPlotImpl: React.FC<{
   useDrawEffect({
     layer,
     globalAlpha,
-    runner: ({
-      ctx,
-      valToPxDistance,
-      valToPos,
-      clampXPosToChartArea,
-      clampYPosToChartArea,
-    }) => {
+    runner: ({ ctx, valToPosWithStrategy }) => {
       if (data.length === 0) return;
-      const yBottom = clampYPosToChartArea(
-        valToPos(0, yScaleId, "canvas"),
-        "canvas",
-      );
+      const yBottom = valToPosWithStrategy(0, yScaleId, "canvas", "clamp");
 
       if (yBottom === null) {
         return;
       }
 
-      const barWidth = valToPxDistance(barWidthRaw, xScaleId, "canvas") ?? 0;
-
       const points: Array<{
-        x: number;
+        x0: number;
+        x1: number;
         y: number;
         width: number;
         height: number;
       }> = [];
-      for (const datapoint of data) {
-        const xCenter = valToPos(datapoint.x, xScaleId, "canvas");
+      for (const { x, y } of data) {
+        const x0 = valToPosWithStrategy(x[0], xScaleId, "canvas", "clamp");
+        const x1 = valToPosWithStrategy(x[1], xScaleId, "canvas", "clamp");
+        const yTop = valToPosWithStrategy(y, yScaleId, "canvas", "clamp");
 
-        if (xCenter === null) {
-          continue;
-        }
-
-        // Adjust x position based on bar position
-        const x = xCenter - barWidth / 2 + xPositionOffset * barWidth;
-
-        const yTop = clampYPosToChartArea(
-          valToPos(datapoint.y, yScaleId, "canvas"),
-          "canvas",
-        );
-        if (yTop === null) {
+        if (x0 === null || x1 === null || yTop === null || x0 === x1) {
           continue;
         }
 
         const barHeight = yBottom - yTop;
 
-        const compensatedX = clampXPosToChartArea(x, "canvas");
-        const compensatedWidth =
-          clampXPosToChartArea(x + barWidth, "canvas") - compensatedX;
-
         points.push({
-          x: compensatedX,
+          x0,
+          x1,
           y: yTop,
-          width: compensatedWidth,
+          width: x1 - x0,
           height: barHeight,
         });
       }
@@ -99,9 +73,9 @@ const BarPlotImpl: React.FC<{
         for (const p of points) {
           ctx.beginPath();
           if (radius) {
-            ctx.roundRect(p.x, p.y, p.width, p.height, radius);
+            ctx.roundRect(p.x0, p.y, p.x1 - p.x0, p.height, radius);
           } else {
-            ctx.rect(p.x, p.y, p.width, p.height);
+            ctx.rect(p.x0, p.y, p.x1 - p.x0, p.height);
           }
           ctx.fill();
         }
@@ -111,9 +85,9 @@ const BarPlotImpl: React.FC<{
         ctx.beginPath();
         for (const p of points) {
           if (radius) {
-            ctx.roundRect(p.x, p.y, p.width, p.height, radius);
+            ctx.roundRect(p.x0, p.y, p.x1 - p.x0, p.height, radius);
           } else {
-            ctx.rect(p.x, p.y, p.width, p.height);
+            ctx.rect(p.x0, p.y, p.x1 - p.x0, p.height);
           }
         }
         ctx.stroke();
@@ -126,8 +100,6 @@ const BarPlotImpl: React.FC<{
       xScaleId,
       yScaleId,
       style,
-      barWidthRaw,
-      xPositionOffset,
       radius,
     ],
   });

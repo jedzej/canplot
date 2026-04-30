@@ -100,11 +100,13 @@ function MyChart() {
 
 ```tsx
 <BarPlot
-  data={data}
+  data={[
+    { x: [0.7, 1.3], y: 45 },
+    { x: [1.7, 2.3], y: 60 },
+    { x: [2.7, 3.3], y: 55 },
+  ]}
   xScaleId="x"
   yScaleId="y"
-  barWidth={0.6}
-  xPositionOffset={0}
   style={{ fillStyle: '#ff6b6b' }}
 />
 ```

@@ -19,6 +19,19 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+/** Helper to convert simple {x, y} data to bar range format */
+function toBars(
+  points: { x: number; y: number }[],
+  barWidth: number,
+  offset = 0,
+): Array<{ x: [number, number]; y: number }> {
+  const half = barWidth / 2;
+  return points.map(({ x, y }) => {
+    const center = x + offset * barWidth;
+    return { x: [center - half, center + half] as [number, number], y };
+  });
+}
+
 // Basic bar chart
 export const Basic: Story = {
   render: () => {
@@ -45,17 +58,17 @@ export const Basic: Story = {
       },
     ];
 
-    const data = [
-      { x: 1, y: 30 },
-      { x: 2, y: 45 },
-      { x: 3, y: 60 },
-      { x: 4, y: 35 },
-      { x: 5, y: 70 },
-      { x: 6, y: 55 },
-      { x: 7, y: 80 },
-      { x: 8, y: 65 },
-      { x: 9, y: 50 },
-      { x: 10, y: 75 },
+    const data: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.75, 1.25], y: 30 },
+      { x: [1.75, 2.25], y: 45 },
+      { x: [2.75, 3.25], y: 60 },
+      { x: [3.75, 4.25], y: 35 },
+      { x: [4.75, 5.25], y: 70 },
+      { x: [5.75, 6.25], y: 55 },
+      { x: [6.75, 7.25], y: 80 },
+      { x: [7.75, 8.25], y: 65 },
+      { x: [8.75, 9.25], y: 50 },
+      { x: [9.75, 10.25], y: 75 },
     ];
 
     return (
@@ -76,8 +89,6 @@ export const Basic: Story = {
             data={data}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.5}
-            xPositionOffset={0}
             style={{
               fillStyle: "#4c6ef5",
               strokeStyle: "#364fc7",
@@ -116,7 +127,7 @@ export const MultipleBarSeries: Story = {
       },
     ];
 
-    const series1 = [
+    const rawSeries1 = [
       { x: 1, y: 30 },
       { x: 2, y: 45 },
       { x: 3, y: 60 },
@@ -125,7 +136,7 @@ export const MultipleBarSeries: Story = {
       { x: 6, y: 55 },
     ];
 
-    const series2 = [
+    const rawSeries2 = [
       { x: 1, y: 40 },
       { x: 2, y: 35 },
       { x: 3, y: 50 },
@@ -134,7 +145,7 @@ export const MultipleBarSeries: Story = {
       { x: 6, y: 65 },
     ];
 
-    const series3 = [
+    const rawSeries3 = [
       { x: 1, y: 25 },
       { x: 2, y: 55 },
       { x: 3, y: 40 },
@@ -158,11 +169,9 @@ export const MultipleBarSeries: Story = {
           }}
         >
           <BarPlot
-            data={series1}
+            data={toBars(rawSeries1, 0.25, -1)}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.25}
-            xPositionOffset={-1}
             style={{
               fillStyle: "#4c6ef5",
               strokeStyle: "#364fc7",
@@ -170,11 +179,9 @@ export const MultipleBarSeries: Story = {
             }}
           />
           <BarPlot
-            data={series2}
+            data={toBars(rawSeries2, 0.25, 0)}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.25}
-            xPositionOffset={0}
             style={{
               fillStyle: "#51cf66",
               strokeStyle: "#37b24d",
@@ -182,11 +189,9 @@ export const MultipleBarSeries: Story = {
             }}
           />
           <BarPlot
-            data={series3}
+            data={toBars(rawSeries3, 0.25, 1)}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.25}
-            xPositionOffset={1}
             style={{
               fillStyle: "#ff6b6b",
               strokeStyle: "#f03e3e",
@@ -225,17 +230,17 @@ export const WithInteractions: Story = {
       },
     ];
 
-    const data = [
-      { x: 1, y: 30 },
-      { x: 2, y: 45 },
-      { x: 3, y: 60 },
-      { x: 4, y: 35 },
-      { x: 5, y: 70 },
-      { x: 6, y: 55 },
-      { x: 7, y: 80 },
-      { x: 8, y: 65 },
-      { x: 9, y: 50 },
-      { x: 10, y: 75 },
+    const data: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.7, 1.3], y: 30 },
+      { x: [1.7, 2.3], y: 45 },
+      { x: [2.7, 3.3], y: 60 },
+      { x: [3.7, 4.3], y: 35 },
+      { x: [4.7, 5.3], y: 70 },
+      { x: [5.7, 6.3], y: 55 },
+      { x: [6.7, 7.3], y: 80 },
+      { x: [7.7, 8.3], y: 65 },
+      { x: [8.7, 9.3], y: 50 },
+      { x: [9.7, 10.3], y: 75 },
     ];
 
     return (
@@ -256,8 +261,6 @@ export const WithInteractions: Story = {
             data={data}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.6}
-            xPositionOffset={0}
             style={{
               fillStyle: "#9775fa",
               strokeStyle: "#7950f2",
@@ -277,6 +280,7 @@ export const WithInteractions: Story = {
 export const TimeSeries: Story = {
   render: () => {
     const now = new Date("2024-01-01T00:00:00Z");
+    const dayMs = 24 * 60 * 60 * 1000;
     const scales: PlotScaleConfig[] = [
       {
         id: "x",
@@ -286,7 +290,7 @@ export const TimeSeries: Story = {
         },
         origin: "x",
         min: now.getTime(),
-        max: now.getTime() + 30 * 24 * 60 * 60 * 1000, // 30 days
+        max: now.getTime() + 30 * dayMs, // 30 days
       },
       {
         id: "y",
@@ -300,10 +304,17 @@ export const TimeSeries: Story = {
       },
     ];
 
-    const data = Array.from({ length: 30 }, (_, i) => ({
-      x: now.getTime() + i * 24 * 60 * 60 * 1000,
-      y: 200 + Math.sin(i / 5) * 100 + Math.random() * 50,
-    }));
+    const halfBar = 0.4 * dayMs;
+    const data: Array<{ x: [number, number]; y: number }> = Array.from(
+      { length: 30 },
+      (_, i) => {
+        const center = now.getTime() + i * dayMs;
+        return {
+          x: [center - halfBar, center + halfBar] as [number, number],
+          y: 200 + Math.sin(i / 5) * 100 + Math.random() * 50,
+        };
+      },
+    );
 
     return (
       <div style={{ padding: "20px" }}>
@@ -323,8 +334,6 @@ export const TimeSeries: Story = {
             data={data}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.8 * 24 * 60 * 60 * 1000}
-            xPositionOffset={0}
             style={{
               fillStyle: "#20c997",
               strokeStyle: "#12b886",
@@ -363,22 +372,22 @@ export const DifferentStyles: Story = {
       },
     ];
 
-    const solidBars = [
-      { x: 1, y: 40 },
-      { x: 2, y: 60 },
-      { x: 3, y: 55 },
+    const solidBars: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.8, 1.2], y: 40 },
+      { x: [1.8, 2.2], y: 60 },
+      { x: [2.8, 3.2], y: 55 },
     ];
 
-    const thickStroke = [
-      { x: 5, y: 50 },
-      { x: 6, y: 70 },
-      { x: 7, y: 45 },
+    const thickStroke: Array<{ x: [number, number]; y: number }> = [
+      { x: [4.8, 5.2], y: 50 },
+      { x: [5.8, 6.2], y: 70 },
+      { x: [6.8, 7.2], y: 45 },
     ];
 
-    const wideBars = [
-      { x: 9, y: 65 },
-      { x: 10, y: 55 },
-      { x: 11, y: 80 },
+    const wideBars: Array<{ x: [number, number]; y: number }> = [
+      { x: [8.65, 9.35], y: 65 },
+      { x: [9.65, 10.35], y: 55 },
+      { x: [10.65, 11.35], y: 80 },
     ];
 
     return (
@@ -399,8 +408,6 @@ export const DifferentStyles: Story = {
             data={solidBars}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.4}
-            xPositionOffset={0}
             style={{
               fillStyle: "#4c6ef5",
             }}
@@ -409,8 +416,6 @@ export const DifferentStyles: Story = {
             data={thickStroke}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.4}
-            xPositionOffset={0}
             style={{
               fillStyle: "#51cf66",
               strokeStyle: "#2f9e44",
@@ -421,8 +426,6 @@ export const DifferentStyles: Story = {
             data={wideBars}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.7}
-            xPositionOffset={0}
             style={{
               fillStyle: "#ff6b6b",
               strokeStyle: "#f03e3e",
@@ -461,17 +464,17 @@ export const WithLineOverlay: Story = {
       },
     ];
 
-    const barData = [
-      { x: 1, y: 30 },
-      { x: 2, y: 45 },
-      { x: 3, y: 60 },
-      { x: 4, y: 35 },
-      { x: 5, y: 70 },
-      { x: 6, y: 55 },
-      { x: 7, y: 80 },
-      { x: 8, y: 65 },
-      { x: 9, y: 50 },
-      { x: 10, y: 75 },
+    const barData: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.75, 1.25], y: 30 },
+      { x: [1.75, 2.25], y: 45 },
+      { x: [2.75, 3.25], y: 60 },
+      { x: [3.75, 4.25], y: 35 },
+      { x: [4.75, 5.25], y: 70 },
+      { x: [5.75, 6.25], y: 55 },
+      { x: [6.75, 7.25], y: 80 },
+      { x: [7.75, 8.25], y: 65 },
+      { x: [8.75, 9.25], y: 50 },
+      { x: [9.75, 10.25], y: 75 },
     ];
 
     const lineData = [
@@ -505,8 +508,6 @@ export const WithLineOverlay: Story = {
             data={barData}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.5}
-            xPositionOffset={0}
             style={{
               fillStyle: "rgba(76, 110, 245, 0.5)",
               strokeStyle: "#4c6ef5",
@@ -596,17 +597,17 @@ export const InteractiveZoom: Story = {
       },
     ];
 
-    const data = [
-      { x: 1, y: 30 },
-      { x: 2, y: 45 },
-      { x: 3, y: 60 },
-      { x: 4, y: 35 },
-      { x: 5, y: 70 },
-      { x: 6, y: 55 },
-      { x: 7, y: 80 },
-      { x: 8, y: 65 },
-      { x: 9, y: 50 },
-      { x: 10, y: 75 },
+    const data: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.75, 1.25], y: 30 },
+      { x: [1.75, 2.25], y: 45 },
+      { x: [2.75, 3.25], y: 60 },
+      { x: [3.75, 4.25], y: 35 },
+      { x: [4.75, 5.25], y: 70 },
+      { x: [5.75, 6.25], y: 55 },
+      { x: [6.75, 7.25], y: 80 },
+      { x: [7.75, 8.25], y: 65 },
+      { x: [8.75, 9.25], y: 50 },
+      { x: [9.75, 10.25], y: 75 },
     ];
 
     return (
@@ -668,8 +669,6 @@ export const InteractiveZoom: Story = {
             data={data}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.5}
-            xPositionOffset={0}
             style={{
               fillStyle: "#4c6ef5",
               strokeStyle: "#364fc7",
@@ -708,17 +707,17 @@ export const RoundedCorners: Story = {
       },
     ];
 
-    const data = [
-      { x: 1, y: 30 },
-      { x: 2, y: 45 },
-      { x: 3, y: 60 },
-      { x: 4, y: 35 },
-      { x: 5, y: 70 },
-      { x: 6, y: 55 },
-      { x: 7, y: 80 },
-      { x: 8, y: 65 },
-      { x: 9, y: 50 },
-      { x: 10, y: 75 },
+    const data: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.7, 1.3], y: 30 },
+      { x: [1.7, 2.3], y: 45 },
+      { x: [2.7, 3.3], y: 60 },
+      { x: [3.7, 4.3], y: 35 },
+      { x: [4.7, 5.3], y: 70 },
+      { x: [5.7, 6.3], y: 55 },
+      { x: [6.7, 7.3], y: 80 },
+      { x: [7.7, 8.3], y: 65 },
+      { x: [8.7, 9.3], y: 50 },
+      { x: [9.7, 10.3], y: 75 },
     ];
 
     return (
@@ -739,8 +738,6 @@ export const RoundedCorners: Story = {
             data={data}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.6}
-            xPositionOffset={0}
             radius={8}
             style={{
               fillStyle: "#7950f2",
@@ -761,7 +758,7 @@ export const Performance: Story = {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [data, setData] = useState(() =>
       Array.from({ length: 1000 }, (_, i) => ({
-        x: i,
+        x: [i - 0.4, i + 0.4] as [number, number],
         y: Math.random() * 100,
       }))
     );
@@ -823,8 +820,6 @@ export const Performance: Story = {
             data={data}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.8}
-            xPositionOffset={0}
             style={{
               fillStyle: "#4c6ef5",
               strokeStyle: "#364fc7",
@@ -863,43 +858,43 @@ export const GlobalAlpha: Story = {
       },
     ];
 
-    const data1 = [
-      { x: 1, y: 70 },
-      { x: 2, y: 85 },
-      { x: 3, y: 60 },
-      { x: 4, y: 75 },
-      { x: 5, y: 90 },
-      { x: 6, y: 65 },
-      { x: 7, y: 80 },
-      { x: 8, y: 55 },
-      { x: 9, y: 70 },
-      { x: 10, y: 85 },
+    const data1: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.6, 1.4], y: 70 },
+      { x: [1.6, 2.4], y: 85 },
+      { x: [2.6, 3.4], y: 60 },
+      { x: [3.6, 4.4], y: 75 },
+      { x: [4.6, 5.4], y: 90 },
+      { x: [5.6, 6.4], y: 65 },
+      { x: [6.6, 7.4], y: 80 },
+      { x: [7.6, 8.4], y: 55 },
+      { x: [8.6, 9.4], y: 70 },
+      { x: [9.6, 10.4], y: 85 },
     ];
 
-    const data2 = [
-      { x: 1, y: 50 },
-      { x: 2, y: 65 },
-      { x: 3, y: 80 },
-      { x: 4, y: 55 },
-      { x: 5, y: 70 },
-      { x: 6, y: 85 },
-      { x: 7, y: 60 },
-      { x: 8, y: 75 },
-      { x: 9, y: 50 },
-      { x: 10, y: 65 },
+    const data2: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.6, 1.4], y: 50 },
+      { x: [1.6, 2.4], y: 65 },
+      { x: [2.6, 3.4], y: 80 },
+      { x: [3.6, 4.4], y: 55 },
+      { x: [4.6, 5.4], y: 70 },
+      { x: [5.6, 6.4], y: 85 },
+      { x: [6.6, 7.4], y: 60 },
+      { x: [7.6, 8.4], y: 75 },
+      { x: [8.6, 9.4], y: 50 },
+      { x: [9.6, 10.4], y: 65 },
     ];
 
-    const data3 = [
-      { x: 1, y: 30 },
-      { x: 2, y: 45 },
-      { x: 3, y: 60 },
-      { x: 4, y: 35 },
-      { x: 5, y: 50 },
-      { x: 6, y: 45 },
-      { x: 7, y: 40 },
-      { x: 8, y: 55 },
-      { x: 9, y: 30 },
-      { x: 10, y: 45 },
+    const data3: Array<{ x: [number, number]; y: number }> = [
+      { x: [0.6, 1.4], y: 30 },
+      { x: [1.6, 2.4], y: 45 },
+      { x: [2.6, 3.4], y: 60 },
+      { x: [3.6, 4.4], y: 35 },
+      { x: [4.6, 5.4], y: 50 },
+      { x: [5.6, 6.4], y: 45 },
+      { x: [6.6, 7.4], y: 40 },
+      { x: [7.6, 8.4], y: 55 },
+      { x: [8.6, 9.4], y: 30 },
+      { x: [9.6, 10.4], y: 45 },
     ];
 
     return (
@@ -921,8 +916,6 @@ export const GlobalAlpha: Story = {
             data={data1}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.8}
-            xPositionOffset={0}
             style={{
               fillStyle: "#ff6b6b",
               strokeStyle: "#c92a2a",
@@ -936,8 +929,6 @@ export const GlobalAlpha: Story = {
             data={data2}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.8}
-            xPositionOffset={0}
             style={{
               fillStyle: "#51cf66",
               strokeStyle: "#2b8a3e",
@@ -951,14 +942,76 @@ export const GlobalAlpha: Story = {
             data={data3}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.8}
-            xPositionOffset={0}
             style={{
               fillStyle: "#4c6ef5",
               strokeStyle: "#364fc7",
               lineWidth: 1,
             }}
             globalAlpha={0.3}
+          />
+        </CanPlot>
+      </div>
+    );
+  },
+};
+
+// Variable width bars
+export const VariableWidth: Story = {
+  render: () => {
+    const scales: PlotScaleConfig[] = [
+      {
+        id: "x",
+        axis: {
+          position: "bottom",
+          size: 40,
+        },
+        origin: "x",
+        min: 0,
+        max: 100,
+      },
+      {
+        id: "y",
+        axis: {
+          position: "left",
+          size: 40,
+        },
+        origin: "y",
+        min: 0,
+        max: 50,
+      },
+    ];
+
+    const data: Array<{ x: [number, number]; y: number }> = [
+      { x: [0, 10], y: 25 },
+      { x: [10, 35], y: 40 },
+      { x: [35, 45], y: 15 },
+      { x: [45, 80], y: 30 },
+      { x: [80, 100], y: 45 },
+    ];
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <CanPlot
+          style={{ width: "100%", height: "400px" }}
+          configuration={{
+            padding: {
+              bottom: 20,
+              left: 20,
+              right: 20,
+              top: 20,
+            },
+            scales,
+          }}
+        >
+          <BarPlot
+            data={data}
+            xScaleId="x"
+            yScaleId="y"
+            style={{
+              fillStyle: "#4c6ef5",
+              strokeStyle: "#364fc7",
+              lineWidth: 1,
+            }}
           />
         </CanPlot>
       </div>

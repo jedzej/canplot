@@ -507,7 +507,7 @@ export const ThreeChartsXAxisSync: Story = {
     }));
 
     const barData = Array.from({ length: 20 }, (_, i) => ({
-      x: i * 5,
+      x: [i * 5 - 1.5, i * 5 + 1.5] as [number, number],
       y: 15 + Math.random() * 30,
     }));
 
@@ -674,8 +674,6 @@ export const ThreeChartsXAxisSync: Story = {
                 data={barData}
                 xScaleId="x"
                 yScaleId="y2"
-                xPositionOffset={0}
-                barWidth={3}
                 style={{
                   fillStyle: "#f59f00",
                   strokeStyle: "#d68500",

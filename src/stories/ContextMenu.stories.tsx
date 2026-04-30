@@ -544,7 +544,7 @@ export const ContextMenuMultiSeries: Story = {
     }));
 
     const barData = Array.from({ length: 10 }, (_, i) => ({
-      x: i * 10 + 5,
+      x: [i * 10 + 1, i * 10 + 9] as [number, number],
       y: 30 + Math.random() * 40,
     }));
 
@@ -599,13 +599,11 @@ export const ContextMenuMultiSeries: Story = {
               data={barData}
               xScaleId="x"
               yScaleId="y"
-              xPositionOffset={0}
               style={{
                 fillStyle: "#ffd43b77",
                 strokeStyle: "#fab005",
                 lineWidth: 2,
               }}
-              barWidth={8}
             />
 
             <LinePlot

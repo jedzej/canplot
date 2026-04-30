@@ -400,11 +400,12 @@ export const BarChartTooltip: Story = {
           }}
         >
           <BarPlot
-            data={data}
+            data={data.map(({ x, y }) => ({
+              x: [x - 0.3, x + 0.3] as [number, number],
+              y,
+            }))}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.6}
-            xPositionOffset={0}
             radius={4}
             style={{
               fillStyle: "#ff6b6b",
@@ -810,11 +811,12 @@ export const GroupedBarsTooltip: Story = {
           }}
         >
           <BarPlot
-            data={series1}
+            data={series1.map(({ x, y }) => ({
+              x: [x - 0.375, x - 0.125] as [number, number],
+              y,
+            }))}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.25}
-            xPositionOffset={-1}
             style={{
               fillStyle: "#4c6ef5",
               strokeStyle: "#364fc7",
@@ -822,11 +824,12 @@ export const GroupedBarsTooltip: Story = {
             }}
           />
           <BarPlot
-            data={series2}
+            data={series2.map(({ x, y }) => ({
+              x: [x - 0.125, x + 0.125] as [number, number],
+              y,
+            }))}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.25}
-            xPositionOffset={0}
             style={{
               fillStyle: "#51cf66",
               strokeStyle: "#37b24d",
@@ -834,11 +837,12 @@ export const GroupedBarsTooltip: Story = {
             }}
           />
           <BarPlot
-            data={series3}
+            data={series3.map(({ x, y }) => ({
+              x: [x + 0.125, x + 0.375] as [number, number],
+              y,
+            }))}
             xScaleId="x"
             yScaleId="y"
-            barWidth={0.25}
-            xPositionOffset={1}
             style={{
               fillStyle: "#ff6b6b",
               strokeStyle: "#f03e3e",
