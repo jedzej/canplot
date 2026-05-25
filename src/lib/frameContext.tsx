@@ -108,6 +108,7 @@ export const useDrawEffect = ({
       () => {
         const canvasWidth = frameDrawer.ctx.canvas.width;
         const canvasHeight = frameDrawer.ctx.canvas.height;
+        const sanitizedGlobalAlpha = globalAlpha ?? 1;
 
         if (canvasWidth === 0 || canvasHeight === 0) return;
 
@@ -132,15 +133,19 @@ export const useDrawEffect = ({
             ...frameDrawer.frame,
             ctx: offscreenRef.current!.ctx,
           });
-          runnerRef.current(offscreenFrameDrawer);
+          if (sanitizedGlobalAlpha > 0) {
+            runnerRef.current(offscreenFrameDrawer);
+          }
           needsRedrawRef.current = false;
         }
 
         // Copy cached bitmap to main canvas
         const oldGlobalAlpha = frameDrawer.ctx.globalAlpha;
-        const oldGlobalCompositeOperation = frameDrawer.ctx.globalCompositeOperation;
-        frameDrawer.ctx.globalAlpha = globalAlpha ?? 1;
-        frameDrawer.ctx.globalCompositeOperation = globalCompositeOperation ?? "source-over";
+        const oldGlobalCompositeOperation =
+          frameDrawer.ctx.globalCompositeOperation;
+        frameDrawer.ctx.globalAlpha = sanitizedGlobalAlpha;
+        frameDrawer.ctx.globalCompositeOperation =
+          globalCompositeOperation ?? "source-over";
         frameDrawer.ctx.drawImage(offscreenRef.current!.canvas, 0, 0);
         frameDrawer.ctx.globalAlpha = oldGlobalAlpha;
         frameDrawer.ctx.globalCompositeOperation = oldGlobalCompositeOperation;
@@ -150,13 +155,26 @@ export const useDrawEffect = ({
     return () => {
       unsubscribe();
     };
-  }, [drawPropagateContext, layer, frameDrawer, offscreenFrameDrawer, globalAlpha, globalCompositeOperation]);
+  }, [
+    drawPropagateContext,
+    layer,
+    frameDrawer,
+    offscreenFrameDrawer,
+    globalAlpha,
+    globalCompositeOperation,
+  ]);
 
   useLayoutEffect(() => {
     needsRedrawRef.current = true;
     updateRequest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateRequest, scaleLimitsKey, globalAlpha, globalCompositeOperation, ...deps]);
+  }, [
+    updateRequest,
+    scaleLimitsKey,
+    globalAlpha,
+    globalCompositeOperation,
+    ...deps,
+  ]);
 
   useEffect(() => {
     return () => {
