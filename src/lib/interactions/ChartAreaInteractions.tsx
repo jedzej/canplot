@@ -522,6 +522,7 @@ const ChartAreaInteractionsImpl: React.FC<{
         });
       }}
       onDoubleClick={(event) => {
+        event.preventDefault();
         withPointerPosition(event, (positions, _, keys) => {
           const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
