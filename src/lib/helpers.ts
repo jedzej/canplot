@@ -60,7 +60,11 @@ export const valToPxDistance = (
   const factor =
     (scale.origin === "x" ? chartArea.width : chartArea.height) /
     (scale.max - scale.min);
-  return val * factor;
+  const result = val * factor;
+  if (Number.isFinite(result)) {
+    return result;
+  }
+  return null;
 };
 
 export const valToPos = (
@@ -87,15 +91,15 @@ export const valToPos = (
   const result =
     scale.origin === "x"
       ? clamp(
-          chartArea.x + relativePosition,
-          chartArea.x - 10 * chartArea.width,
-          chartArea.x + 11 * chartArea.width
-        )
+        chartArea.x + relativePosition,
+        chartArea.x - 10 * chartArea.width,
+        chartArea.x + 11 * chartArea.width
+      )
       : clamp(
-          chartArea.y + chartArea.height - relativePosition,
-          chartArea.y - 10 * chartArea.height,
-          chartArea.y + 11 * chartArea.height
-        );
+        chartArea.y + chartArea.height - relativePosition,
+        chartArea.y - 10 * chartArea.height,
+        chartArea.y + 11 * chartArea.height
+      );
   return result;
 };
 
