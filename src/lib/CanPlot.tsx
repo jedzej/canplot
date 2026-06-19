@@ -75,7 +75,7 @@ const Updaters: React.FC<{ frame: PlotDrawFrame; children?: ReactNode }> = ({
   frame,
   children,
 }) => {
-  const drawPropagateStore = useMemo(createDrawPropagateStore, []);
+  const [drawPropagateStore] = useState(() => createDrawPropagateStore());
   const [drawVersion, setDrawVersion] = useState(0);
   useLayoutEffect(() => {
     frame?.ctx.clearRect(0, 0, frame.ctx.canvas.width, frame.ctx.canvas.height);
@@ -85,7 +85,7 @@ const Updaters: React.FC<{ frame: PlotDrawFrame; children?: ReactNode }> = ({
   frameRef.current = frame;
 
   useLayoutEffect(() => {
-    drawPropagateStore.subscribe(() => {
+    return drawPropagateStore.subscribe(() => {
       if (frameRef.current) {
         drawAxes(frameRef.current!);
       }

@@ -10,6 +10,7 @@ import { CANPLOT_LAYER, FrameDrawer } from "./FrameDrawer";
 import { FrameContext } from "./contexts/FrameContext";
 import { RedrawRequestContext } from "./contexts/RedrawRequestContext";
 import { DrawPropagateContext } from "./contexts/DrawPropagateContext";
+import { deepEqual } from "./helpers";
 
 export const useDrawEffectNoCache = (
   layer: number | keyof typeof CANPLOT_LAYER,
@@ -126,6 +127,15 @@ export const useDrawEffect = ({
           offscreenRef.current = { canvas, ctx: offscreenCtx };
           needsRedrawRef.current = true;
         }
+        let offscreenFrame = null;
+        try {
+          offscreenFrame = offscreenFrameDrawer.frame;
+        } catch (error) {
+        }
+        if (!deepEqual(offscreenFrame?.chartAreaCanvasPX, frameDrawer.frame.chartAreaCanvasPX)) {
+          needsRedrawRef.current = true;
+        }
+
 
         if (needsRedrawRef.current) {
           offscreenRef.current!.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
