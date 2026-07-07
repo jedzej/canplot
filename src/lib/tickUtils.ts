@@ -297,8 +297,8 @@ const makeFirstTick = (
         Math.ceil(
           ((result.getTime() + offsetHours * hour) % day) / hour / incrValue,
         ) *
-          incrValue -
-          offsetHours,
+        incrValue -
+        offsetHours,
         0,
         0,
         0,
@@ -381,10 +381,10 @@ export const makeTimeTicks = ({
     const hourFmt =
       incrUnit === "hours"
         ? new Intl.DateTimeFormat("en-US", {
-            timeZone,
-            hour: "numeric",
-            hourCycle: "h23",
-          })
+          timeZone,
+          hour: "numeric",
+          hourCycle: "h23",
+        })
         : null;
 
     let candidate: number;
@@ -561,18 +561,27 @@ export const makeTimeTickFormat = ({
           }
           visibleParts.push(
             `${h}:${m}${secondsPart}` +
-              (showTimezone && newTimeZoneName ? ` ${tz}` : ""),
+            (showTimezone && newTimeZoneName ? ` ${tz}` : ""),
           );
         }
         if (newDay || newMonth) {
-          visibleParts.push(
-            [
-              curr.label.find((a) => a.type === "month")?.value,
-              newDay && curr.label.find((a) => a.type === "day")?.value,
-            ]
-              .filter(Boolean)
-              .join(" "),
-          );
+          let partial = "";
+          if (locale.startsWith("zh") || locale.startsWith("ja")) {
+            const monthIndex = curr.label.findIndex((a) => a.type === "month");
+            partial += curr.label[monthIndex]?.value || ""
+            partial += (curr.label[monthIndex + 1]?.value || "");
+            const dayIndex = curr.label.findIndex((a) => a.type === "day");
+            if (dayIndex >= 0 && newDay) {
+              partial += curr.label[dayIndex]?.value || ""
+              partial += (curr.label[dayIndex + 1]?.value || "");
+            }
+          } else {
+            partial += curr.label.find((a) => a.type === "month")?.value || "";
+            if (newDay) {
+              partial += " " + (curr.label.find((a) => a.type === "day")?.value || "");
+            }
+          }
+          visibleParts.push(partial);
         }
         if (newYear) {
           visibleParts.push(curr.label.find((a) => a.type === "year")?.value);
