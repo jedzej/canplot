@@ -16,6 +16,7 @@ export * from "./interactions/TooltipsX";
 export * from "./interactions/CrossHair";
 export * from "./interactions/SelectBox";
 export * from "./interactions/AxisOverlay";
+export type * from "./interactions/types";
 
 // Types
 export type * from "./types";

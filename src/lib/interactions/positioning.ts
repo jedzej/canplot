@@ -1,7 +1,8 @@
-import { posToVal, valToPos } from "../helpers";
+import { posToVal, valFits, valToPos } from "../helpers";
 import type { PlotDrawFrame, PlotDrawScaleConfig } from "../types";
 import type {
   InteractionsEventPointerPosition,
+  InteractionsSyncConfig,
   PointerSyncPosition,
   ScaledSelectionRange,
 } from "./types";
@@ -10,49 +11,118 @@ export const makePointerSyncPosition = (
   event: Pick<MouseEvent, "clientX" | "clientY">,
   rect: DOMRect | undefined,
   frame: PlotDrawFrame,
-  xViaScaleId: string | undefined,
-  yViaScaleId: string | undefined
+  sync: InteractionsSyncConfig | undefined
 ):
   | { pointerSyncPosition: PointerSyncPosition; cssX: number; cssY: number }
   | undefined => {
   if (!rect) return;
   const effectiveXSyncViaScaleId =
-    xViaScaleId ?? frame.scales.find((s) => s.origin === "x")?.id;
+    sync?.xViaScaleId ?? frame.scales.find((s) => s.origin === "x")?.id;
   const effectiveYSyncViaScaleId =
-    yViaScaleId ?? frame.scales.find((s) => s.origin === "y")?.id;
+    sync?.yViaScaleId ?? frame.scales.find((s) => s.origin === "y")?.id;
 
   const cssX = event.clientX - rect.left;
   const x: PointerSyncPosition["x"] = effectiveXSyncViaScaleId
-    ? {
+    ? (() => {
+      const value = posToVal(
+        frame,
+        cssX,
+        effectiveXSyncViaScaleId,
+        "css"
+      )!;
+      return {
         scaleId: effectiveXSyncViaScaleId,
-        value: posToVal(frame, cssX, effectiveXSyncViaScaleId, "css")!,
-      }
+        value,
+        normalized: sync?.xToNormalized?.(value) ?? null,
+      };
+    })()
     : null;
 
   const cssY = event.clientY - rect.top;
   const y: PointerSyncPosition["y"] = effectiveYSyncViaScaleId
-    ? {
+    ? (() => {
+      const value = posToVal(
+        frame,
+        cssY,
+        effectiveYSyncViaScaleId,
+        "css"
+      )!;
+      return {
         scaleId: effectiveYSyncViaScaleId,
-        value: posToVal(frame, cssY, effectiveYSyncViaScaleId, "css")!,
-      }
+        value,
+        normalized: sync?.yToNormalized?.(value) ?? null,
+      };
+    })()
     : null;
 
   return { pointerSyncPosition: { x, y }, cssX, cssY };
 };
 
+const makeToNormalized = (
+  sync: InteractionsSyncConfig | undefined
+): InteractionsEventPointerPosition["toNormalized"] => {
+  return (value, axis) => {
+    const fn = axis === "x" ? sync?.xToNormalized : sync?.yToNormalized;
+    return fn?.(value) ?? null;
+  };
+};
+
+const makeFromNormalized = (
+  sync: InteractionsSyncConfig | undefined
+): InteractionsEventPointerPosition["fromNormalized"] => {
+  return (normalized, axis) => {
+    const fn = axis === "x" ? sync?.xFromNormalized : sync?.yFromNormalized;
+    return fn?.(normalized) ?? null;
+  };
+};
+
 export const pointerSyncPositionToInteractionsPosition = (
   pointerSyncPosition: PointerSyncPosition,
-  frame: PlotDrawFrame
+  frame: PlotDrawFrame,
+  sync: InteractionsSyncConfig | undefined
 ): InteractionsEventPointerPosition | undefined => {
   const { x, y } = pointerSyncPosition;
-  const cssX =
-    x && frame.scales.some((scale) => scale.id === x.scaleId)
-      ? valToPos(frame, x.value, x.scaleId, "css")
-      : null;
-  const cssY =
-    y && frame.scales.some((scale) => scale.id === y.scaleId)
-      ? valToPos(frame, y.value, y.scaleId, "css")
-      : null;
+
+  const resolveAxisCss = (
+    axis: "x" | "y",
+    source: PointerSyncPosition["x"] | PointerSyncPosition["y"]
+  ): number | null => {
+    if (!source) return null;
+    const viaScaleId = axis === "x" ? sync?.xViaScaleId : sync?.yViaScaleId;
+    const fromNormalized =
+      axis === "x" ? sync?.xFromNormalized : sync?.yFromNormalized;
+
+    // Preferred: normalized bridge.
+    if (
+      source.normalized !== null &&
+      fromNormalized &&
+      viaScaleId &&
+      frame.scales.some((s) => s.id === viaScaleId)
+    ) {
+      const localValue = fromNormalized(source.normalized);
+      if (localValue === null || !Number.isFinite(localValue)) {
+        // fall through to matching-scale-id path
+      } else if (!valFits(frame, localValue, viaScaleId)) {
+        return null;
+      } else {
+        return valToPos(frame, localValue, viaScaleId, "css");
+      }
+    }
+
+    // Fallback: matching source scale id in receiver frame.
+    if (frame.scales.some((s) => s.id === source.scaleId)) {
+      if (!valFits(frame, source.value, source.scaleId)) {
+        return null;
+      }
+      return valToPos(frame, source.value, source.scaleId, "css");
+    }
+
+    return null;
+  };
+
+  const cssX = resolveAxisCss("x", x);
+  const cssY = resolveAxisCss("y", y);
+
   return {
     cssX,
     cssY,
@@ -66,6 +136,22 @@ export const pointerSyncPositionToInteractionsPosition = (
         return [[scale.id, posToVal(frame, pos, scale.id, "css")!]];
       })
     ),
+    normalizedX: x?.normalized ?? null,
+    normalizedY: y?.normalized ?? null,
+    toNormalized: makeToNormalized(sync),
+    fromNormalized: makeFromNormalized(sync),
+  };
+};
+
+export const makeSpanSelectHelpers = (
+  sync: InteractionsSyncConfig | undefined
+): {
+  toNormalized: (value: number, axis: "x" | "y") => number | null;
+  fromNormalized: (normalized: number, axis: "x" | "y") => number | null;
+} => {
+  return {
+    toNormalized: makeToNormalized(sync),
+    fromNormalized: makeFromNormalized(sync),
   };
 };
 
@@ -100,7 +186,7 @@ export const extrapolateScaledSelectionRange = (
       }
       const from = posToVal(frame, fromCSS, scale.id, "css");
       const to = posToVal(frame, toCSS, scale.id, "css");
-      if(from === null || to === null) {
+      if (from === null || to === null) {
         return [];
       }
       return [

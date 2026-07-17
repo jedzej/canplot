@@ -16,6 +16,7 @@ import type {
   ContextMenuEvent,
   DblClickEvent,
   DocumentMouseUpEvent,
+  InteractionsSyncConfig,
   MouseDownEvent,
   MouseUpEvent,
   MoveEvent,
@@ -26,6 +27,7 @@ import type {
 import {
   extrapolateScaledSelectionRange,
   makePointerSyncPosition,
+  makeSpanSelectHelpers,
   pointerSyncPositionToInteractionsPosition,
 } from "./positioning";
 
@@ -41,11 +43,7 @@ type ChartAreaInteractionsProps = {
   className?: string;
   style?: React.CSSProperties;
   id?: string;
-  sync?: {
-    key: string;
-    xViaScaleId?: string;
-    yViaScaleId?: string;
-  };
+  sync?: InteractionsSyncConfig;
   children?: React.ReactNode;
   innerChildren?: React.ReactNode;
 };
@@ -167,8 +165,7 @@ const ChartAreaInteractionsImpl: React.FC<{
       event,
       getRect(),
       frameRef.current,
-      sync?.xViaScaleId,
-      sync?.yViaScaleId,
+      sync,
     );
     if (positions) {
       foo(
@@ -352,6 +349,7 @@ const ChartAreaInteractionsImpl: React.FC<{
               scaled: yRanges ?? [],
             },
             keys,
+            ...makeSpanSelectHelpers(sync),
           };
           lastSpanSelectEventRef.current = spanSelectEvent;
 
@@ -368,6 +366,7 @@ const ChartAreaInteractionsImpl: React.FC<{
         const pointer = pointerSyncPositionToInteractionsPosition(
           positions,
           frameRef.current,
+          sync,
         );
         if (!pointer) return;
         const anyButtonPressed = Object.values(keys).some((v) => v);
@@ -413,6 +412,7 @@ const ChartAreaInteractionsImpl: React.FC<{
       ? pointerSyncPositionToInteractionsPosition(
           event.positions,
           frameRef.current,
+          sync,
         )
       : null;
     lastMoveSyncEventRef.current = event;
@@ -447,6 +447,7 @@ const ChartAreaInteractionsImpl: React.FC<{
           const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
             frameRef.current,
+            sync,
           );
           if (!pointer) return;
           InteractionsBus.click.dispatchEvent(interactionsId, {
@@ -479,6 +480,7 @@ const ChartAreaInteractionsImpl: React.FC<{
           const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
             frameRef.current,
+            sync,
           );
           if (!pointer) return;
           InteractionsBus.mousedown.dispatchEvent(interactionsId, {
@@ -497,6 +499,7 @@ const ChartAreaInteractionsImpl: React.FC<{
           const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
             frameRef.current,
+            sync,
           );
           if (!pointer) return;
           InteractionsBus.mouseup.dispatchEvent(interactionsId, {
@@ -512,6 +515,7 @@ const ChartAreaInteractionsImpl: React.FC<{
           const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
             frameRef.current,
+            sync,
           );
           if (!pointer) return;
           InteractionsBus.contextmenu.dispatchEvent(interactionsId, {
@@ -527,6 +531,7 @@ const ChartAreaInteractionsImpl: React.FC<{
           const pointer = pointerSyncPositionToInteractionsPosition(
             positions,
             frameRef.current,
+            sync,
           );
           if (!pointer) return;
           InteractionsBus.dblclick.dispatchEvent(interactionsId, {

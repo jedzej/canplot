@@ -7,16 +7,28 @@ type ModifiersKeys = {
   metaKey: boolean;
 };
 
+export type InteractionsSyncConfig = {
+  key: string;
+  xViaScaleId?: string;
+  yViaScaleId?: string;
+  xToNormalized?: (value: number) => number | null;
+  xFromNormalized?: (normalized: number) => number | null;
+  yToNormalized?: (value: number) => number | null;
+  yFromNormalized?: (normalized: number) => number | null;
+};
+
 // EVENTS FOR SYNCING POINTERS BETWEEN MULTIPLE PLOTS
 
 export type PointerSyncPosition = {
   x: {
     scaleId: string;
     value: number;
+    normalized: number | null;
   } | null;
   y: {
     scaleId: string;
     value: number;
+    normalized: number | null;
   } | null;
 };
 
@@ -73,6 +85,10 @@ export type InteractionsEventPointerPosition = {
   cssX: number | null;
   cssY: number | null;
   scaled: Record<string, number>;
+  normalizedX: number | null;
+  normalizedY: number | null;
+  toNormalized: (value: number, axis: "x" | "y") => number | null;
+  fromNormalized: (normalized: number, axis: "x" | "y") => number | null;
 };
 
 export type InteractionsEvent = {
@@ -124,6 +140,8 @@ export type SpanSelectEvent = {
   };
   completed: boolean;
   keys: ModifiersKeys;
+  toNormalized: (value: number, axis: "x" | "y") => number | null;
+  fromNormalized: (normalized: number, axis: "x" | "y") => number | null;
 };
 
 export type PressAndWheelEvent = InteractionsEvent & {

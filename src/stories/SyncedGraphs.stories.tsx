@@ -4,6 +4,8 @@ import { CanPlot } from "../lib/CanPlot";
 import { LinePlot } from "../lib/plot/LinePlot";
 import { BarPlot } from "../lib/plot/BarPlot";
 import { AreaPlot } from "../lib/plot/AreaPlot";
+import { XTicks, YTicks } from "../lib/plot/Ticks";
+import { makeLinearTicks, makeTimeTicks } from "../lib/tickUtils";
 import { ChartAreaInteractions } from "../lib/interactions/ChartAreaInteractions";
 import { Crosshair } from "../lib/interactions/CrossHair";
 import { SelectBox } from "../lib/interactions/SelectBox";
@@ -153,6 +155,9 @@ export const CommonZoom: Story = {
               <SelectBox makeStyle={() => ({ backgroundColor: "#4c6ef544" })} />
             </ChartAreaInteractions>
 
+            <XTicks scaleId="x" ticks={makeLinearTicks()} />
+            <YTicks scaleId="y" ticks={makeLinearTicks()} />
+
             <LinePlot
               data={data1}
               xScaleId="x"
@@ -188,6 +193,9 @@ export const CommonZoom: Story = {
               <Crosshair />
               <SelectBox makeStyle={() => ({ backgroundColor: "#51cf6644" })} />
             </ChartAreaInteractions>
+
+            <XTicks scaleId="x" ticks={makeLinearTicks()} />
+            <YTicks scaleId="y" ticks={makeLinearTicks()} />
 
             <LinePlot
               data={data2}
@@ -393,6 +401,9 @@ export const XAxisOnlySync: Story = {
                 />
               </ChartAreaInteractions>
 
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <YTicks scaleId="y1" ticks={makeLinearTicks()} />
+
               <LinePlot
                 data={data1}
                 xScaleId="x"
@@ -436,6 +447,9 @@ export const XAxisOnlySync: Story = {
                   makeStyle={() => ({ backgroundColor: "#7950f244" })}
                 />
               </ChartAreaInteractions>
+
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <YTicks scaleId="y2" ticks={makeLinearTicks()} />
 
               <LinePlot
                 data={data2}
@@ -605,6 +619,9 @@ export const ThreeChartsXAxisSync: Story = {
                 />
               </ChartAreaInteractions>
 
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <YTicks scaleId="y1" ticks={makeLinearTicks()} />
+
               <LinePlot
                 data={lineData}
                 xScaleId="x"
@@ -669,6 +686,9 @@ export const ThreeChartsXAxisSync: Story = {
                   makeStyle={() => ({ backgroundColor: "#f59f0044" })}
                 />
               </ChartAreaInteractions>
+
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <YTicks scaleId="y2" ticks={makeLinearTicks()} />
 
               <BarPlot
                 data={barData}
@@ -735,6 +755,9 @@ export const ThreeChartsXAxisSync: Story = {
                   makeStyle={() => ({ backgroundColor: "#51cf6644" })}
                 />
               </ChartAreaInteractions>
+
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <YTicks scaleId="y3" ticks={makeLinearTicks()} />
 
               <AreaPlot
                 data={areaData}
@@ -903,6 +926,9 @@ export const SideBySideComparison: Story = {
                 />
               </ChartAreaInteractions>
 
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <YTicks scaleId="y" ticks={makeLinearTicks()} />
+
               <LinePlot
                 data={dataA}
                 xScaleId="x"
@@ -952,6 +978,9 @@ export const SideBySideComparison: Story = {
                   makeStyle={() => ({ backgroundColor: "#f7670744" })}
                 />
               </ChartAreaInteractions>
+
+              <XTicks scaleId="x" ticks={makeLinearTicks()} />
+              <YTicks scaleId="y" ticks={makeLinearTicks()} />
 
               <LinePlot
                 data={dataB}
@@ -1138,6 +1167,9 @@ export const TimeSeriesXAxisSync: Story = {
                 />
               </ChartAreaInteractions>
 
+              <XTicks scaleId="time" ticks={makeTimeTicks()} />
+              <YTicks scaleId="temp" ticks={makeLinearTicks()} />
+
               <LinePlot
                 data={tempData}
                 xScaleId="time"
@@ -1202,6 +1234,9 @@ export const TimeSeriesXAxisSync: Story = {
                 />
               </ChartAreaInteractions>
 
+              <XTicks scaleId="time" ticks={makeTimeTicks()} />
+              <YTicks scaleId="sales" ticks={makeLinearTicks()} />
+
               <AreaPlot
                 data={salesData}
                 xScaleId="time"
@@ -1214,6 +1249,322 @@ export const TimeSeriesXAxisSync: Story = {
               />
             </CanPlot>
           </div>
+        </div>
+      </div>
+    );
+  },
+};
+
+// Cross-scale sync via normalized-value bridge.
+// Two plots share cursor movement even though their X scales have different
+// ids and ranges. Each plot's sync config declares how to translate its local
+// X value to/from a shared "wall-clock ms" reference space, so the receiver
+// can reconstruct the cursor position on its own scale.
+export const NormalizedBridgeSync: Story = {
+  render: () => {
+    // Shared reference: wall-clock ms. In this demo both plots use identity
+    // linear translations, but the mechanism supports arbitrary (e.g. gap-aware)
+    // transforms — the source uses xToNormalized, the receiver uses
+    // xFromNormalized.
+    const T0 = 1_700_000_000_000; // arbitrary epoch ms
+    const HOUR = 3_600_000;
+
+    // Plot A: local x scale is "opTime" in seconds (0..3600), representing an
+    // hour of operation. Normalization: seconds -> wall-clock ms.
+    const opTimeScale: PlotScaleConfig = {
+      id: "opTime",
+      axis: { position: "bottom", size: 40 },
+      origin: "x",
+      min: 0,
+      max: 3600,
+    };
+    const yScaleA: PlotScaleConfig = {
+      id: "yA",
+      axis: { position: "left", size: 60 },
+      origin: "y",
+      min: 0,
+      max: 100,
+    };
+
+    // Plot B: local x scale is "wallClock" in ms (T0..T0+HOUR).
+    const wallClockScale: PlotScaleConfig = {
+      id: "wallClock",
+      axis: { position: "bottom", size: 40 },
+      origin: "x",
+      min: T0,
+      max: T0 + HOUR,
+    };
+    const yScaleB: PlotScaleConfig = {
+      id: "yB",
+      axis: { position: "left", size: 60 },
+      origin: "y",
+      min: -50,
+      max: 50,
+    };
+
+    const opTimeData = Array.from({ length: 120 }, (_, i) => ({
+      x: i * 30, // seconds, 0..3570
+      y: 50 + Math.sin(i / 8) * 30,
+    }));
+    const wallClockData = Array.from({ length: 120 }, (_, i) => ({
+      x: T0 + i * 30_000, // ms, matches opTime seconds * 1000
+      y: Math.cos(i / 6) * 40,
+    }));
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3 style={{ margin: "0 0 8px 0" }}>
+          Normalized-value cursor bridge (mismatched scales)
+        </h3>
+        <p style={{ fontSize: "14px", color: "#666" }}>
+          Chart A's x axis is <code>opTime</code> (seconds, 0..3600). Chart B's
+          x axis is <code>wallClock</code> (ms epoch). No shared scale id — the
+          crosshair still syncs because each plot declares{" "}
+          <code>xToNormalized</code>/<code>xFromNormalized</code> against a
+          shared wall-clock-ms reference space.
+        </p>
+
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}
+        >
+          <CanPlot
+            style={{ width: "100%", height: "250px" }}
+            configuration={{
+              padding: { top: 20, right: 20, bottom: 20, left: 20 },
+              scales: [opTimeScale, yScaleA],
+            }}
+          >
+            <ChartAreaInteractions
+              sync={{
+                key: "normalized-bridge-demo",
+                xViaScaleId: "opTime",
+                // opTime seconds -> wall-clock ms (shared reference)
+                xToNormalized: (v) => T0 + v * 1000,
+                // wall-clock ms -> opTime seconds
+                xFromNormalized: (n) => (n - T0) / 1000,
+              }}
+            >
+              <Crosshair />
+            </ChartAreaInteractions>
+
+            <XTicks scaleId="opTime" ticks={makeLinearTicks()} />
+            <YTicks scaleId="yA" ticks={makeLinearTicks()} />
+
+            <LinePlot
+              data={opTimeData}
+              xScaleId="opTime"
+              yScaleId="yA"
+              style={{ strokeStyle: "#4c6ef5", lineWidth: 2 }}
+            />
+          </CanPlot>
+
+          <CanPlot
+            style={{ width: "100%", height: "250px" }}
+            configuration={{
+              padding: { top: 20, right: 20, bottom: 20, left: 20 },
+              scales: [wallClockScale, yScaleB],
+            }}
+          >
+            <ChartAreaInteractions
+              sync={{
+                key: "normalized-bridge-demo",
+                xViaScaleId: "wallClock",
+                // wallClock ms -> shared reference (identity here)
+                xToNormalized: (v) => v,
+                xFromNormalized: (n) => n,
+              }}
+            >
+              <Crosshair />
+            </ChartAreaInteractions>
+
+            <XTicks scaleId="wallClock" ticks={makeTimeTicks()} />
+            <YTicks scaleId="yB" ticks={makeLinearTicks()} />
+
+            <LinePlot
+              data={wallClockData}
+              xScaleId="wallClock"
+              yScaleId="yB"
+              style={{ strokeStyle: "#51cf66", lineWidth: 2 }}
+            />
+          </CanPlot>
+        </div>
+      </div>
+    );
+  },
+};
+
+// Same normalized-bridge mechanism, but with realistic partial-overlap
+// viewports AND a discontinuity in the opTime <-> wallClock mapping.
+//
+// Machine operation ran twice with a 30-minute gap between runs:
+//   opTime  [0, 1800) seconds -> wallClock [T0, T0+30min)
+//   opTime  [1800, 3600] seconds -> wallClock [T0+60min, T0+90min]
+//
+// Plot A (opTime): viewport shows all 3600 op-seconds (continuous op axis).
+// Plot B (wallClock): viewport shows [T0+15min, T0+75min] — 60 wall-minutes,
+// spanning the tail of run #1, the entire off-gap, and the head of run #2.
+//
+// Effects to observe when hovering:
+// - Move cursor in Plot A: crosshair in Plot B jumps across the wall-clock gap
+//   at op-second 1800.
+// - Move cursor in Plot B within the gap [T0+30min..T0+60min]: crosshair in
+//   Plot A hides because xFromNormalized returns null (no opTime exists for
+//   that wall-clock range).
+export const NormalizedBridgeSyncPartialOverlapWithGap: Story = {
+  render: () => {
+    const T0 = 1_700_000_000_000; // arbitrary epoch ms
+    const MIN = 60_000;
+    const RUN1_END_OP_SEC = 1800; // 30 min of ops
+    const RUN1_END_WALL_MS = T0 + 30 * MIN;
+    const RUN2_START_WALL_MS = T0 + 60 * MIN; // gap of 30 min
+    const RUN2_START_OP_SEC = 1800;
+
+    // opTime seconds -> wall-clock ms, with a jump at 1800.
+    const opTimeToWallClock = (opSec: number): number => {
+      if (opSec < RUN1_END_OP_SEC) {
+        return T0 + opSec * 1000;
+      }
+      return RUN2_START_WALL_MS + (opSec - RUN2_START_OP_SEC) * 1000;
+    };
+
+    // wall-clock ms -> opTime seconds, or null when inside the machine-off gap.
+    const wallClockToOpTime = (wallMs: number): number | null => {
+      if (wallMs >= T0 && wallMs < RUN1_END_WALL_MS) {
+        return (wallMs - T0) / 1000;
+      }
+      if (wallMs >= RUN2_START_WALL_MS) {
+        return RUN2_START_OP_SEC + (wallMs - RUN2_START_WALL_MS) / 1000;
+      }
+      return null;
+    };
+
+    // Plot A viewport: full opTime range (0..3600 seconds).
+    const opTimeScale: PlotScaleConfig = {
+      id: "opTime",
+      axis: { position: "bottom", size: 40 },
+      origin: "x",
+      min: 0,
+      max: 3600,
+    };
+    const yScaleA: PlotScaleConfig = {
+      id: "yA",
+      axis: { position: "left", size: 60 },
+      origin: "y",
+      min: 0,
+      max: 100,
+    };
+
+    // Plot B viewport: [T0+15min, T0+75min] — partial overlap + gap.
+    const wallClockScale: PlotScaleConfig = {
+      id: "wallClock",
+      axis: { position: "bottom", size: 40 },
+      origin: "x",
+      min: T0 + 15 * MIN,
+      max: T0 + 75 * MIN,
+    };
+    const yScaleB: PlotScaleConfig = {
+      id: "yB",
+      axis: { position: "left", size: 60 },
+      origin: "y",
+      min: -50,
+      max: 50,
+    };
+
+    // Op-time-indexed data (continuous, one sample every 30 op-seconds).
+    const opTimeData = Array.from({ length: 121 }, (_, i) => ({
+      x: i * 30,
+      y: 50 + Math.sin(i / 8) * 30,
+    }));
+
+    // Wall-clock-indexed data: only during the two runs (no samples in gap).
+    const wallClockData: { x: number; y: number }[] = [];
+    for (let opSec = 0; opSec <= 3600; opSec += 30) {
+      wallClockData.push({
+        x: opTimeToWallClock(opSec),
+        y: Math.cos(opSec / 240) * 40,
+      });
+    }
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <h3 style={{ margin: "0 0 8px 0" }}>
+          Normalized-value cursor bridge — partial overlap + gap
+        </h3>
+        <p style={{ fontSize: "14px", color: "#666", maxWidth: "80ch" }}>
+          Two runs of 30 minutes each with a 30-minute machine-off gap between
+          them. Plot A shows continuous <code>opTime</code> [0..3600 s]; Plot B
+          shows a <code>wallClock</code> window [T0+15 min..T0+75 min] covering
+          the tail of run #1, the full gap, and the head of run #2. Hover Plot
+          A around op-second 1800 to see the Plot B crosshair jump across the
+          wall-clock gap. Hover Plot B within the gap to see Plot A hide the
+          crosshair (<code>xFromNormalized</code> returns <code>null</code>).
+        </p>
+
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}
+        >
+          <CanPlot
+            style={{ width: "100%", height: "250px" }}
+            configuration={{
+              padding: { top: 20, right: 20, bottom: 20, left: 20 },
+              scales: [opTimeScale, yScaleA],
+            }}
+          >
+            <ChartAreaInteractions
+              sync={{
+                key: "normalized-bridge-gap-demo",
+                xViaScaleId: "opTime",
+                // opTime -> shared wall-clock ms (with the gap encoded)
+                xToNormalized: opTimeToWallClock,
+                // wall-clock ms -> opTime, or null when inside the off-gap.
+                // Returning null lets the receiver hide its crosshair when the
+                // source cursor is over a wall-clock range that has no opTime.
+                xFromNormalized: wallClockToOpTime,
+              }}
+            >
+              <Crosshair />
+            </ChartAreaInteractions>
+
+            <XTicks scaleId="opTime" ticks={makeLinearTicks()} />
+            <YTicks scaleId="yA" ticks={makeLinearTicks()} />
+
+            <LinePlot
+              data={opTimeData}
+              xScaleId="opTime"
+              yScaleId="yA"
+              style={{ strokeStyle: "#4c6ef5", lineWidth: 2 }}
+            />
+          </CanPlot>
+
+          <CanPlot
+            style={{ width: "100%", height: "250px" }}
+            configuration={{
+              padding: { top: 20, right: 20, bottom: 20, left: 20 },
+              scales: [wallClockScale, yScaleB],
+            }}
+          >
+            <ChartAreaInteractions
+              sync={{
+                key: "normalized-bridge-gap-demo",
+                xViaScaleId: "wallClock",
+                // wall-clock ms IS the normalized reference space here.
+                xToNormalized: (v) => v,
+                xFromNormalized: (n) => n,
+              }}
+            >
+              <Crosshair />
+            </ChartAreaInteractions>
+
+            <XTicks scaleId="wallClock" ticks={makeTimeTicks()} />
+            <YTicks scaleId="yB" ticks={makeLinearTicks()} />
+
+            <LinePlot
+              data={wallClockData}
+              xScaleId="wallClock"
+              yScaleId="yB"
+              style={{ strokeStyle: "#51cf66", lineWidth: 2 }}
+            />
+          </CanPlot>
         </div>
       </div>
     );
